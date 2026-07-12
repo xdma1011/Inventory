@@ -919,10 +919,10 @@
             left: 50%;
             transform: translateX(-50%) translateY(110%);
             visibility: hidden;
-            width: clamp(320px, 44vh, 480px); /* مقروءة حتى بوضع Desktop site العريض */
+            width: clamp(350px, 54vh, 580px); /* أعرض قليلاً لاستيعاب عمود طرد/حبة */
             max-width: 100vw;
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 6px;
             padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
             background: #263238;
@@ -967,8 +967,8 @@
         }
 
         .op-bar button {
-            padding: 12px 0;
-            font-size: 19px;
+            padding: 14px 0;
+            font-size: 23px;
             font-weight: 900;
             font-family: inherit;
             border: none;
@@ -981,6 +981,23 @@
         .op-bar .op-sym {
             background: #37474f;
             color: #80deea;
+        }
+
+        .op-bar .op-nav {
+            grid-row: span 2; /* زر طويل بارتفاع صفين */
+            font-size: 17px;
+            line-height: 1.25;
+            font-weight: 900;
+        }
+
+        .op-bar .op-pkg {
+            background: #00695c;
+            color: #b2dfdb;
+        }
+
+        .op-bar .op-unit {
+            background: #4527a0;
+            color: #d1c4e9;
         }
 
         .pad-fab {
@@ -1742,7 +1759,7 @@
                 if (sectionStarts[index]) {
                     const sr = document.createElement('tr');
                     sr.className = 'section-row';
-                    sr.innerHTML = `<td colspan="16">${sectionStarts[index]}</td>`;
+                    sr.innerHTML = `<td colspan="18">${sectionStarts[index]}</td>`;
                     tbody.appendChild(sr);
                 }
                 const row = document.createElement('tr');
@@ -1773,10 +1790,12 @@
 <td><input type="text" inputmode="decimal" autocomplete="off" id="input1-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
 <td><input type="text" inputmode="decimal" autocomplete="off" id="input2-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
 <td><input type="text" inputmode="decimal" autocomplete="off" id="input3-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
+<td><input type="text" inputmode="decimal" autocomplete="off" id="input4-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
 <td class="section-divider"><select hidden id="multiplier-${index}" onchange="calculateRow(${index})" ${disabled}>${pkgOpts}</select></td>
-<td class="section-divider"><input type="text" inputmode="decimal" autocomplete="off" id="input4-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
 <td class="section-divider"><input type="text" inputmode="decimal" autocomplete="off" id="input5-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
-<td class="section-divider"><input type="text" inputmode="decimal" autocomplete="off" id="input6-${index}" class="negative-allowed" oninput="onExprInput(this, ${index})" placeholder="-0"></td>
+<td class="section-divider"><input type="text" inputmode="decimal" autocomplete="off" id="input6-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
+<td class="section-divider"><input type="text" inputmode="decimal" autocomplete="off" id="input7-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
+<td class="section-divider"><input type="text" inputmode="decimal" autocomplete="off" id="input8-${index}" class="negative-allowed" oninput="onExprInput(this, ${index})" placeholder="-0"></td>
 <td class="section-divider">
   <div class="multiplier-box">
     <select id="secondOp-${index}" onchange="calculateRow(${index})" class="op-select ${item.secondOp === '*' ? 'op-multiply' : 'op-divide'} ${fixClass}" ${disabled}>${secOpOpts}</select>
@@ -1793,7 +1812,7 @@
             loadSavedData();
             inventoryData.forEach((_, i) => {
                 updateBatchDisplay(i);
-                ['input1', 'input2', 'input3', 'input4', 'input5', 'input6'].forEach(n => {
+                ['input1', 'input2', 'input3', 'input4', 'input5', 'input6', 'input7', 'input8'].forEach(n => {
                     const el = document.getElementById(`${n}-${i}`);
                     if (el && el.value) el.title = el.value;
                     if (el && cellHasValue(el)) lockExprCell(el);
@@ -1812,11 +1831,13 @@
             const input4 = evaluateExpression(document.getElementById(`input4-${index}`).value);
             const input5 = evaluateExpression(document.getElementById(`input5-${index}`).value);
             const input6 = evaluateExpression(document.getElementById(`input6-${index}`).value);
+            const input7 = evaluateExpression(document.getElementById(`input7-${index}`).value);
+            const input8 = evaluateExpression(document.getElementById(`input8-${index}`).value);
             const secondOp = document.getElementById(`secondOp-${index}`).value;
             const secondVal = parseFloat(document.getElementById(`secondVal-${index}`).value) || 1;
             const bf = getBatchFactor(index);
-            const firstSection = (input1 + input2 + input3) * packageSize;
-            let secondSection = input4 + input5 + input6;
+            const firstSection = (input1 + input2 + input3 + input4) * packageSize;
+            let secondSection = input5 + input6 + input7 + input8;
             // إذا كان للصنف معامل باتش: نتجاهل ÷/× المعامل القديم لتفادي التحويل المزدوج
             if (!bf) secondSection = secondOp === '*' ? secondSection * secondVal : (secondVal !== 0 ? secondSection / secondVal : 0);
             let total = firstSection + secondSection;
@@ -1918,7 +1939,8 @@
                     const in1 = evaluateExpression(document.getElementById(`input1-${i}`).value);
                     const in2 = evaluateExpression(document.getElementById(`input2-${i}`).value);
                     const in3 = evaluateExpression(document.getElementById(`input3-${i}`).value);
-                    matrixBoxes += (in1 + in2 + in3);
+                    const in4 = evaluateExpression(document.getElementById(`input4-${i}`).value);
+                    matrixBoxes += (in1 + in2 + in3 + in4);
                 } else if (item.category === 'water') {
                     waterTotal += qty;
                     if (systemData[item.sku.toLowerCase()] !== undefined) waterDiff += qty - systemData[item.sku.toLowerCase()];
@@ -2025,7 +2047,7 @@
                     this.select(); if (firstVisible) {
                         setTimeout(() => {
                             const idx = parseInt(firstVisible.dataset.index);
-                            const cols = ['input1', 'input2', 'input3', 'input4', 'input5', 'input6'];
+                            const cols = ['input1', 'input2', 'input3', 'input4', 'input5', 'input6', 'input7', 'input8'];
                             let target = null;
                             for (const col of cols) {
                                 const el = document.getElementById(`${col}-${idx}`);
@@ -2260,6 +2282,8 @@
                     input4: document.getElementById(`input4-${i}`).value,
                     input5: document.getElementById(`input5-${i}`).value,
                     input6: document.getElementById(`input6-${i}`).value,
+                    input7: document.getElementById(`input7-${i}`).value,
+                    input8: document.getElementById(`input8-${i}`).value,
                     minVal: minValues[i]
                 };
             });
@@ -2297,7 +2321,15 @@
                         if (sop) sop.value = entry.secondOp || '*';
                         if (sva) sva.value = entry.secondVal || 1;
                     }
-                    ['input1', 'input2', 'input3', 'input4', 'input5', 'input6'].forEach(n => {
+                    if (entry.input7 === undefined && entry.input8 === undefined) {
+                        // حفظ من النسخة القديمة (3+3): نرحّل المجموعة الثانية لمواقعها الجديدة
+                        entry.input8 = entry.input6 || '';
+                        entry.input6 = entry.input5 || '';
+                        entry.input5 = entry.input4 || '';
+                        entry.input4 = '';
+                        entry.input7 = '';
+                    }
+                    ['input1', 'input2', 'input3', 'input4', 'input5', 'input6', 'input7', 'input8'].forEach(n => {
                         const el = document.getElementById(`${n}-${i}`);
                         if (el) el.value = entry[n] || '';
                     });
@@ -2351,7 +2383,7 @@
                 document.getElementById(`multiplier-${i}`).value = inventoryData[i].packageSize;
                 document.getElementById(`secondOp-${i}`).value = inventoryData[i].secondOp;
                 document.getElementById(`secondVal-${i}`).value = inventoryData[i].secondVal;
-                ['input1', 'input2', 'input3', 'input4', 'input5', 'input6'].forEach(n => { const el = document.getElementById(`${n}-${i}`); el.value = ''; el.readOnly = false; el.classList.remove('cell-locked'); });
+                ['input1', 'input2', 'input3', 'input4', 'input5', 'input6', 'input7', 'input8'].forEach(n => { const el = document.getElementById(`${n}-${i}`); el.value = ''; el.readOnly = false; el.classList.remove('cell-locked'); });
                 minValues[i] = 0;
                 document.getElementById(`min-${i}`).value = '';
                 calculateRow(i);
@@ -2374,7 +2406,7 @@
             let t = 'نظام الجرد - الجاردنز\n22-FEB-2026\n' + '='.repeat(100) + '\n';
             t += 'الناتج\tالفرق\tالحد الأدنى\tالمادة\tSKU\tوحدة\t1\t2\t3\t4\t5\t6\n' + '-'.repeat(100) + '\n';
             inventoryData.forEach((_, i) => {
-                t += `${document.getElementById(`result-${i}`).textContent}\t${document.getElementById(`diffValue-${i}`).textContent}\t${minValues[i] || 0}\t${inventoryData[i].name}\t${inventoryData[i].sku}\t${inventoryData[i].unit}\t${document.getElementById(`input1-${i}`).value || '0'}\t${document.getElementById(`input2-${i}`).value || '0'}\t${document.getElementById(`input3-${i}`).value || '0'}\t${document.getElementById(`input4-${i}`).value || '0'}\t${document.getElementById(`input5-${i}`).value || '0'}\t${document.getElementById(`input6-${i}`).value || '0'}\n`;
+                t += `${document.getElementById(`result-${i}`).textContent}\t${document.getElementById(`diffValue-${i}`).textContent}\t${minValues[i] || 0}\t${inventoryData[i].name}\t${inventoryData[i].sku}\t${inventoryData[i].unit}\t${document.getElementById(`input1-${i}`).value || '0'}\t${document.getElementById(`input2-${i}`).value || '0'}\t${document.getElementById(`input3-${i}`).value || '0'}\t${document.getElementById(`input4-${i}`).value || '0'}\t${document.getElementById(`input5-${i}`).value || '0'}\t${document.getElementById(`input6-${i}`).value || '0'}\t${document.getElementById(`input7-${i}`).value || '0'}\t${document.getElementById(`input8-${i}`).value || '0'}\n`;
             });
             t += `\n${document.getElementById('grandTotal').textContent}\nمجموع الماتركس: ${document.getElementById('matrixTotal').textContent}\nمجموع المياه: ${document.getElementById('waterTotal').textContent}\nصناديق الماتركس: ${document.getElementById('matrixBoxes').textContent}\n`;
             downloadFile(t, 'inventory_22FEB2026.txt', 'text/plain');
@@ -2388,11 +2420,11 @@
                 localStorage.getItem(BATCH_LS_KEY) || JSON.stringify(batchFactors),
                 JSON.stringify({ exported: new Date().toISOString(), items: inventoryData.length, keys: ['inventoryData_22FEB2026_v8', BATCH_LS_KEY] })
             ];
-            let html = '<table border="1" dir="rtl"><thead><tr><th>الناتج</th><th>باتش/1000</th><th>الكمية الخام</th><th>الفرق</th><th>الحد الأدنى</th><th>المادة</th><th>SKU</th><th>وحدة</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead><tbody>';
+            let html = '<table border="1" dir="rtl"><thead><tr><th>الناتج</th><th>باتش/1000</th><th>الكمية الخام</th><th>الفرق</th><th>الحد الأدنى</th><th>المادة</th><th>SKU</th><th>وحدة</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr></thead><tbody>';
             inventoryData.forEach((_, i) => {
                 const f = getBatchFactor(i);
                 const bq = f ? parseFloat((getRawResult(i) / f * 1000).toFixed(2)) : '';
-                html += `<tr><td>${document.getElementById(`result-${i}`).textContent}</td><td>${f || ''}</td><td>${bq}</td><td>${document.getElementById(`diffValue-${i}`).textContent}</td><td>${minValues[i] || 0}</td><td>${escHtml(inventoryData[i].name)}</td><td>${inventoryData[i].sku}</td><td>${inventoryData[i].unit}</td><td>${escHtml(document.getElementById(`input1-${i}`).value || '0')}</td><td>${escHtml(document.getElementById(`input2-${i}`).value || '0')}</td><td>${escHtml(document.getElementById(`input3-${i}`).value || '0')}</td><td>${escHtml(document.getElementById(`input4-${i}`).value || '0')}</td><td>${escHtml(document.getElementById(`input5-${i}`).value || '0')}</td><td>${escHtml(document.getElementById(`input6-${i}`).value || '0')}</td></tr>`;
+                html += `<tr><td>${document.getElementById(`result-${i}`).textContent}</td><td>${f || ''}</td><td>${bq}</td><td>${document.getElementById(`diffValue-${i}`).textContent}</td><td>${minValues[i] || 0}</td><td>${escHtml(inventoryData[i].name)}</td><td>${inventoryData[i].sku}</td><td>${inventoryData[i].unit}</td><td>${escHtml(document.getElementById(`input1-${i}`).value || '0')}</td><td>${escHtml(document.getElementById(`input2-${i}`).value || '0')}</td><td>${escHtml(document.getElementById(`input3-${i}`).value || '0')}</td><td>${escHtml(document.getElementById(`input4-${i}`).value || '0')}</td><td>${escHtml(document.getElementById(`input5-${i}`).value || '0')}</td><td>${escHtml(document.getElementById(`input6-${i}`).value || '0')}</td><td>${escHtml(document.getElementById(`input7-${i}`).value || '0')}</td><td>${escHtml(document.getElementById(`input8-${i}`).value || '0')}</td></tr>`;
             });
             html += '</tbody></table>';
             html += `<p><strong>${document.getElementById('grandTotal').textContent}</strong></p>`;
@@ -2412,7 +2444,7 @@
         }
         function copyAllToClipboard() {
             let t = 'الناتج\tالفرق\tالحد الأدنى\tالمادة\tSKU\tوحدة\t1\t2\t3\t4\t5\t6\n';
-            inventoryData.forEach((_, i) => { t += `${document.getElementById(`result-${i}`).textContent.replace(/,/g, '')}\t${document.getElementById(`diffValue-${i}`).textContent}\t${minValues[i] || 0}\t${inventoryData[i].name}\t${inventoryData[i].sku}\t${inventoryData[i].unit}\t${document.getElementById(`input1-${i}`).value || '0'}\t${document.getElementById(`input2-${i}`).value || '0'}\t${document.getElementById(`input3-${i}`).value || '0'}\t${document.getElementById(`input4-${i}`).value || '0'}\t${document.getElementById(`input5-${i}`).value || '0'}\t${document.getElementById(`input6-${i}`).value || '0'}\n`; });
+            inventoryData.forEach((_, i) => { t += `${document.getElementById(`result-${i}`).textContent.replace(/,/g, '')}\t${document.getElementById(`diffValue-${i}`).textContent}\t${minValues[i] || 0}\t${inventoryData[i].name}\t${inventoryData[i].sku}\t${inventoryData[i].unit}\t${document.getElementById(`input1-${i}`).value || '0'}\t${document.getElementById(`input2-${i}`).value || '0'}\t${document.getElementById(`input3-${i}`).value || '0'}\t${document.getElementById(`input4-${i}`).value || '0'}\t${document.getElementById(`input5-${i}`).value || '0'}\t${document.getElementById(`input6-${i}`).value || '0'}\t${document.getElementById(`input7-${i}`).value || '0'}\t${document.getElementById(`input8-${i}`).value || '0'}\n`; });
             navigator.clipboard.writeText(t).then(() => showToast('تم نسخ جميع البيانات!', 'success'));
         }
         function downloadFile(content, filename, mimeType) {
@@ -2688,11 +2720,11 @@
                     const m = el.id.match(/^input(\d)-(\d+)$/);
                     if (!m) return;
                     const idx = m[2];
-                    for (let k = parseInt(m[1]) + 1; k <= 6; k++) {
+                    for (let k = parseInt(m[1]) + 1; k <= 8; k++) {
                         const nxt = document.getElementById(`input${k}-${idx}`);
                         if (nxt && !nxt.readOnly) { nxt.focus(); return; }
                     }
-                    for (let k = 1; k <= 6; k++) {
+                    for (let k = 1; k <= 8; k++) {
                         const nxt = document.getElementById(`input${k}-${idx}`);
                         if (nxt && !nxt.readOnly) { nxt.focus(); return; }
                     }
@@ -2805,6 +2837,34 @@
             const r = el.closest('tr[data-index]');
             if (r && typeof renderLive === 'function') renderLive(parseInt(r.dataset.index), el);
         }
+        // زر طرد/حبة: يعتمد الخانة الحالية (مثل إنتر) ثم يقفز لأول خانة فارغة أو صفر بالمجموعة المطلوبة بنفس الصف
+        // طرد = الخانات 1-4 (تُضرب بحجم الطرد) ، حبة = الخانات 5-8
+        function goToGroupCell(startN) {
+            const cur = opBarTarget;
+            if (!cur) return;
+            const row = cur.closest('tr[data-index]');
+            if (!row) return;
+            const idx = row.dataset.index;
+            if (cur.id.indexOf('input') === 0) lockInput(cur); // مثل إنتر: يقفل إن كانت فيها قيمة
+            let target = null;
+            for (let k = startN; k < startN + 4; k++) {
+                const el = document.getElementById(`input${k}-${idx}`);
+                if (el && !el.readOnly && !cellHasValue(el)) { target = el; break; } // فارغة أو صفر
+            }
+            if (!target) {
+                for (let k = startN; k < startN + 4; k++) {
+                    const el = document.getElementById(`input${k}-${idx}`);
+                    if (el && !el.readOnly) { target = el; break; } // وإلا أول غير مقفلة
+                }
+            }
+            if (!target) {
+                const live = document.querySelector('#opBar .op-live');
+                if (live) { live.classList.remove('flash'); void live.offsetWidth; live.classList.add('flash'); }
+                return;
+            }
+            openPadFor(target);
+        }
+
         function restoreTempInputModes() {
             document.querySelectorAll('input[data-temp-none]').forEach(el => {
                 el.setAttribute('inputmode', 'decimal');
@@ -2853,7 +2913,7 @@
             // عند تفعيل اللوحة: inputmode="none" يمنع كيبورد الهاتف (أندرويد/آيفون) ويبقي مؤشر الكتابة
             const mode = numpadEnabled() ? 'none' : 'decimal';
             for (let i = 0; i < inventoryData.length; i++)
-                for (let n = 1; n <= 6; n++) {
+                for (let n = 1; n <= 8; n++) {
                     const el = document.getElementById(`input${n}-${i}`);
                     if (el) el.setAttribute('inputmode', mode);
                 }
@@ -2884,8 +2944,15 @@
             const margin = 10;
             let left = r.left + r.width / 2 - bw / 2;
             left = Math.max(margin, Math.min(window.innerWidth - bw - margin, left));
+            // أقصى حد للنزول: أسفل بار مجموع الماتركس (مهم بوضع Desktop site على أندرويد حيث الشاشة الافتراضية طويلة جداً)
+            let maxBottom = window.innerHeight - margin;
+            const sg = document.querySelector('.summary-group');
+            if (sg) {
+                const sb = sg.getBoundingClientRect().bottom;
+                if (sb > 150) maxBottom = Math.min(maxBottom, sb);
+            }
             let top = r.bottom + 8;
-            if (top + bh > window.innerHeight - margin) top = Math.max(margin, r.top - bh - 8);
+            if (top + bh > maxBottom) top = Math.max(margin, Math.min(r.top - bh - 8, maxBottom - bh));
             bar.style.left = left + 'px';
             bar.style.top = top + 'px';
         }
@@ -2933,6 +3000,7 @@
                 b.addEventListener('touchstart', ev => ev.preventDefault(), { passive: false });
                 const handler = () => {
                     if (b.dataset.op === 'done') { commitCell(opBarTarget); }
+                    else if (b.dataset.op === 'goPkg' || b.dataset.op === 'goUnit') { goToGroupCell(b.dataset.op === 'goPkg' ? 1 : 5); }
                     else if (b.dataset.op === 'search') {
                         // الخانة فارغة؟ لا تغلقها ولا تنتقل — ابقَ مكانك
                         if (opBarTarget && !opBarTarget.value.trim()) {
@@ -3025,13 +3093,15 @@
                         <th class="th-min" style="width:72px">الحد الأدنى</th>
                         <th style="width:170px">اسم المادة</th>
                         <th style="width:90px">حجم الطرد</th>
-                        <th style="width:66px">1</th>
-                        <th style="width:66px">2</th>
-                        <th style="width:66px">3</th>
+                        <th style="width:62px">1</th>
+                        <th style="width:62px">2</th>
+                        <th style="width:62px">3</th>
+                        <th style="width:62px">4</th>
                         <th class="section-divider-head" style="width:90px">فاصل ×</th>
-                        <th class="section-divider-head" style="width:66px">4</th>
-                        <th class="section-divider-head" style="width:66px">5</th>
-                        <th class="section-divider-head" style="width:66px">6 (-)</th>
+                        <th class="section-divider-head" style="width:62px">5</th>
+                        <th class="section-divider-head" style="width:62px">6</th>
+                        <th class="section-divider-head" style="width:62px">7</th>
+                        <th class="section-divider-head" style="width:62px">8 (-)</th>
                         <th class="section-divider-head" style="width:90px">÷/× المعامل</th>
                         <th class="section-divider-head" style="width:110px">SKU</th>
                         <th class="section-divider-head" style="width:60px">وحدة</th>
@@ -3055,7 +3125,7 @@
                     <div class="s-value" id="matrixDiff">0</div>
                 </div>
                 <div class="summary-card matrix-boxes">
-                    <div class="s-label">📦 مجموع الصناديق (أول 3)</div>
+                    <div class="s-label">📦 مجموع الصناديق (أول 4)</div>
                     <div class="s-value" id="matrixBoxes">0</div>
                 </div>
             </div>
@@ -3195,6 +3265,7 @@
         <button type="button" data-op="9">9</button>
         <button type="button" data-op="/" class="op-sym">÷</button>
         <button type="button" data-op="⌫" class="op-del">⌫</button>
+        <button type="button" data-op="goPkg" class="op-nav op-pkg">📦<br>طرد</button>
         <button type="button" data-op="4">4</button>
         <button type="button" data-op="5">5</button>
         <button type="button" data-op="6">6</button>
@@ -3205,6 +3276,7 @@
         <button type="button" data-op="3">3</button>
         <button type="button" data-op="-" class="op-sym">－</button>
         <button type="button" data-op="(" class="op-sym">(</button>
+        <button type="button" data-op="goUnit" class="op-nav op-unit">🔢<br>حبة</button>
         <button type="button" data-op="0">0</button>
         <button type="button" data-op="00">00</button>
         <button type="button" data-op=".">.</button>
