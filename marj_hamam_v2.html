@@ -983,6 +983,40 @@
             color: #80deea;
         }
 
+        .pad-fab {
+            position: fixed;
+            bottom: 24px;
+            left: 14px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(145deg, #6a1b9a, #8e24aa);
+            color: #fff;
+            font-size: 24px;
+            box-shadow: 0 6px 18px rgba(106, 27, 154, 0.5);
+            z-index: 2950;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+
+        .pad-fab.show {
+            display: flex;
+            animation: fabPop 0.18s ease;
+        }
+
+        .pad-fab:active {
+            transform: scale(0.92);
+        }
+
+        @keyframes fabPop {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
         .btn-numpad {
             background: linear-gradient(135deg, #37474f, #546e7a);
             color: #fff;
@@ -2287,7 +2321,7 @@
             if (cellHasValue(input)) { input.readOnly = true; input.classList.add('cell-locked'); }
             input.blur();
         }
-        function unlockInput(input) { input.readOnly = false; input.classList.remove('cell-locked'); input.style.background = ''; input.style.cursor = ''; input.focus(); try { input.select(); } catch (e) {} }
+        function unlockInput(input) { input.readOnly = false; input.classList.remove('cell-locked'); input.style.background = ''; input.style.cursor = ''; input.focus(); try { input.select(); } catch (e) {} if (typeof maybeOpenPadAfterUnlock === 'function' && input.id.indexOf('input') === 0) maybeOpenPadAfterUnlock(input); }
 
 
         // ═══════════ إدخال رقمي فقط (أرقام + رموز حسابية) ═══════════
@@ -2358,7 +2392,7 @@
                 el.title = bf ? 'معطَّل — معامل الباتش هو المعتمد لهذا الصنف' : '';
             });
         }
-        function unlockFactor(el) { el.readOnly = false; el.classList.add('unlocked'); el.focus(); el.select(); }
+        function unlockFactor(el) { el.readOnly = false; el.classList.add('unlocked'); el.focus(); try { el.select(); } catch (e) {} if (typeof maybeOpenPadAfterUnlock === 'function') maybeOpenPadAfterUnlock(el); }
         function lockFactor(el) { el.readOnly = true; el.classList.remove('unlocked'); }
 
         // ═══════════ تصدير CSV لكل شيت جرد (جاهز لاستيراد Foodics) ═══════════
@@ -2523,6 +2557,7 @@
             const bar = document.getElementById('opBar');
             if (bar) bar.classList.remove('show');
             opBarTarget = null;
+            restoreTempInputModes();
             jumpToSearch();
         }
         let dblGuard = 0;
@@ -2626,6 +2661,76 @@
         }
         document.addEventListener('DOMContentLoaded', setupDoubleTap);
 
+        // ═══════════ فتح اللوحة يدوياً لخانة محددة (يعمل حتى لو مفتاح اللوحة مطفي) ═══════════
+        function openPadFor(el) {
+            if (!el) return;
+            const bar = document.getElementById('opBar');
+            if (!bar) return;
+            opBarTarget = el;
+            const desktop = (typeof isDesktopPointer === 'function') && isDesktopPointer();
+            bar.classList.toggle('anchored', desktop);
+            bar.classList.add('show');
+            // لو كيبورد الهاتف كان سيفتح (المفتاح مطفي): نمنعه مؤقتاً لهذه الخانة
+            if (el.getAttribute('inputmode') !== 'none') {
+                el.dataset.tempNone = '1';
+                el.setAttribute('inputmode', 'none');
+                el.blur();
+            }
+            try { el.focus(); } catch (e) {}
+            // الفك بعد رقصة الكيبورد — لأن blur فوق قد يعيد قفل خانة المعامل تلقائياً
+            if (el.readOnly) {
+                el.readOnly = false;
+                if (el.id.indexOf('batchf-') === 0) el.classList.add('unlocked');
+                else { el.classList.remove('cell-locked'); el.style.background = ''; el.style.cursor = ''; }
+                try { el.select(); } catch (e) {}
+            }
+            if (desktop) {
+                if (typeof positionOpBarUnder === 'function') positionOpBarUnder(el);
+            } else {
+                const row = el.closest('tr');
+                if (row) setTimeout(() => { try { row.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) {} }, 120);
+            }
+            const r = el.closest('tr[data-index]');
+            if (r && typeof renderLive === 'function') renderLive(parseInt(r.dataset.index), el);
+        }
+        function restoreTempInputModes() {
+            document.querySelectorAll('input[data-temp-none]').forEach(el => {
+                el.setAttribute('inputmode', 'decimal');
+                delete el.dataset.tempNone;
+            });
+        }
+        // بعد فتح قفل خانة بالدبل كليك: افتح اللوحة تلقائياً إن كانت مفعّلة
+        function maybeOpenPadAfterUnlock(el) {
+            if (typeof numpadEnabled === 'function' && numpadEnabled()) setTimeout(() => openPadFor(el), 30);
+            else if (typeof updateFab === 'function') setTimeout(updateFab, 30);
+        }
+
+        // ═══════════ الزر العائم 🔢: يفتح اللوحة للخانة النشطة بأي حالة ═══════════
+        let lastRowInput = null;
+        function updateFab() {
+            const fab = document.getElementById('padFab');
+            const bar = document.getElementById('opBar');
+            if (!fab || !bar) return;
+            const a = document.activeElement;
+            const activeIsRow = a && a.matches && a.matches('input[id^="input"], input[id^="batchf-"]');
+            fab.classList.toggle('show', !!activeIsRow && !bar.classList.contains('show'));
+        }
+        function setupPadFab() {
+            const fab = document.getElementById('padFab');
+            const bar = document.getElementById('opBar');
+            if (!fab || !bar) return;
+            document.addEventListener('focusin', e => {
+                if (e.target.matches && e.target.matches('input[id^="input"], input[id^="batchf-"]')) lastRowInput = e.target;
+                updateFab();
+            });
+            document.addEventListener('focusout', () => setTimeout(updateFab, 160));
+            new MutationObserver(updateFab).observe(bar, { attributes: true, attributeFilter: ['class'] });
+            const open = ev => { ev.preventDefault(); if (lastRowInput) openPadFor(lastRowInput); };
+            fab.addEventListener('mousedown', open);
+            fab.addEventListener('touchstart', open, { passive: false });
+        }
+        document.addEventListener('DOMContentLoaded', setupPadFab);
+
         const NUMPAD_LS_KEY = 'numpadEnabled_v1';
         function numpadEnabled() {
             const saved = localStorage.getItem(NUMPAD_LS_KEY);
@@ -2704,9 +2809,10 @@
             document.addEventListener('focusout', e => {
                 setTimeout(() => {
                     const a = document.activeElement;
-                    if (!a || !(a.matches && a.matches('input[id^="input"]'))) {
+                    if (!a || !(a.matches && a.matches('input[id^="input"], input[id^="batchf-"]'))) {
                         bar.classList.remove('show');
                         opBarTarget = null;
+                        restoreTempInputModes();
                     } else { opBarTarget = a; }
                 }, 120);
             });
@@ -2990,6 +3096,9 @@
         <button type="button" data-op=")" class="op-sym">)</button>
         <button type="button" data-op="done" class="op-done">✔ تم</button>
     </div>
+
+    <!-- زر عائم يفتح لوحة الأرقام للخانة النشطة -->
+    <button type="button" class="pad-fab" id="padFab" title="افتح لوحة الأرقام">🔢</button>
 
     <div class="toast" id="toast"></div>
 
