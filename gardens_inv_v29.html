@@ -919,7 +919,7 @@
             left: 50%;
             transform: translateX(-50%) translateY(110%);
             visibility: hidden;
-            width: clamp(350px, 54vh, 580px); /* أعرض قليلاً لاستيعاب عمود طرد/حبة */
+            width: min(560px, calc(100vw - 12px)); /* px سقفاً ثابتاً للأزرار + vw حد أمان للشاشات الضيقة */
             max-width: 100vw;
             display: grid;
             grid-template-columns: repeat(6, 1fr);
@@ -2854,7 +2854,7 @@
             const bar = document.getElementById('opBar');
             if (!bar) return;
             opBarTarget = el;
-            const desktop = (typeof isDesktopPointer === 'function') && isDesktopPointer();
+            const desktop = (typeof useAnchoredPad === 'function') && useAnchoredPad();
             bar.classList.toggle('anchored', desktop);
             bar.classList.add('show');
             // لو كيبورد الهاتف كان سيفتح (المفتاح مطفي): نمنعه مؤقتاً لهذه الخانة
@@ -2874,6 +2874,7 @@
             if (desktop) {
                 if (typeof positionOpBarUnder === 'function') positionOpBarUnder(el);
             } else {
+                clearAnchorInline(bar);
                 const row = el.closest('tr');
                 if (row) setTimeout(() => { try { row.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (err) {} }, 120);
             }
@@ -2978,24 +2979,43 @@
             try { return window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(pointer: coarse)').matches; }
             catch (e) { return false; }
         }
+        // أندرويد بوضع Desktop site: لمس + شاشة هاتف + عرض رسم عريض — التثبيت بأسفل "الشاشة" هنا
+        // يعني أسفل صفحة افتراضية طولها ~2200px بعيداً عن الزوم، فنلصق اللوحة بالخلية بدلاً منه
+        function isDesktopSitePhone() {
+            try {
+                return window.matchMedia('(pointer: coarse)').matches
+                    && Math.min(screen.width, screen.height) < 500
+                    && window.innerWidth > 700;
+            } catch (e) { return false; }
+        }
+        function useAnchoredPad() { return isDesktopPointer() || isDesktopSitePhone(); }
         function positionOpBarUnder(el) {
             const bar = document.getElementById('opBar');
             if (!bar || !el) return;
             const r = el.getBoundingClientRect();
-            const bw = bar.offsetWidth || 400;
-            const bh = bar.offsetHeight || 260;
-            const margin = 10;
+            const margin = 8;
+            // الشاشة المرئية الفعلية: مع الزوم بوضع Desktop site هي أصغر بكثير من الصفحة الافتراضية،
+            // وvisualViewport يعطينا موضعها وأبعادها الحقيقية داخل الصفحة
+            const vv = window.visualViewport;
+            const vpW = vv ? vv.width : window.innerWidth;
+            const vpH = vv ? vv.height : window.innerHeight;
+            const vpL = vv ? vv.offsetLeft : 0;
+            const vpT = vv ? vv.offsetTop : 0;
+            // عرض اللوحة: px سقفاً + لا يتجاوز الشاشة المرئية (حتى وأنت مزوّم تراها كاملة)
+            const bw = Math.min(560, vpW - margin * 2);
+            bar.style.width = bw + 'px';
+            const bh = bar.offsetHeight || 300;
             let left = r.left + r.width / 2 - bw / 2;
-            left = Math.max(margin, Math.min(window.innerWidth - bw - margin, left));
-            // أقصى حد للنزول: أسفل بار مجموع الماتركس (مهم بوضع Desktop site على أندرويد حيث الشاشة الافتراضية طويلة جداً)
-            let maxBottom = window.innerHeight - margin;
+            left = Math.max(vpL + margin, Math.min(vpL + vpW - bw - margin, left));
+            // أقصى نزول: أسفل الشاشة المرئية أو أسفل بار الماتركس، أيهما أعلى
+            let maxBottom = vpT + vpH - margin;
             const sg = document.querySelector('.summary-group');
             if (sg) {
                 const sb = sg.getBoundingClientRect().bottom;
                 if (sb > 150) maxBottom = Math.min(maxBottom, sb);
             }
             let top = r.bottom + 8;
-            if (top + bh > maxBottom) top = Math.max(margin, Math.min(r.top - bh - 8, maxBottom - bh));
+            if (top + bh > maxBottom) top = Math.max(vpT + margin, Math.min(r.top - bh - 8, maxBottom - bh));
             bar.style.left = left + 'px';
             bar.style.top = top + 'px';
         }
@@ -3005,6 +3025,11 @@
         }
         window.addEventListener('resize', repositionOpBarIfAnchored);
         window.addEventListener('scroll', repositionOpBarIfAnchored, true);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', repositionOpBarIfAnchored);
+            window.visualViewport.addEventListener('scroll', repositionOpBarIfAnchored);
+        }
+        function clearAnchorInline(bar) { bar.style.left = ''; bar.style.top = ''; bar.style.width = ''; }
 
         function setupOpBar() {
             const bar = document.getElementById('opBar');
@@ -3014,12 +3039,13 @@
             document.addEventListener('focusin', e => {
                 if (e.target.matches && e.target.matches('input[id^="input"]') && !e.target.readOnly && numpadEnabled()) {
                     opBarTarget = e.target;
-                    const desktop = isDesktopPointer();
+                    const desktop = useAnchoredPad();
                     bar.classList.toggle('anchored', desktop);
                     bar.classList.add('show');
                     if (desktop) {
                         positionOpBarUnder(e.target); // تحت الخلية مباشرة (يشمل حالة البحث + إنتر لأنها تستدعي focus() أيضاً)
                     } else {
+                        clearAnchorInline(bar);
                         // أنزل الصف ليجلس فوق اللوحة مباشرة بدل ما يكون العين فوق والأصابع تحت
                         const row = e.target.closest('tr');
                         if (row) setTimeout(() => {
