@@ -1527,11 +1527,9 @@
             { name: "صلصة بندورة المنتجة", sku: "sp-0174", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false },
             { name: "بولونيز منتج", sku: "sp-0150", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 3.5, isFixed: false },
             { name: "سباغيتي منتج", sku: "p-0107", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false },
-            { name: "شوربة عدس منتج", sku: "sp-0175", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false },
             { name: "شعيرية شعرية مطبوخة منتجة", sku: "p-0160", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 0.4, isFixed: false },
             { name: "صحن كشري - طبق", sku: "sk-0042", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false },
             { name: "علبة صوص الكشري كمالة", sku: "sk-0099", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false },
-            { name: "علب عدس شوربة", sku: "sk-0128", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false },
             { name: "معالق - ملاعق", sku: "sk-0040", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true },
             { name: "شوك", sku: "sk-0041", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true },
             { name: "معكرونة كشري خام كوع", sku: "sk-0033", unit: "G", packageSize: 9.6, secondOp: "*", secondVal: 1, isFixed: false },
@@ -1551,12 +1549,11 @@
             { name: "ماتركس اب زيرو", sku: "sk-0084", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix" },
             { name: "ماتركس فروت", sku: "sk-0085", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix" },
             { name: "ماتركس تفاح", sku: "sk-0115", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix" },
-            { name: "زيت قلي", sku: "sk-0044", unit: "G", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "xyz" },
             { name: "ماتركس اورانج", sku: "sk-0082", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix" }
         ];
 
         // ─── أقسام شيتات الجرد (عناوين فواصل داخل الجدول) ───
-        const sectionStarts = { 0: "🏭 شيت الجرد ١ — الإنتاج", 13: "📦 شيت الجرد ٢ — المواد والمشروبات" };
+        const sectionStarts = { 0: "🏭 شيت الجرد ١ — الإنتاج", 12: "📦 شيت الجرد ٢ — المواد والمشروبات" };
 
         // ─── معامل التحويل إلى باتش لكل 1000 من الوحدة الحالية ───
         // القيم الافتراضية مأخوذة من جداول Foodics (إدخال 1000 → كم باتش ظهر)
@@ -1587,13 +1584,11 @@
                 { n: 'صلصة بندورة المنتجة', s: 'sp-0174' },
                 { n: 'بولونيز منتج', s: 'sp-0150' },
                 { n: 'سباغيتي منتج', s: 'p-0107' },
-                { n: 'شوربة عدس منتج', s: 'sp-0175' },
                 { n: 'شعيرية شعرية مطبوخة منتجة', s: 'p-0160' }
             ]},
             { id: 'sheet2', title: 'شيت الجرد ٢ — المواد والمشروبات', icon: '📦', items: [
                 { n: 'صحن كشري - طبق', s: 'sk-0042' },
                 { n: 'علبة صوص الكشري كمالة', s: 'sk-0099' },
-                { n: 'علب عدس شوربة', s: 'sk-0128' },
                 { n: 'معالق - ملاعق', s: 'sk-0040' },
                 { n: 'شوك', s: 'sk-0041' },
                 { n: 'معكرونة كشري خام كوع', s: 'sk-0033' },
@@ -1613,7 +1608,6 @@
                 { n: 'ماتركس اب زيرو', s: 'sk-0084' },
                 { n: 'ماتركس فروت', s: 'sk-0085' },
                 { n: 'ماتركس تفاح', s: 'sk-0115' },
-                { n: 'زيت قلي', s: 'sk-0044' },
                 { n: 'ماتركس اورانج', s: 'sk-0082' }
             ]}
         ];
@@ -1969,7 +1963,7 @@
                     if (targetId) { const next = document.getElementById(targetId); if (next) { next.focus(); next.select(); } }
                 });
             });
-            window.addEventListener('beforeunload', () => saveData());
+            window.addEventListener('beforeunload', () => { if (!importInProgress) saveData(); });
             setInterval(() => saveData(true), 30000);
         }
 
@@ -2155,7 +2149,9 @@
         }
 
         // ─── SAVE / LOAD (SKU-keyed — index-independent) ───
+        let importInProgress = false; // أثناء استيراد نسخة احتياطية: يمنع أي حفظ من الكتابة فوق البيانات المستوردة
         function saveData(isAuto = false) {
+            if (importInProgress) return;
             const data = {};
             inventoryData.forEach((item, i) => {
                 const key = item.sku + '||' + item.name; // double-key: sku+name avoids duplicate-SKU collision
@@ -2262,6 +2258,50 @@
                 loadSavedData();
                 showToast('✅ تم استيراد البيانات بنجاح', 'success');
             } catch (e) { showToast('خطأ في البيانات: ' + e.message, 'error'); }
+        }
+
+        // ═══════════ تصدير/استيراد كامل التخزين المحلي كملف (للنقل بين المتصفحات) ═══════════
+        function exportLsFile() {
+            const dump = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                dump[k] = localStorage.getItem(k);
+            }
+            const stamp = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
+            const blob = new Blob(['\uFEFF' + JSON.stringify({ __app: 'inventory_backup', __branch: 'marjhamam', __when: new Date().toISOString(), keys: dump }, null, 2)], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'backup_marjhamam_' + stamp + '.txt';
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+            showToast('تم تنزيل ملف النسخة الاحتياطية — انقله لأي متصفح واستورده هناك', 'success');
+        }
+        function importLsFile() { document.getElementById('lsFileInput').click(); }
+        function handleLsFile(inp) {
+            const file = inp.files[0];
+            inp.value = '';
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const txt = decodeSysBuffer(e.target.result);
+                    if (txt === '__XLSX__') throw new Error('هذا ملف Excel وليس ملف نسخة احتياطية');
+                    const parsed = JSON.parse(String(txt).replace(/^\uFEFF/, ''));
+                    const keys = parsed && parsed.keys && typeof parsed.keys === 'object' ? parsed.keys
+                        : (parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null);
+                    if (!keys) throw new Error('صيغة الملف غير معروفة');
+                    const n = Object.keys(keys).length;
+                    if (!n) throw new Error('الملف فارغ');
+                    if (parsed.__branch && parsed.__branch !== 'marjhamam' && !confirm('تنبيه: هذا الملف من فرع "' + parsed.__branch + '" وهذه صفحة فرع آخر — تستورده رغم ذلك؟')) return;
+                    if (!confirm('سيتم استبدال البيانات المحفوظة هنا بمحتوى الملف (' + n + ' مفتاح). متابعة؟')) return;
+                    importInProgress = true; // من هذه اللحظة: لا حفظ تلقائي، لا حفظ عند الإغلاق — الملف هو المرجع
+                    Object.entries(keys).forEach(([k, v]) => { try { localStorage.setItem(k, String(v)); } catch (err) {} });
+                    showToast('تم الاستيراد — سيُعاد تحميل الصفحة الآن', 'success');
+                    setTimeout(() => location.reload(), 700);
+                } catch (err) { showToast('فشل الاستيراد: ' + err.message, 'error'); }
+            };
+            reader.onerror = () => showToast('تعذر قراءة الملف', 'error');
+            reader.readAsArrayBuffer(file);
         }
         function openLsModal() { document.getElementById('lsModal').classList.add('show'); document.getElementById('lsPasteInput').value = ''; }
         function closeLsModal() { document.getElementById('lsModal').classList.remove('show'); }
@@ -2938,6 +2978,9 @@
                 <button class="btn btn-info" onclick="saveData()">💾 حفظ</button>
                 <button class="btn btn-transfer" onclick="copyLocalStorage()">📤 نسخ للنقل</button>
                 <button class="btn btn-transfer2" onclick="openLsModal()">📥 استيراد</button>
+                <button class="btn btn-transfer2" onclick="exportLsFile()">💾 تصدير ملف</button>
+                <button class="btn btn-transfer2" onclick="importLsFile()">📂 استيراد ملف</button>
+                <input type="file" id="lsFileInput" accept=".txt,.json,text/plain,application/json,application/octet-stream" style="display:none" onchange="handleLsFile(this)">
                 <button class="btn btn-danger" onclick="confirmClearAll()">🗑️ مسح</button>
                 <button class="btn btn-numpad" id="numpadToggle" onclick="toggleNumpad()">🔢 لوحة الأرقام</button>
             </div>
