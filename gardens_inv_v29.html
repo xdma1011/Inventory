@@ -880,6 +880,45 @@
             right: 0;
         }
 
+        tr.section-row td {
+            position: sticky;
+            top: 41px; /* تحت ترويسة الجدول — تُضبط بدقة من الكود حسب ارتفاعها الفعلي */
+            z-index: 60;
+        }
+
+        tr.section-row td > td, /* حماية */
+        .sec-label {
+            vertical-align: middle;
+        }
+
+        .sec-actions {
+            float: left;
+            display: inline-flex;
+            gap: 6px;
+            margin-inline-start: 14px;
+        }
+
+        .sec-btn {
+            border: none;
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-size: 12.5px;
+            font-weight: 900;
+            font-family: inherit;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .sec-btn-xlsx {
+            background: #1b5e20;
+            color: #c8e6c9;
+        }
+
+        .sec-btn-csv {
+            background: #4a148c;
+            color: #e1bee7;
+        }
+
         tr.section-row:hover td {
             background: linear-gradient(135deg, #1a237e, #283593) !important;
         }
@@ -1756,7 +1795,12 @@
                 if (sectionStarts[index]) {
                     const sr = document.createElement('tr');
                     sr.className = 'section-row';
-                    sr.innerHTML = `<td colspan="18">${sectionStarts[index]}</td>`;
+                    const secLabel = sectionStarts[index];
+                    const secSheet = sheetIdForSectionLabel(secLabel);
+                    const secBtns = secSheet
+                        ? `<span class="sec-actions"><button class="sec-btn sec-btn-xlsx" onclick="exportSheetXLSX('${secSheet}')">📊 Excel</button><button class="sec-btn sec-btn-csv" onclick="exportSheetCSV('${secSheet}')">📥 CSV</button></span>`
+                        : '';
+                    sr.innerHTML = `<td colspan="18"><span class="sec-label">${secLabel}</span>${secBtns}</td>`;
                     tbody.appendChild(sr);
                 }
                 const row = document.createElement('tr');
@@ -2597,6 +2641,112 @@
             v = String(v == null ? '' : v);
             return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
         }
+
+        // ═══════════ توليد ملف Excel (xlsx) حقيقي بدون مكتبات — ZIP مخزّن + XML ═══════════
+        function crc32Bytes(u8) {
+            if (!crc32Bytes.t) {
+                const t = [];
+                for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c >>> 0; }
+                crc32Bytes.t = t;
+            }
+            let crc = 0 ^ (-1);
+            for (let i = 0; i < u8.length; i++) crc = (crc >>> 8) ^ crc32Bytes.t[(crc ^ u8[i]) & 0xFF];
+            return (crc ^ (-1)) >>> 0;
+        }
+        function makeZip(entries) { // entries: [[name, textContent], ...] — تخزين بلا ضغط (يقبله كل قارئ xlsx)
+            const enc = new TextEncoder();
+            const d = new Date();
+            const zTime = (d.getHours() << 11) | (d.getMinutes() << 5) | Math.floor(d.getSeconds() / 2);
+            const zDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+            const parts = [], central = [];
+            let offset = 0;
+            entries.forEach(([name, content]) => {
+                const nameB = enc.encode(name), data = enc.encode(content), crc = crc32Bytes(data);
+                const lh = new DataView(new ArrayBuffer(30));
+                lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+                lh.setUint16(10, zTime, true); lh.setUint16(12, zDate, true);
+                lh.setUint32(14, crc, true); lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true);
+                lh.setUint16(26, nameB.length, true);
+                parts.push(new Uint8Array(lh.buffer), nameB, data);
+                const ch = new DataView(new ArrayBuffer(46));
+                ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+                ch.setUint16(12, zTime, true); ch.setUint16(14, zDate, true);
+                ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true);
+                ch.setUint16(28, nameB.length, true);
+                ch.setUint32(42, offset, true);
+                central.push(new Uint8Array(ch.buffer), nameB);
+                offset += 30 + nameB.length + data.length;
+            });
+            const centralSize = central.reduce((a, p) => a + p.length, 0);
+            const eocd = new DataView(new ArrayBuffer(22));
+            eocd.setUint32(0, 0x06054b50, true); eocd.setUint16(8, entries.length, true); eocd.setUint16(10, entries.length, true);
+            eocd.setUint32(12, centralSize, true); eocd.setUint32(16, offset, true);
+            const all = [...parts, ...central, new Uint8Array(eocd.buffer)];
+            const out = new Uint8Array(all.reduce((a, p) => a + p.length, 0));
+            let pos = 0; all.forEach(p => { out.set(p, pos); pos += p.length; });
+            return out;
+        }
+        function xlsxFromRows(rows, sheetName) {
+            const esc = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const colL = i => { let s = ''; i++; while (i) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = (i - 1 - m) / 26; } return s; };
+            let body = '';
+            rows.forEach((r, ri) => {
+                body += '<row r="' + (ri + 1) + '">';
+                r.forEach((c, ci) => {
+                    if (c === '' || c === null || c === undefined) return;
+                    const ref = colL(ci) + (ri + 1);
+                    if (typeof c === 'number' && isFinite(c)) body += '<c r="' + ref + '"><v>' + c + '</v></c>';
+                    else body += '<c r="' + ref + '" t="inlineStr"><is><t xml:space="preserve">' + esc(c) + '</t></is></c>';
+                });
+                body += '</row>';
+            });
+            const sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                + '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>' + body + '</sheetData></worksheet>';
+            return makeZip([
+                ['[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>'],
+                ['_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
+                ['xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="' + esc(sheetName).slice(0, 60) + '" sheetId="1" r:id="rId1"/></sheets></workbook>'],
+                ['xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>'],
+                ['xl/worksheets/sheet1.xml', sheetXml]
+            ]);
+        }
+        // صفوف شيت الجرد (مشتركة بين CSV وExcel) — بقالب Foodics حرفياً
+        function buildSheetRows(sheet) {
+            const rows = [['Inventory Item Name', 'Inventory Item SKU', 'Storage quantity', 'Ingredients quantity', 'Inventory Count ID']];
+            const missing = [];
+            sheet.items.forEach(entry => {
+                const idx = findPageIndex(entry);
+                let qty = '';
+                if (idx >= 0) qty = parseFloat(getRawResult(idx).toFixed(5));
+                else missing.push(entry.n);
+                rows.push([entry.n, entry.s, qty, '', '']);
+            });
+            return { rows, missing };
+        }
+        function exportSheetXLSX(sheetId) {
+            const sheet = countSheets.find(s => s.id === sheetId);
+            if (!sheet) return;
+            const { rows, missing } = buildSheetRows(sheet);
+            const bytes = xlsxFromRows(rows, sheet.title);
+            const d = new Date().toISOString().slice(0, 10);
+            downloadFile(bytes, `foodics_${sheetId}_${d}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            if (missing.length) showToast(`⚠️ ${sheet.title}: بدون كمية (${missing.join('، ')})`, 'warning');
+            else showToast(`✅ Excel ${sheet.title} جاهز للاستيراد في Foodics`, 'success');
+        }
+        // ربط عنوان القسم بالجدول بشيت الجرد الموافق له
+        function sheetIdForSectionLabel(label) {
+            // شيتات مرج الحمام المرقمة أولاً (عناوينها تحوي كلمات تتقاطع مع شيتات الجاردنز)
+            if (label.includes('شيت الجرد ١')) return 'sheet1';
+            if (label.includes('شيت الجرد ٢')) return 'sheet2';
+            if (label.includes('مشروبات')) return 'drinks';
+            if (label.includes('الجرد العام')) return 'general';
+            if (label.includes('معكرونة')) return 'pasta';
+            if (label.includes('كشري')) return 'koshari';
+            if (label.includes('حلويات')) return 'desserts';
+            if (label.includes('إنتاج') || label.includes('الانتاج')) return 'production';
+            return null;
+        }
+
         function exportSheetCSV(sheetId) {
             const sheet = countSheets.find(s => s.id === sheetId);
             if (!sheet) return;
@@ -2946,6 +3096,16 @@
             fab.addEventListener('touchstart', open, { passive: false });
         }
         document.addEventListener('DOMContentLoaded', setupPadFab);
+
+        // صفوف الأقسام تلتصق تماماً تحت ترويسة الجدول مهما كان ارتفاعها الفعلي
+        function updateSectionStickyOffset() {
+            const th = document.querySelector('#inventoryTable thead');
+            if (!th) return;
+            const h = th.offsetHeight || 41;
+            document.querySelectorAll('tr.section-row td').forEach(td => { td.style.top = h + 'px'; });
+        }
+        document.addEventListener('DOMContentLoaded', () => setTimeout(updateSectionStickyOffset, 100));
+        window.addEventListener('resize', updateSectionStickyOffset);
 
         const NUMPAD_LS_KEY = 'numpadEnabled_v1';
         function numpadEnabled() {
