@@ -1555,19 +1555,17 @@
 
     <script>
         const inventoryData = [
-            { name: "صحون الباشميل المنتجة", sku: "sp-0149", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, category: "Bashmil" },
-            { name: "صحون ام علي المنتجة", sku: "sp-180", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, category: "Bashmil" },
-            { name: "صحون مهلبية المنتجة", sku: "sk-0146", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, category: "Bashmil" },
-            { name: "علبة مهلبية ", sku: "sk-0112", unit: "PC", packageSize: 50, secondOp: "*", secondVal: 1, isFixed: false, category: "Bashmil" },
-            { name: "شطة منتجة", sku: "sp-0156", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, category: "Bashmil" },
-            { name: "دقة منتجة", sku: "sp-0155", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, category: "Bashmil" },
-            { name: "خبز مقلي", sku: "sp-0162", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, category: "Bashmil" },
-            { name: "بصل مقلي", sku: "sp-0154", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false },
-            { name: "صلصة بندورة المنتجة", sku: "sp-0174", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false },
-            { name: "بولونيز منتج", sku: "sp-0150", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 3.5, isFixed: false },
-            { name: "سباغيتي منتج", sku: "p-0107", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false },
-            { name: "شعيرية شعرية مطبوخة منتجة", sku: "p-0160", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 0.4, isFixed: false },
-            { name: "صحن كشري - طبق", sku: "sk-0042", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false },
+            { name: "صحون الباشميل المنتجة", sku: "sp-0149", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false },
+            { name: "صحون ام علي المنتجة", sku: "sp-180", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false },
+            { name: "علبة شطة منتجة", sku: "sp-0156", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false },
+            { name: "علبة دقة منتجة", sku: "sp-0155", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false },
+            { name: "علبة خبز مقلي منتجة", sku: "sp-0162", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false },
+            { name: "بصل مقلي", sku: "sp-0154", unit: "KG", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false },
+            { name: "صلصة البندورة للكشري", sku: "sp-0174", unit: "KG", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false },
+            { name: "صلصة البولونيز", sku: "sp-0150", unit: "KG", packageSize: 1.0, secondOp: "/", secondVal: 3.5, isFixed: false },
+            { name: "شعرية مطبوخة", sku: "sp-0160", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 0.4, isFixed: false },
+            { name: "علبة مهلبية منتجة", sku: "p-0163", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false },
+            { name: "طبق كشري", sku: "sk-0042", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false },
             { name: "علبة صوص الكشري كمالة", sku: "sk-0099", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false },
             { name: "معالق - ملاعق", sku: "sk-0040", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true },
             { name: "شوك", sku: "sk-0041", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true },
@@ -1587,12 +1585,14 @@
             { name: "ماتركس اب", sku: "sk-0083", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix" },
             { name: "ماتركس اب زيرو", sku: "sk-0084", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix" },
             { name: "ماتركس فروت", sku: "sk-0085", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix" },
-            { name: "ماتركس تفاح", sku: "sk-0115", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix" },
-            { name: "ماتركس اورانج", sku: "sk-0082", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix" }
+            { name: "ماتريكس تفاح", sku: "sk-0148", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix" },
+            { name: "ماتركس اورانج", sku: "sk-0082", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix" },
+            { name: "اكياس الطلبات - صغير", sku: "sk-0147", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false },
+            { name: "علبة مهلبية", sku: "sk-0177", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false }
         ];
 
         // ─── أقسام شيتات الجرد (عناوين فواصل داخل الجدول) ───
-        const sectionStarts = { 0: "🏭 شيت الجرد ١ — الإنتاج", 12: "📦 شيت الجرد ٢ — المواد والمشروبات" };
+        const sectionStarts = { 0: "🏭 شيت الجرد ١ — الإنتاج", 10: "📦 شيت الجرد ٢ — المواد والمشروبات" };
 
         // ─── معامل التحويل إلى باتش لكل 1000 من الوحدة الحالية ───
         // القيم الافتراضية مأخوذة من جداول Foodics (إدخال 1000 → كم باتش ظهر)
@@ -1612,25 +1612,23 @@
         // كل عنصر: n = الاسم في Foodics ، s = SKU في Foodics ، page = [sku, name] لعنصر الصفحة إذا اختلف
         const countSheets = [
             { id: 'sheet1', title: 'شيت الجرد ١ — الإنتاج', icon: '🏭', items: [
-                { n: 'صحون الباشميل المنتجة', s: 'sp-0149' },
+                { n: 'صحون الباشميل المنتجة - نقطة بيع مرج الحمام', s: 'sp-0149' },
                 { n: 'صحون ام علي المنتجة', s: 'sp-180' },
-                { n: 'صحون مهلبية المنتجة', s: 'sk-0146' },
-                { n: 'علبة مهلبية', s: 'sk-0112' },
-                { n: 'شطة منتجة', s: 'sp-0156' },
-                { n: 'دقة منتجة', s: 'sp-0155' },
-                { n: 'خبز مقلي', s: 'sp-0162' },
-                { n: 'بصل مقلي', s: 'sp-0154' },
-                { n: 'صلصة بندورة المنتجة', s: 'sp-0174' },
-                { n: 'بولونيز منتج', s: 'sp-0150' },
-                { n: 'سباغيتي منتج', s: 'p-0107' },
-                { n: 'شعيرية شعرية مطبوخة منتجة', s: 'p-0160' }
+                { n: 'علبة شطة منتجة -نقطة بيع مرج الحمام', s: 'sp-0156' },
+                { n: 'علبة دقة منتجة - نقطة بيع مرج الحمام', s: 'sp-0155' },
+                { n: 'علبة خبز مقلي منتجة', s: 'sp-0162' },
+                { n: 'بصل مقلي - نقطة بيع مرج الحمام', s: 'sp-0154' },
+                { n: 'صلصة البندورة للكشري - نقطة مبيعات مرج الحمام', s: 'sp-0174' },
+                { n: 'صلصة البولونيز - نقطة بيع مرج الحمام', s: 'sp-0150' },
+                { n: 'شعرية مطبوخة - نقطة بيع مرج الحمام', s: 'sp-0160' },
+                { n: 'علبة مهلبية منتجة', s: 'p-0163' }
             ]},
             { id: 'sheet2', title: 'شيت الجرد ٢ — المواد والمشروبات', icon: '📦', items: [
-                { n: 'صحن كشري - طبق', s: 'sk-0042' },
+                { n: 'طبق كشري', s: 'sk-0042' },
                 { n: 'علبة صوص الكشري كمالة', s: 'sk-0099' },
-                { n: 'معالق - ملاعق', s: 'sk-0040' },
+                { n: 'معالق', s: 'sk-0040' },
                 { n: 'شوك', s: 'sk-0041' },
-                { n: 'معكرونة كشري خام كوع', s: 'sk-0033' },
+                { n: 'معكرونة كشري خام', s: 'sk-0033' },
                 { n: 'معكرونة سباغتي خام', s: 'sk-0034' },
                 { n: 'رز خام', s: 'sk-0032' },
                 { n: 'عدس حب خام', s: 'sk-0046' },
@@ -1640,14 +1638,16 @@
                 { n: 'ملح', s: 'sk-0038' },
                 { n: 'سماق', s: 'sk-0070' },
                 { n: 'ليمون', s: 'sk-0102' },
-                { n: 'مياه معدنية - ماتركس', s: 'sk-0079' },
+                { n: 'مياه معدنية', s: 'sk-0079' },
                 { n: 'ماتركس كولا', s: 'sk-0080' },
                 { n: 'ماتركس كولا زيرو', s: 'sk-0081' },
                 { n: 'ماتركس اب', s: 'sk-0083' },
                 { n: 'ماتركس اب زيرو', s: 'sk-0084' },
                 { n: 'ماتركس فروت', s: 'sk-0085' },
-                { n: 'ماتركس تفاح', s: 'sk-0115' },
-                { n: 'ماتركس اورانج', s: 'sk-0082' }
+                { n: 'ماتريكس تفاح', s: 'sk-0148' },
+                { n: 'ماتركس اورانج', s: 'sk-0082' },
+                { n: 'اكياس الطلبات - صغير', s: 'sk-0147' },
+                { n: 'علبة مهلبية', s: 'sk-0177' }
             ]}
         ];
 
@@ -3242,8 +3242,8 @@
                     <div class="s-value" id="matrixBoxes">0</div>
                 </div>
             </div>
-            <!-- Water group -->
-            <div class="summary-pair">
+            <!-- Water group (مخفي: المياه صارت ضمن الماتركس) -->
+            <div class="summary-pair" id="waterGroup" style="display:none">
                 <div class="pair-label">WATER</div>
                 <div class="summary-card water-total">
                     <div class="s-label">💧 مجموع المياه (جرد)</div>
