@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الجرد - الجاردنز</title>
+    <title>نظام الجرد v38 - الجاردنز  </title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
 
@@ -891,11 +891,61 @@
             vertical-align: middle;
         }
 
+        /* العمود المثبت (افتراضياً اسم المادة) */
+        th.col-pinned,
+        td.col-pinned {
+            position: sticky;
+            right: 0;
+            z-index: 40;
+            box-shadow: -3px 0 8px rgba(0, 0, 0, 0.12);
+        }
+
+        td.col-pinned {
+            background: #fffde7;
+        }
+
+        tr.active-row td.col-pinned {
+            background: #fff8e1;
+        }
+
+        th.col-pinned {
+            z-index: 110;
+        }
+
+        /* حجم الطرد: أنحف */
+        td[data-col="pkg"] select {
+            width: 54px;
+            padding: 5px 2px;
+            font-size: 12px;
+        }
+
+        /* عمود الفاصل: لون قوي مريح وعرض صغير */
+        th.gap-head {
+            background: #00838f !important;
+            color: #e0f7fa !important;
+            font-size: 11px;
+        }
+
+        td.gap-col {
+            background: linear-gradient(180deg, #00838f, #006064) !important;
+            width: 44px;
+            min-width: 44px;
+        }
+
+        /* خانات الحبات (5-8) بلون مميز عن الطرود */
+        input[id^="input5-"],
+        input[id^="input6-"],
+        input[id^="input7-"],
+        input[id^="input8-"] {
+            background: #ede7f6;
+            border-color: #b39ddb;
+        }
+
         .sec-actions {
-            float: left;
             display: inline-flex;
             gap: 6px;
             margin-inline-start: 14px;
+            vertical-align: middle;
         }
 
         .sec-btn {
@@ -961,7 +1011,7 @@
             width: min(560px, calc(100vw - 12px)); /* px سقفاً ثابتاً للأزرار + vw حد أمان للشاشات الضيقة */
             max-width: 100vw;
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: 0.95fr repeat(5, 1fr) 0.95fr;
             gap: 6px;
             padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
             background: #263238;
@@ -1023,10 +1073,16 @@
         }
 
         .op-bar .op-nav {
-            grid-row: span 2; /* زر طويل بارتفاع صفين */
+            grid-row: span 4; /* عمود جانبي كامل الارتفاع */
             font-size: 17px;
             line-height: 1.25;
             font-weight: 900;
+        }
+
+        .op-bar .op-big {
+            font-size: 30px !important;
+            font-weight: 900;
+            color: #ffe082;
         }
 
         .op-bar .op-pkg {
@@ -1555,14 +1611,14 @@
 
     <script>
         const inventoryData = [
-            { name: "مياه معدنية - ماتركس", sku: "sk-0079", unit: "PC", packageSize: 12.0, secondOp: "*", secondVal: 1, isFixed: false, category: "water", note: "صندوق = 12 حبة" },
-            { name: "ماتركس تفاح", sku: "sk-0115", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق" },
+            { name: "ماتركس تفاح", sku: "sk-0148", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق" },
             { name: "ماتركس كولا", sku: "sk-0080", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق" },
             { name: "ماتركس كولا زيرو", sku: "sk-0081", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق" },
             { name: "ماتركس اب", sku: "sk-0083", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق" },
             { name: "ماتركس اب زيرو", sku: "sk-0084", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق" },
             { name: "ماتركس فروت", sku: "sk-0085", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق" },
             { name: "ماتركس اورانج", sku: "sk-0082", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق" },
+            { name: "مياه معدنية - ماتركس", sku: "sk-0079", unit: "PC", packageSize: 12.0, secondOp: "*", secondVal: 1, isFixed: false, category: "water", note: "صندوق = 12 حبة" },
             { name: "كريمة طبخ", sku: "sk-0058", unit: "G", packageSize: 12.0, secondOp: "*", secondVal: 1, isFixed: false },
             { name: "ملح", sku: "sk-0038", unit: "G", packageSize: 13.5, secondOp: "*", secondVal: 1, isFixed: false },
             { name: "فلفل اسمر - اسود", sku: "sk-0076", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false },
@@ -1584,6 +1640,7 @@
             { name: "جزر", sku: "sk-0037", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false },
             { name: "صنوبر", sku: "sk-0067", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false },
             { name: "سماق", sku: "sk-0070", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false },
+            { name: "علبة شوربة", sku: "sk-0128", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 50 علبة" },
             { name: "عدس مجروش خام", sku: "sk-0045", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false },
             { name: "ماجي", sku: "sk-0078", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 24 حبة" },
             { name: "فلفل ابيض", sku: "sk-0103", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false },
@@ -1621,10 +1678,9 @@
             { name: "نشا", sku: "sk-0143", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false },
             { name: "فستق حلبي", sku: "sk-0066", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false },
             { name: "فانيلا", sku: "sk-0142", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false },
-            { name: "علب مهلبية", sku: "sk-0145", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 50 علبة" },
+            { name: "علب مهلبية", sku: "sk-0177", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 50 علبة" },
             { name: "حليب بودرة", sku: "sk-0057", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false },
             { name: "سكر", sku: "sk-0039", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false },
-            { name: "لبن رايب", sku: "sk-0068", unit: "G", packageSize: 5.0, secondOp: "*", secondVal: 1, isFixed: false },
             { name: "بصل مقلي منتج", sku: "P-0112", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false },
             { name: "صلصة البندورة مطبوخة", sku: "p-0115", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false },
             { name: "شعرية مطبوخة", sku: "p-0105", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false },
@@ -1635,11 +1691,11 @@
             { name: "علبة دقة منتجة", sku: "p-0125", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false },
             { name: "علبة مهلبية منتجة", sku: "p-0163", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false },
             { name: "علبة خبز مقلي منتجة", sku: "p-0127", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false },
-            { name: "خلطة حليب ام علي(Batch)**", sku: "sk-0066", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, note: "Batch — معامل الفاقد ÷ 1.1" }
+            { name: "حليب ام علي المطبوخ", sku: "P-0111", unit: "ML", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, note: "Batch — لكل 1000 مل × 0.40816" }
         ];
 
         // ─── أقسام شيتات الجرد (عناوين فواصل داخل الجدول) ───
-        const sectionStarts = { 0: "🥤 المشروبات", 7: "🧂 الجرد العام", 16: "🍝 المعكرونة", 35: "🍛 الكشري", 53: "🍮 الحلويات", 69: "📁 أخرى (غير مذكورة في شيتات الجرد)", 70: "🏭 جرد الإنتاج الأسبوعي" };
+        const sectionStarts = { 0: "🥤 المشروبات", 8: "🧂 الجرد العام", 16: "🍝 المعكرونة", 36: "🍛 الكشري", 54: "🍮 الحلويات", 70: "🏭 جرد الإنتاج الأسبوعي" };
 
         // ─── معامل التحويل إلى باتش لكل 1000 من الوحدة الحالية ───
         // القيم الافتراضية مأخوذة من جداول Foodics (إدخال 1000 → كم باتش ظهر)
@@ -1651,7 +1707,7 @@
             'p-0116||صلصة البولونيز باتش': 0.28571,
             'p-0123||صحون الباشميل المنتجة باتش': 125,
             'p-0127||علبة خبز مقلي منتجة': 142.85714,
-            'sk-0066||خلطة حليب ام علي(Batch)**': 0.38168,
+            'P-0111||حليب ام علي المطبوخ': 0.40816,
             'p-0119||خلطة ام علي': 0.90909,
             'p-0128||خلطة مكسرات': 1.22699,
             'p-0129||رقائق مطبوخة': 2,
@@ -1681,10 +1737,10 @@
                 { n: 'علبة دقة منتجة', s: 'P-0125' },
                 { n: 'علبة مهلبية منتجة', s: 'P-0163' },
                 { n: 'علبة خبز مقلي منتجة', s: 'P-0127' },
-                { n: 'حليب ام علي المطبوخ', s: 'P-0111', page: ['sk-0066', 'خلطة حليب ام علي(Batch)**'] }
+                { n: 'حليب ام علي المطبوخ', s: 'P-0111' }
             ]},
             { id: 'drinks', title: 'المشروبات', icon: '🥤', items: [
-                { n: 'ماتريكس تفاح', s: 'sk-0148', page: ['sk-0115', 'ماتركس تفاح'] },
+                { n: 'ماتريكس تفاح', s: 'sk-0148' },
                 { n: 'ماتركس كولا', s: 'sk-0080' },
                 { n: 'ماتركس كولا زيرو', s: 'sk-0081' },
                 { n: 'ماتركس اب', s: 'sk-0083' },
@@ -1719,6 +1775,7 @@
                 { n: 'جزر', s: 'sk-0037' },
                 { n: 'صنوبر', s: 'sk-0067' },
                 { n: 'سماق', s: 'sk-0070' },
+                { n: 'علبة شوربة', s: 'sk-0128' },
                 { n: 'عدس مجروش خام', s: 'sk-0045' },
                 { n: 'ماجي', s: 'sk-0078' },
                 { n: 'فلفل ابيض', s: 'sk-0103' },
@@ -1761,7 +1818,7 @@
                 { n: 'نشا', s: 'sk-0143' },
                 { n: 'فستق حلبي', s: 'sk-0066', page: ['sk-0066', 'فستق حلبي'] },
                 { n: 'فانيلا', s: 'sk-0142' },
-                { n: 'علبة مهلبية', s: 'sk-0177', page: ['sk-0145', 'علب مهلبية'] },
+                { n: 'علبة مهلبية', s: 'sk-0177' },
                 { n: 'حليب بودرة', s: 'sk-0057' },
                 { n: 'سكر', s: 'sk-0039' }
             ]}
@@ -1823,17 +1880,17 @@
                     ? `<button class="note-btn" onclick="showNote(${index})" title="ملاحظة">📌</button>`
                     : '';
                 row.innerHTML = `
-<td><div class="result-cell" data-index="${index}" tabindex="0" title="انقر للنسخ — ↑↓ للتنقل"><span id="result-${index}">0</span><span class="batch-tag" id="btag-${index}" style="display:none">باتش</span></div></td>
-<td class="batch-cell"><input type="text" inputmode="decimal" autocomplete="off" readonly id="batchf-${index}" value="${batchFactors[item.sku + '||' + item.name] !== undefined ? batchFactors[item.sku + '||' + item.name] : ''}" oninput="onFactorInput(this, ${index})" ondblclick="unlockFactor(this)" onblur="lockFactor(this)" onkeydown="if(event.key==='Enter') this.blur()" placeholder="—" title="كم باتش يساوي 1000 ${item.unit} — دبل كليك للتعديل"><div class="batch-result" id="batchres-${index}">—</div></td>
-<td><div class="diff-cell diff-zero" id="diff-${index}"><span id="diffValue-${index}">-</span></div></td>
-<td class="min-cell"><input type="number" inputmode="decimal" id="min-${index}" value="0" min="0" oninput="onMinChange(${index})" placeholder="0" title="الحد الأدنى"></td>
-<td><div class="item-name">${item.name}${noteBtn}</div></td>
-<td><select id="package-${index}" onchange="calculateRow(${index})" ${disabled}>${pkgOpts}</select></td>
+<td data-col="result"><div class="result-cell" data-index="${index}" tabindex="0" title="انقر للنسخ — ↑↓ للتنقل"><span id="result-${index}">0</span><span class="batch-tag" id="btag-${index}" style="display:none">باتش</span></div></td>
+<td class="batch-cell" data-col="batch"><input type="text" inputmode="decimal" autocomplete="off" readonly id="batchf-${index}" value="${batchFactors[item.sku + '||' + item.name] !== undefined ? batchFactors[item.sku + '||' + item.name] : ''}" oninput="onFactorInput(this, ${index})" ondblclick="unlockFactor(this)" onblur="lockFactor(this)" onkeydown="if(event.key==='Enter') this.blur()" placeholder="—" title="كم باتش يساوي 1000 ${item.unit} — دبل كليك للتعديل"><div class="batch-result" id="batchres-${index}">—</div></td>
+<td data-col="diff"><div class="diff-cell diff-zero" id="diff-${index}"><span id="diffValue-${index}">-</span></div></td>
+<td class="min-cell" data-col="min"><input type="number" inputmode="decimal" id="min-${index}" value="0" min="0" oninput="onMinChange(${index})" placeholder="0" title="الحد الأدنى"></td>
+<td data-col="name"><div class="item-name">${item.name}${noteBtn}</div></td>
+<td data-col="pkg"><select id="package-${index}" onchange="calculateRow(${index})" ${disabled}>${pkgOpts}</select></td>
 <td><input type="text" inputmode="decimal" autocomplete="off" id="input1-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
 <td><input type="text" inputmode="decimal" autocomplete="off" id="input2-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
 <td><input type="text" inputmode="decimal" autocomplete="off" id="input3-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
 <td><input type="text" inputmode="decimal" autocomplete="off" id="input4-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
-<td class="section-divider"><select hidden id="multiplier-${index}" onchange="calculateRow(${index})" ${disabled}>${pkgOpts}</select></td>
+<td class="section-divider gap-col"><select hidden id="multiplier-${index}" onchange="calculateRow(${index})" ${disabled}>${pkgOpts}</select></td>
 <td class="section-divider"><input type="text" inputmode="decimal" autocomplete="off" id="input5-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
 <td class="section-divider"><input type="text" inputmode="decimal" autocomplete="off" id="input6-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
 <td class="section-divider"><input type="text" inputmode="decimal" autocomplete="off" id="input7-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
@@ -1969,7 +2026,7 @@
         // ─── SUMMARY TOTALS ───
         function updateSummaryTotals() {
             let matrixTotal = 0, matrixDiff = 0, matrixBoxes = 0;
-            let waterTotal = 0, waterDiff = 0;
+            let waterTotal = 0, waterDiff = 0, waterBoxes = 0;
             // Matrix indices in inventoryData (category==='matrix'): indices 7-13
             // Water index: 14
             inventoryData.forEach((item, i) => {
@@ -1986,6 +2043,10 @@
                 } else if (item.category === 'water') {
                     waterTotal += qty;
                     if (systemData[item.sku.toLowerCase()] !== undefined) waterDiff += qty - systemData[item.sku.toLowerCase()];
+                    waterBoxes += evaluateExpression(document.getElementById(`input1-${i}`).value)
+                        + evaluateExpression(document.getElementById(`input2-${i}`).value)
+                        + evaluateExpression(document.getElementById(`input3-${i}`).value)
+                        + evaluateExpression(document.getElementById(`input4-${i}`).value);
                 }
             });
             const mDE = document.getElementById('matrixDiff');
@@ -1994,6 +2055,7 @@
             mDE.textContent = matrixDiff.toLocaleString('en-US', { maximumFractionDigits: 2 });
             document.getElementById('matrixBoxes').textContent = matrixBoxes.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' صندوق';
             document.getElementById('waterTotal').textContent = waterTotal.toLocaleString('en-US', { maximumFractionDigits: 2 });
+            const wBx = document.getElementById('waterBoxes'); if (wBx) wBx.textContent = waterBoxes.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' صندوق';
             wDE.textContent = waterDiff.toLocaleString('en-US', { maximumFractionDigits: 2 });
             ['matrixDiff', 'waterDiff'].forEach(id => {
                 const el = document.getElementById(id);
@@ -3105,8 +3167,67 @@
             const h = th.offsetHeight || 41;
             document.querySelectorAll('tr.section-row td').forEach(td => { td.style.top = h + 'px'; });
         }
-        document.addEventListener('DOMContentLoaded', () => setTimeout(updateSectionStickyOffset, 100));
+        document.addEventListener('DOMContentLoaded', () => setTimeout(() => { applyColumnLayout(); updateSectionStickyOffset(); }, 100));
         window.addEventListener('resize', updateSectionStickyOffset);
+
+
+        // ═══════════ ترتيب وتثبيت الأعمدة (غير الإدخالية) ═══════════
+        const COL_LS_KEY = 'colLayout_v2';
+        const COL_DEFAULT = { order: ['name', 'result', 'batch', 'diff', 'min', 'pkg'], pinned: 'name' };
+        const COL_LABELS = { name: 'اسم المادة', result: 'الناتج', batch: 'باتش /1000', diff: 'الفرق', min: 'الحد الأدنى', pkg: 'حجم الطرد' };
+        function loadColLayout() {
+            try {
+                const c = JSON.parse(localStorage.getItem(COL_LS_KEY));
+                if (c && Array.isArray(c.order) && c.order.length === 6 && COL_DEFAULT.order.every(k => c.order.includes(k))) return c;
+            } catch (e) {}
+            return JSON.parse(JSON.stringify(COL_DEFAULT));
+        }
+        let colLayout = loadColLayout();
+        function saveColLayout() { try { localStorage.setItem(COL_LS_KEY, JSON.stringify(colLayout)); } catch (e) {} }
+        function applyColumnLayout() {
+            // العمود المثبت دائماً أول واحد
+            const order = [colLayout.pinned, ...colLayout.order.filter(k => k !== colLayout.pinned)];
+            const applyRow = (tr) => {
+                const tagged = {};
+                tr.querySelectorAll(':scope > [data-col]').forEach(c => { tagged[c.dataset.col] = c; });
+                if (!tagged.name) return;
+                // نقطة الإرجاع: أول خلية غير موسومة (خانات الإدخال)
+                const cells = [...tr.children];
+                const anchor = cells.find(c => !c.dataset.col) || null;
+                order.forEach(k => { if (tagged[k]) tr.insertBefore(tagged[k], anchor); });
+                Object.values(tagged).forEach(c => c.classList.remove('col-pinned'));
+                if (tagged[colLayout.pinned]) tagged[colLayout.pinned].classList.add('col-pinned');
+            };
+            const headRow = document.querySelector('#inventoryTable thead tr');
+            if (headRow) applyRow(headRow);
+            document.querySelectorAll('#tableBody tr[data-index]').forEach(applyRow);
+        }
+        function openColModal() {
+            const m = document.getElementById('colModal');
+            renderColModal();
+            m.classList.add('show');
+        }
+        function closeColModal() { document.getElementById('colModal').classList.remove('show'); }
+        function renderColModal() {
+            const list = document.getElementById('colList');
+            list.innerHTML = colLayout.order.map((k, i) => `
+                <div class="col-row">
+                    <label class="col-pin" title="العمود المثبت (يصير أول عمود ومجمّداً)"><input type="radio" name="pinCol" value="${k}" ${colLayout.pinned === k ? 'checked' : ''} onchange="colLayout.pinned=this.value"> \U0001F4CC</label>
+                    <span class="col-name">${COL_LABELS[k]}</span>
+                    <span class="col-arrows">
+                        <button onclick="moveCol(${i},-1)" ${i === 0 ? 'disabled' : ''}>\u25B2</button>
+                        <button onclick="moveCol(${i},1)" ${i === colLayout.order.length - 1 ? 'disabled' : ''}>\u25BC</button>
+                    </span>
+                </div>`).join('');
+        }
+        function moveCol(i, d) {
+            const j = i + d;
+            if (j < 0 || j >= colLayout.order.length) return;
+            [colLayout.order[i], colLayout.order[j]] = [colLayout.order[j], colLayout.order[i]];
+            renderColModal();
+        }
+        function applyColsAndClose() { saveColLayout(); applyColumnLayout(); closeColModal(); showToast('تم تطبيق ترتيب الأعمدة', 'success'); }
+        function resetColLayout() { colLayout = JSON.parse(JSON.stringify(COL_DEFAULT)); saveColLayout(); renderColModal(); applyColumnLayout(); showToast('رجع الترتيب الافتراضي: اسم المادة أولاً ومثبتاً', 'success'); }
 
         const NUMPAD_LS_KEY = 'numpadEnabled_v1';
         function numpadEnabled() {
@@ -3280,6 +3401,7 @@
                 <button class="btn btn-info" onclick="saveData()">💾 حفظ</button>
                 <button class="btn btn-transfer" onclick="copyLocalStorage()">📤 نسخ للنقل</button>
                 <button class="btn btn-transfer2" onclick="openLsModal()">📥 استيراد</button>
+                <button class="btn btn-info" onclick="openColModal()">🧱 الأعمدة</button>
                 <button class="btn btn-transfer2" onclick="exportLsFile()">💾 تصدير ملف</button>
                 <button class="btn btn-transfer2" onclick="importLsFile()">📂 استيراد ملف</button>
                 <input type="file" id="lsFileInput" accept=".txt,.json,text/plain,application/json,application/octet-stream" style="display:none" onchange="handleLsFile(this)">
@@ -3320,17 +3442,17 @@
             <table id="inventoryTable">
                 <thead>
                     <tr>
-                        <th style="width:100px">الناتج</th>
-                        <th class="th-batch" style="width:96px">باتش /1000</th>
-                        <th style="width:90px">الفرق</th>
-                        <th class="th-min" style="width:72px">الحد الأدنى</th>
-                        <th style="width:170px">اسم المادة</th>
-                        <th style="width:90px">حجم الطرد</th>
+                        <th data-col="result" style="width:100px">الناتج</th>
+                        <th data-col="batch" class="th-batch" style="width:96px">باتش /1000</th>
+                        <th data-col="diff" style="width:90px">الفرق</th>
+                        <th data-col="min" class="th-min" style="width:72px">الحد الأدنى</th>
+                        <th data-col="name" style="width:170px">اسم المادة</th>
+                        <th data-col="pkg" style="width:58px">الطرد</th>
                         <th style="width:62px">1</th>
                         <th style="width:62px">2</th>
                         <th style="width:62px">3</th>
                         <th style="width:62px">4</th>
-                        <th class="section-divider-head" style="width:90px">فاصل ×</th>
+                        <th class="gap-head" style="width:44px">فاصل</th>
                         <th class="section-divider-head" style="width:62px">5</th>
                         <th class="section-divider-head" style="width:62px">6</th>
                         <th class="section-divider-head" style="width:62px">7</th>
@@ -3363,7 +3485,7 @@
                 </div>
             </div>
             <!-- Water group (مخفي: المياه صارت ضمن الماتركس) -->
-            <div class="summary-pair" id="waterGroup" style="display:none">
+            <div class="summary-pair" id="waterGroup">
                 <div class="pair-label">WATER</div>
                 <div class="summary-card water-total">
                     <div class="s-label">💧 مجموع المياه (جرد)</div>
@@ -3372,6 +3494,10 @@
                 <div class="summary-card water-diff">
                     <div class="s-label">📊 فرق المياه</div>
                     <div class="s-value" id="waterDiff">0</div>
+                </div>
+                <div class="summary-card water-total">
+                    <div class="s-label">📦 صناديق المياه (أول 4)</div>
+                    <div class="s-value" id="waterBoxes">0</div>
                 </div>
             </div>
             <!-- معلومات الحالة (مصغّرة) -->
@@ -3493,10 +3619,11 @@
             <span class="op-res" id="opRes"></span>
         </div>
         <div class="op-diff empty" id="opDiff"></div>
+        <button type="button" data-op="goUnit" class="op-nav op-unit">🔢<br>حبة</button>
         <button type="button" data-op="7">7</button>
         <button type="button" data-op="8">8</button>
         <button type="button" data-op="9">9</button>
-        <button type="button" data-op="/" class="op-sym">÷</button>
+        <button type="button" data-op="/" class="op-sym">/</button>
         <button type="button" data-op="⌫" class="op-del">⌫</button>
         <button type="button" data-op="goPkg" class="op-nav op-pkg">📦<br>طرد</button>
         <button type="button" data-op="4">4</button>
@@ -3507,19 +3634,33 @@
         <button type="button" data-op="1">1</button>
         <button type="button" data-op="2">2</button>
         <button type="button" data-op="3">3</button>
-        <button type="button" data-op="-" class="op-sym">－</button>
+        <button type="button" data-op="-" class="op-sym op-big">－</button>
         <button type="button" data-op="(" class="op-sym">(</button>
-        <button type="button" data-op="goUnit" class="op-nav op-unit">🔢<br>حبة</button>
         <button type="button" data-op="0">0</button>
         <button type="button" data-op="00">00</button>
         <button type="button" data-op=".">.</button>
-        <button type="button" data-op="+" class="op-sym">＋</button>
+        <button type="button" data-op="+" class="op-sym op-big">＋</button>
         <button type="button" data-op=")" class="op-sym">)</button>
         <button type="button" data-op="done" class="op-done">✔ تم</button>
     </div>
 
     <!-- زر عائم يفتح لوحة الأرقام للخانة النشطة -->
     <button type="button" class="pad-fab" id="padFab" title="افتح لوحة الأرقام">🔢</button>
+
+
+    <!-- إعدادات الأعمدة -->
+    <div class="modal-overlay" id="colModal" onclick="if(event.target===this)closeColModal()">
+        <div class="modal-box" style="max-width:380px;text-align:right">
+            <h3 style="margin-bottom:4px">🧱 ترتيب الأعمدة</h3>
+            <p style="font-size:12px;color:#666;margin-bottom:10px">📌 يحدد العمود المثبت (يصير الأول ويبقى ظاهراً أثناء التمرير) — والأسهم لترتيب الباقي</p>
+            <div id="colList"></div>
+            <div style="display:flex;gap:8px;margin-top:14px">
+                <button class="btn btn-info" style="flex:1" onclick="applyColsAndClose()">✔ تطبيق</button>
+                <button class="btn btn-warning" onclick="resetColLayout()">↺ الافتراضي</button>
+                <button class="btn btn-danger" onclick="closeColModal()">إغلاق</button>
+            </div>
+        </div>
+    </div>
 
     <div class="toast" id="toast"></div>
 
@@ -3552,7 +3693,7 @@
             ["sk-0067", "صنوبر", "G", 585], ["sk-0071", "لحمة مفرومة", "G", -500], ["sk-0073", "بصل خام", "G", -4070],
             ["sk-0075", "كرفس", "G", 13420], ["sk-0091", "صحن ام علي", "PC", 11], ["sk-0092", "صحن باشميل", "PC", -45],
             ["sk-0097", "علبة الشطة والدقة", "PC", 15100], ["sk-0099", "علبة صوص الكشري كمالة", "PC", 5060],
-            ["sk-0177", "علبة مهلبية", "PC", 99]
+            ["sk-0128", "علبة شوربة", "PC", 85], ["sk-0177", "علبة مهلبية", "PC", 99]
         ];
 
         const OM_ALI_DEFAULTS = { "بندق": 270, "جوز هند": 225, "لوز": 160, "كاجو": 160 };
@@ -3561,7 +3702,7 @@
         const DEFAULT_MINS = {
             "sk-0037": 7000, "sk-0040": 5000, "sk-0041": 500, "sk-0042": 7500, "sk-0066": 500,
             "sk-0067": 750, "sk-0071": 20000, "sk-0073": 10000, "sk-0075": 7000, "sk-0091": 1000,
-            "sk-0092": 1000, "sk-0097": 6000, "sk-0099": 1500, "sk-0177": 150
+            "sk-0092": 1000, "sk-0097": 6000, "sk-0099": 1500, "sk-0128": 100, "sk-0177": 150
         };
         const RESTOCK = {
             "sk-0066": { type: "fixed", amount: 500, label: "جم" },
