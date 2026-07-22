@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../shared/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;600;700;800&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- معرّف الفرع -->
+  <script>
+    window.BRANCH_ID   = 'gardens';
+    window.BRANCH_NAME = 'الجاردنز';
+    window.LS_KEY      = 'inventoryData_22FEB2026_v8';
+  </script>
+  <script src="data.js"></script>
+</head>
+
+<body>
+    <!-- التبويبات الرئيسية -->
+    <div class="main-tabs">
+        <button class="mtab active" id="mtab-inv" onclick="switchMainTab('inv')">📋 الجرد</button>
+        <button class="mtab" id="mtab-shop" onclick="switchMainTab('shop')">🛒 المشتريات</button>
+    </div>
+
+    
+  
+  
+
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-left">
+                <h1>📦 نظام الجرد التفاعلي — الجاردنز</h1>
+                <p>22-FEB-2026 | مع مقارنة بيانات النظام</p>
+            </div>
+            <div class="header-badge">🏪 Gardens</div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 بحث عن مادة أو SKU...">
+            </div>
+            <button class="btn btn-tools" id="toolsToggle" onclick="toggleTools()">⚙️ الأدوات</button>
+        </div>
+
+        <!-- TOOLS PANEL (قابلة للطي — الأزرار كلها هنا) -->
+        <div class="tools-panel" id="toolsPanel">
+            <div class="controls tools-controls">
+                <button class="btn btn-sort" onclick="sortByVariance()">⬆⬇ ترتيب حسب الفرق</button>
+                <button class="btn btn-reset-sort" onclick="resetSort()">↩ إعادة الترتيب الأصلي</button>
+                <button class="btn btn-success" onclick="exportToText()">📄 نص</button>
+                <button class="btn btn-primary" onclick="exportToExcel()">📊 Excel</button>
+                <button class="btn btn-warning" onclick="copyAllToClipboard()">📋 نسخ</button>
+                <button class="btn btn-info" onclick="saveData()">💾 حفظ</button>
+                <button class="btn btn-transfer" onclick="copyLocalStorage()">📤 نسخ للنقل</button>
+                <button class="btn btn-transfer2" onclick="openLsModal()">📥 استيراد</button>
+                <button class="btn btn-info" onclick="openColModal()">🧱 الأعمدة</button>
+                <button class="btn btn-transfer2" onclick="exportLsFile()">💾 تصدير ملف</button>
+                <button class="btn btn-transfer2" onclick="importLsFile()">📂 استيراد ملف</button>
+                <input type="file" id="lsFileInput" accept=".txt,.json,text/plain,application/json,application/octet-stream" style="display:none" onchange="handleLsFile(this)">
+                <button class="btn btn-danger" onclick="confirmClearAll()">🗑️ مسح</button>
+                <button class="btn btn-numpad" id="numpadToggle" onclick="toggleNumpad()">🔢 لوحة الأرقام</button>
+            </div>
+            <div class="csv-bar">
+                <span class="csv-bar-label">📥 CSV للاستيراد في Foodics:</span>
+                <button class="btn csv-btn" onclick="exportSheetCSV('drinks')">🥤 المشروبات</button>
+                <button class="btn csv-btn" onclick="exportSheetCSV('general')">🧂 الجرد العام</button>
+                <button class="btn csv-btn" onclick="exportSheetCSV('pasta')">🍝 المعكرونة</button>
+                <button class="btn csv-btn" onclick="exportSheetCSV('koshari')">🍛 الكشري</button>
+                <button class="btn csv-btn" onclick="exportSheetCSV('desserts')">🍮 الحلويات</button>
+                <button class="btn csv-btn" onclick="exportSheetCSV('production')">🏭 الإنتاج الأسبوعي</button>
+            </div>
+        </div>
+
+        <!-- SORT BANNER -->
+        <div class="sort-mode-banner" id="sortBanner">⚠️ الجدول مرتب حسب أكبر فرق — اضغط "إعادة الترتيب الأصلي" للرجوع
+        </div>
+
+        <!-- UPLOAD -->
+        <div class="upload-section">
+            <span>📤 بيانات النظام:</span>
+            <input type="file" id="systemFile" onchange="uploadSystemData()"
+                accept=".csv,.txt,.json,.xlsx,.xls,text/csv,text/comma-separated-values,text/plain,application/json,application/vnd.ms-excel,application/octet-stream">
+            <button class="btn btn-info" onclick="uploadSystemData()">🔄 تحميل</button>
+            <button class="btn btn-warning" onclick="togglePasteBox()">📋 لصق</button>
+            <button class="btn btn-danger" onclick="clearSystemData()">❌ مسح</button>
+        </div>
+        <div class="paste-sys" id="pasteSysBox" style="display:none">
+            <textarea id="pasteSysArea" placeholder="افتح ملف CSV بأي تطبيق نصوص، انسخ محتواه كاملاً والصقه هنا&#10;Name,SKU,Barcode,Storage Unit,Quantity&#10;بندق,sk-0062,,G,600"></textarea>
+            <button class="btn btn-info" onclick="pasteSystemData()">✔ اقرأ الملصوق</button>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-container">
+            <table id="inventoryTable">
+                <thead>
+                    <tr>
+                        <th data-col="result" style="width:100px">الناتج</th>
+                        <th data-col="batch" class="th-batch" style="width:96px">باتش /1000</th>
+                        <th data-col="diff" style="width:90px">الفرق</th>
+                        <th data-col="min" class="th-min" style="width:72px">الحد الأدنى</th>
+                        <th data-col="name" style="width:170px">اسم المادة</th>
+                        <th data-col="pkg" style="width:58px">الطرد</th>
+                        <th style="width:62px">1</th>
+                        <th style="width:62px">2</th>
+                        <th style="width:62px">3</th>
+                        <th style="width:62px">4</th>
+                        <th class="gap-head" style="width:44px">فاصل</th>
+                        <th class="section-divider-head" style="width:62px">5</th>
+                        <th class="section-divider-head" style="width:62px">6</th>
+                        <th class="section-divider-head" style="width:62px">7</th>
+                        <th class="section-divider-head" style="width:62px">8 (-)</th>
+                        <th class="section-divider-head" style="width:90px">÷/× المعامل</th>
+                        <th class="section-divider-head" style="width:110px">SKU</th>
+                        <th class="section-divider-head" style="width:60px">وحدة</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="summary-group">
+            <!-- Matrix group -->
+            <div class="summary-pair">
+                <div class="pair-label">MATRIX</div>
+                <div class="summary-card matrix-total">
+                    <div class="s-label">🥤 مجموع الماتركس (جرد)</div>
+                    <div class="s-value" id="matrixTotal">0</div>
+                </div>
+                <div class="summary-card matrix-diff">
+                    <div class="s-label">📊 فرق الماتركس</div>
+                    <div class="s-value" id="matrixDiff">0</div>
+                </div>
+                <div class="summary-card matrix-boxes">
+                    <div class="s-label">📦 مجموع الصناديق (أول 4)</div>
+                    <div class="s-value" id="matrixBoxes">0</div>
+                </div>
+            </div>
+            <!-- Water group (مخفي: المياه صارت ضمن الماتركس) -->
+            <div class="summary-pair" id="waterGroup">
+                <div class="pair-label">WATER</div>
+                <div class="summary-card water-total">
+                    <div class="s-label">💧 مجموع المياه (جرد)</div>
+                    <div class="s-value" id="waterTotal">0</div>
+                </div>
+                <div class="summary-card water-diff">
+                    <div class="s-label">📊 فرق المياه</div>
+                    <div class="s-value" id="waterDiff">0</div>
+                </div>
+                <div class="summary-card water-total">
+                    <div class="s-label">📦 صناديق المياه (أول 4)</div>
+                    <div class="s-value" id="waterBoxes">0</div>
+                </div>
+            </div>
+            <!-- معلومات الحالة (مصغّرة) -->
+            <div class="mini-status">
+                <span>📊 <b id="itemCount">0</b> مادة</span>
+                <span>💻 <b id="systemStatus">غير متصل</b></span>
+                <span>💾 <b id="lastSave">لم يتم الحفظ</b></span>
+                <span>🔄 <b id="autoSaveStatus">تلقائي مفعل</b></span>
+            </div>
+        </div>
+
+        <div class="grand-total" id="grandTotal" style="display:none">📊 المجموع الكلي للجرد: 0</div>
+        <div class="system-total" id="systemTotal" style="display:none">💻 المجموع الكلي من النظام: 0</div>
+        <div class="diff-summary" id="diffSummary" style="display:none">
+            <span>⚠️ الفرق الكلي: <span id="totalDiff">0</span></span>
+            <span>📈 مواد فيها فرق: <span id="itemsWithDiff">0</span></span>
+            <span>✅ مواد متطابقة: <span id="itemsMatched">0</span></span>
+        </div>
+
+    </div>
+
+    <!-- ═══════════ تبويب المشتريات ═══════════ -->
+    <div id="shopTab" style="display:none">
+        <div class="shop-header">
+            <div class="head">
+                <div>
+                    <h1>🍲 مشتريات المطبخ</h1>
+                    <p>أشتري ولا لأ؟ · حسب آخر ملف نظام</p>
+                </div>
+                <span class="src-pill" id="shopSrcPill">📡 من تبويب الجرد</span>
+            </div>
+        </div>
+        <div class="wrap">
+            <div class="buybox">
+                <div class="bb-head">
+                    <h2>🛒 مشتريات أم علي</h2>
+                    <span class="lbl">الهدف:</span>
+                    <input type="number" id="targetB" value="30" min="1" step="1">
+                    <span class="lbl">خلطة</span>
+                </div>
+                <ul id="omShopList"></ul>
+                <div class="bb-foot" id="omShopFoot"></div>
+            </div>
+            <div class="buybox other">
+                <div class="bb-head"><h2>🧾 مشتريات أخرى</h2></div>
+                <ul id="otherShopList"></ul>
+                <div class="bb-foot">حدّد «الحد الأدنى» لأي صنف من بطاقته تحت، وكل ما ينزل عنه يظهر هنا تلقائيًا</div>
+            </div>
+            <div class="file-note" id="shopFileNote"></div>
+            <nav class="chips" id="chips"></nav>
+            <section id="sec-nuts"><div class="sec-title"><span class="em">🥜</span><h2>المكسرات</h2><span class="count" id="cnt-nuts"></span></div><div id="nutsList"></div></section>
+            <section id="sec-veg"><div class="sec-title"><span class="em">🥕</span><h2>الخضروات</h2><span class="count" id="cnt-veg"></span></div><div id="vegList"></div></section>
+            <section id="sec-meat"><div class="sec-title"><span class="em">🥩</span><h2>اللحوم</h2><span class="count" id="cnt-meat"></span></div><div id="meatList"></div></section>
+            <section id="sec-dish"><div class="sec-title"><span class="em">🍽️</span><h2>الأطباق والصحون</h2><span class="count" id="cnt-dish"></span></div><div id="dishList"></div></section>
+            <section id="sec-pack"><div class="sec-title"><span class="em">📦</span><h2>مواد التعبئة والبلاستيك</h2><span class="count" id="cnt-pack"></span></div><div id="packList"></div></section>
+            <section id="sec-other" class="hidden"><div class="sec-title"><span class="em">🧺</span><h2>أصناف أخرى</h2><span class="count" id="cnt-other"></span></div><div id="otherList"></div></section>
+            <div class="warn hidden" id="negWarn">
+                <b>⚠️ تنبيه جرد:</b> <span id="negTxt"></span><br>
+                الرصيد السالب معناه إن المبيعات المسجلة في فوديكس أكثر من المخزون المُدخل — محتاج جرد فعلي وتسوية.
+            </div>
+            <div class="shop-footer">الأصناف والكميات تُقرأ تلقائيًا من ملف النظام المرفوع في تبويب «📋 الجرد»<br>إعداداتك (الهدف، الخلطة، الحدود الدنيا) محفوظة على جهازك · الكيلو يتحول جرامات تلقائيًا</div>
+        </div>
+    </div>
+
+    <!-- TRANSFER MODAL -->
+    <div class="modal-overlay" id="lsModal" onclick="if(event.target===this)closeLsModal()">
+        <div class="modal-box" style="max-width:500px;text-align:right">
+            <h3 style="color:#1565c0;margin-bottom:8px">📥 استيراد بيانات من متصفح آخر</h3>
+            <p style="color:#607d8b;font-size:12px;margin-bottom:12px">الصق هنا النص الذي نسخته من المتصفح الآخر عبر زر
+                "نسخ للنقل"</p>
+            <textarea id="lsPasteInput"
+                style="width:100%;height:140px;padding:10px;border:1.5px solid #90caf9;border-radius:8px;font-family:monospace;font-size:11px;resize:vertical;direction:ltr"
+                placeholder='{"data":{...},"timestamp":"..."}'></textarea>
+            <div class="btn-group" style="margin-top:12px">
+                <button class="btn btn-primary" onclick="closeLsModal()">إلغاء</button>
+                <button class="btn btn-success" onclick="pasteLocalStorage()">✅ استيراد</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTE MODAL -->
+    <div class="modal-overlay" id="noteModal" onclick="if(event.target===this)closeNoteModal()">
+        <div class="modal-box note-modal-box">
+            <div class="note-modal-header">
+                <span class="note-icon-lg">📌</span>
+                <div>
+                    <h3 id="noteTitle" style="color:#1a237e;font-size:16px;margin:0"></h3>
+                    <span id="noteSku"
+                        style="font-size:11px;color:#90a4ae;background:#eceff1;padding:2px 8px;border-radius:3px;display:inline-block;margin-top:4px"></span>
+                </div>
+            </div>
+            <div class="note-body" id="noteBody"></div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:14px"
+                onclick="closeNoteModal()">✓ إغلاق</button>
+        </div>
+    </div>
+
+    <!-- PASSWORD MODAL -->
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-box">
+            <h3>🔐 تأكيد مسح البيانات</h3>
+            <p>هذا الإجراء لا يمكن التراجع عنه!</p>
+            <input type="password" id="passwordInput" placeholder="كلمة المرور" maxlength="10">
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="closePasswordModal()">إلغاء</button>
+                <button class="btn btn-danger" onclick="verifyPassword()">تأكيد</button>
+            </div>
+        </div>
+    </div>
+    <!-- الشريحة العائمة: اسم الصنف الذي تُدخل فيه الآن -->
+    <div class="active-chip" id="activeChip"></div>
+
+    <!-- NUMPAD (ترتيب لوحة مفاتيح الكمبيوتر) -->
+    <div class="op-bar" id="opBar">
+        <div class="op-item" id="opItemName"></div>
+        <div class="op-live">
+            <span class="op-expr" id="opExpr"></span>
+            <span class="op-res" id="opRes"></span>
+        </div>
+        <div class="op-diff empty" id="opDiff"></div>
+        <button type="button" data-op="goUnit" class="op-nav op-unit">🔢<br>حبة</button>
+        <button type="button" data-op="7">7</button>
+        <button type="button" data-op="8">8</button>
+        <button type="button" data-op="9">9</button>
+        <button type="button" data-op="/" class="op-sym">/</button>
+        <button type="button" data-op="⌫" class="op-del">⌫</button>
+        <button type="button" data-op="goPkg" class="op-nav op-pkg">📦<br>طرد</button>
+        <button type="button" data-op="4">4</button>
+        <button type="button" data-op="5">5</button>
+        <button type="button" data-op="6">6</button>
+        <button type="button" data-op="*" class="op-sym">×</button>
+        <button type="button" data-op="search" class="op-search">🔍</button>
+        <button type="button" data-op="1">1</button>
+        <button type="button" data-op="2">2</button>
+        <button type="button" data-op="3">3</button>
+        <button type="button" data-op="-" class="op-sym op-big">－</button>
+        <button type="button" data-op="(" class="op-sym">(</button>
+        <button type="button" data-op="0">0</button>
+        <button type="button" data-op="00">00</button>
+        <button type="button" data-op=".">.</button>
+        <button type="button" data-op="+" class="op-sym op-big">＋</button>
+        <button type="button" data-op=")" class="op-sym">)</button>
+        <button type="button" data-op="done" class="op-done">✔ تم</button>
+    </div>
+
+    <!-- زر عائم يفتح لوحة الأرقام للخانة النشطة -->
+    <button type="button" class="pad-fab" id="padFab" title="افتح لوحة الأرقام">🔢</button>
+
+    <!-- إعدادات الأعمدة -->
+    <div class="modal-overlay" id="colModal" onclick="if(event.target===this)closeColModal()">
+        <div class="modal-box" style="max-width:380px;text-align:right">
+            <h3 style="margin-bottom:4px">🧱 ترتيب الأعمدة</h3>
+            <p style="font-size:12px;color:#666;margin-bottom:10px">📌 يحدد العمود المثبت (يصير الأول ويبقى ظاهراً أثناء التمرير) — والأسهم لترتيب الباقي</p>
+            <div id="colList"></div>
+            <div style="display:flex;gap:8px;margin-top:14px">
+                <button class="btn btn-info" style="flex:1" onclick="applyColsAndClose()">✔ تطبيق</button>
+                <button class="btn btn-warning" onclick="resetColLayout()">↺ الافتراضي</button>
+                <button class="btn btn-danger" onclick="closeColModal()">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    
+
+  <script src="../shared/app.js"></script>
+</body>
+
+</html>
