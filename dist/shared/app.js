@@ -1431,6 +1431,186 @@
         function applyColsAndClose() { saveColLayout(); applyColumnLayout(); closeColModal(); showToast('تم تطبيق ترتيب الأعمدة', 'success'); }
         function resetColLayout() { colLayout = JSON.parse(JSON.stringify(COL_DEFAULT)); saveColLayout(); renderColModal(); applyColumnLayout(); showToast('رجع الترتيب الافتراضي: اسم المادة أولاً ومثبتاً', 'success'); }
 
+
+        // ═══════════ ماسح الباركود: طرد وحبة، بحث أو إضافة مباشرة ═══════════
+        const BARCODE_LS_KEY = 'barcodeMap_' + (window.BRANCH_ID || 'gardens') + '_v1';
+        function loadBarcodeMap() {
+            try { return JSON.parse(localStorage.getItem(BARCODE_LS_KEY)) || {}; }
+            catch (e) { return {}; }
+        }
+        let barcodeMap = loadBarcodeMap();
+        function saveBarcodeMap() { try { localStorage.setItem(BARCODE_LS_KEY, JSON.stringify(barcodeMap)); } catch (e) {} }
+        function findByBarcode(code) {
+            const m = barcodeMap[code];
+            if (!m) return null;
+            const idx = inventoryData.findIndex(x => x.sku === m.sku);
+            if (idx < 0) return null;
+            return { index: idx, type: m.type };
+        }
+        function assignBarcode(code, index, type) {
+            barcodeMap[code] = { sku: inventoryData[index].sku, type };
+            saveBarcodeMap();
+        }
+
+        let scannerMode = null;      // 'search' | 'add'
+        let scannerStream = null;
+        let scannerDetector = null;
+        let scannerLoopId = null;
+        let lastScannedCode = null, lastScanTime = 0;
+
+        function openScanner(mode) {
+            scannerMode = mode;
+            document.getElementById('scanTitle').textContent = mode === 'add' ? '➕ مسح وإضافة مباشرة' : '📷 مسح للبحث';
+            document.getElementById('scanModal').classList.add('show');
+            resetScanPanels();
+            startCamera();
+        }
+        function closeScanner() {
+            document.getElementById('scanModal').classList.remove('show');
+            stopCamera();
+        }
+        function stopCamera() {
+            if (scannerLoopId) cancelAnimationFrame(scannerLoopId);
+            scannerLoopId = null;
+            if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
+        }
+        async function startCamera() {
+            const statusEl = document.getElementById('scanStatus');
+            document.getElementById('scanManualBox').style.display = 'none';
+            if (!('BarcodeDetector' in window)) {
+                statusEl.textContent = '⚠️ متصفحك لا يدعم قراءة الباركود بالكاميرا (جرّب Chrome) — استخدم الإدخال اليدوي تحت';
+                document.getElementById('scanManualBox').style.display = '';
+                return;
+            }
+            try {
+                scannerDetector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a', 'upc_e', 'qr_code'] });
+                scannerStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                const video = document.getElementById('scanVideo');
+                video.srcObject = scannerStream;
+                await video.play();
+                statusEl.textContent = 'وجّه الكاميرا نحو الباركود...';
+                scanLoop();
+            } catch (e) {
+                statusEl.textContent = '⚠️ تعذر فتح الكاميرا (' + e.message + ') — استخدم الإدخال اليدوي تحت';
+                document.getElementById('scanManualBox').style.display = '';
+            }
+        }
+        async function scanLoop() {
+            const video = document.getElementById('scanVideo');
+            try {
+                const codes = await scannerDetector.detect(video);
+                if (codes && codes.length) {
+                    const code = codes[0].rawValue;
+                    const now = Date.now();
+                    if (code !== lastScannedCode || now - lastScanTime > 1500) {
+                        lastScannedCode = code; lastScanTime = now;
+                        handleScannedCode(code);
+                    }
+                }
+            } catch (e) {}
+            scannerLoopId = requestAnimationFrame(scanLoop);
+        }
+        function manualScanSubmit() {
+            const el = document.getElementById('scanManualInput');
+            const v = el.value.trim();
+            if (!v) return;
+            el.value = '';
+            handleScannedCode(v);
+        }
+        function handleScannedCode(code) {
+            const found = findByBarcode(code);
+            if (!found) { showScanNoMatch(code); return; }
+            if (scannerMode === 'add') doDirectAdd(found.index, found.type);
+            else showScanMatch(found.index, found.type);
+        }
+        function showScanMatch(index, type) {
+            const item = inventoryData[index];
+            const panel = document.getElementById('scanMatchPanel');
+            panel.style.display = '';
+            document.getElementById('scanNoMatchPanel').style.display = 'none';
+            document.getElementById('scanMatchName').textContent = item.name + ' (' + item.sku + ')';
+            document.getElementById('scanMatchType').textContent = type === 'pkg' ? '📦 باركود الطرد' : '🔢 باركود الحبة';
+            document.getElementById('scanCount').value = 1;
+            panel.dataset.index = index;
+            panel.dataset.type = type;
+        }
+        function groupFirstAvailable(index, type) {
+            const startN = type === 'pkg' ? 1 : 5;
+            let target = null;
+            for (let k = startN; k < startN + 4; k++) {
+                const el = document.getElementById(`input${k}-${index}`);
+                if (el && !el.readOnly && !cellHasValue(el)) { target = el; break; }
+            }
+            if (!target) {
+                for (let k = startN; k < startN + 4; k++) {
+                    const el = document.getElementById(`input${k}-${index}`);
+                    if (el && !el.readOnly) { target = el; break; }
+                }
+            }
+            return target;
+        }
+        function scanJumpToItem() {
+            const panel = document.getElementById('scanMatchPanel');
+            const index = parseInt(panel.dataset.index), type = panel.dataset.type;
+            const target = groupFirstAvailable(index, type);
+            closeScanner();
+            if (target) {
+                try { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (e) {}
+                setTimeout(() => openPadFor(target), 300);
+            }
+        }
+        function scanAddCount() {
+            const panel = document.getElementById('scanMatchPanel');
+            const index = parseInt(panel.dataset.index), type = panel.dataset.type;
+            const count = parseFloat(document.getElementById('scanCount').value) || 0;
+            addToGroup(index, type, count);
+            showToast('✅ أُضيف ' + count + ' لـ ' + inventoryData[index].name, 'success');
+            resetScanPanels();
+        }
+        function doDirectAdd(index, type) {
+            addToGroup(index, type, 1);
+            showToast('✅ +1: ' + inventoryData[index].name, 'success');
+        }
+        function addToGroup(index, type, amount) {
+            const target = groupFirstAvailable(index, type);
+            if (!target) return;
+            const cur = target.value.trim();
+            target.value = cur ? (cur + '+' + amount) : String(amount);
+            onExprInput(target, index);
+        }
+        function showScanNoMatch(code) {
+            document.getElementById('scanMatchPanel').style.display = 'none';
+            const p = document.getElementById('scanNoMatchPanel');
+            p.style.display = '';
+            document.getElementById('scanNoMatchCode').textContent = code;
+            document.getElementById('scanAssignResults').innerHTML = '';
+            document.getElementById('scanAssignSearch').value = '';
+            p.dataset.code = code;
+        }
+        function scanAssignSearchInput() {
+            const q = document.getElementById('scanAssignSearch').value.trim().toLowerCase();
+            const results = document.getElementById('scanAssignResults');
+            if (!q) { results.innerHTML = ''; return; }
+            const matches = inventoryData
+                .map((it, i) => ({ it, i }))
+                .filter(({ it }) => it.name.toLowerCase().includes(q) || it.sku.toLowerCase().includes(q))
+                .slice(0, 6);
+            results.innerHTML = matches.length
+                ? matches.map(({ it, i }) => `<div class="scan-result-row"><span>${it.name} (${it.sku})</span><span class="scan-result-btns"><button onclick="confirmAssign(${i},'pkg')">📦 طرد</button><button onclick="confirmAssign(${i},'unit')">🔢 حبة</button></span></div>`).join('')
+                : '<div class="scan-no-res">لا نتائج</div>';
+        }
+        function confirmAssign(index, type) {
+            const code = document.getElementById('scanNoMatchPanel').dataset.code;
+            assignBarcode(code, index, type);
+            showToast('🔗 تم ربط الباركود بـ ' + inventoryData[index].name + ' (' + (type === 'pkg' ? 'طرد' : 'حبة') + ')', 'success');
+            resetScanPanels();
+        }
+        function resetScanPanels() {
+            document.getElementById('scanMatchPanel').style.display = 'none';
+            document.getElementById('scanNoMatchPanel').style.display = 'none';
+            document.getElementById('scanStatus').textContent = 'جاري تشغيل الكاميرا...';
+        }
+
         const NUMPAD_LS_KEY = 'numpadEnabled_v1';
         function numpadEnabled() {
             const saved = localStorage.getItem(NUMPAD_LS_KEY);

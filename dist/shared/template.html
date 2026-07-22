@@ -56,6 +56,8 @@
                 <input type="file" id="lsFileInput" accept=".txt,.json,text/plain,application/json,application/octet-stream" style="display:none" onchange="handleLsFile(this)">
                 <button class="btn btn-danger" onclick="confirmClearAll()">🗑️ مسح</button>
                 <button class="btn btn-numpad" id="numpadToggle" onclick="toggleNumpad()">🔢 لوحة الأرقام</button>
+                <button class="btn btn-info" onclick="openScanner('search')">📷 مسح للبحث</button>
+                <button class="btn btn-success" onclick="openScanner('add')">➕ مسح وإضافة</button>
             </div>
             <div class="csv-bar">
                 <span class="csv-bar-label">📥 CSV للاستيراد في Foodics:</span>
@@ -305,6 +307,43 @@
                 <button class="btn btn-info" style="flex:1" onclick="applyColsAndClose()">✔ تطبيق</button>
                 <button class="btn btn-warning" onclick="resetColLayout()">↺ الافتراضي</button>
                 <button class="btn btn-danger" onclick="closeColModal()">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ماسح الباركود -->
+    <div class="modal-overlay" id="scanModal">
+        <div class="modal-box scan-box">
+            <div class="scan-header">
+                <h3 id="scanTitle">📷 مسح الباركود</h3>
+                <button class="scan-close" onclick="closeScanner()">✕</button>
+            </div>
+            <video id="scanVideo" playsinline muted></video>
+            <div class="scan-status" id="scanStatus">جاري تشغيل الكاميرا...</div>
+
+            <div class="scan-match-panel" id="scanMatchPanel" style="display:none">
+                <div class="scan-match-name" id="scanMatchName"></div>
+                <div class="scan-match-type" id="scanMatchType"></div>
+                <div class="scan-count-row">
+                    <label>الكمية:</label>
+                    <input type="number" id="scanCount" value="1" min="0" step="1">
+                </div>
+                <div class="scan-actions">
+                    <button class="btn btn-info" onclick="scanJumpToItem()">🔍 بحث</button>
+                    <button class="btn btn-success" onclick="scanAddCount()">➕ إضافة</button>
+                </div>
+            </div>
+
+            <div class="scan-nomatch-panel" id="scanNoMatchPanel" style="display:none">
+                <div class="scan-nomatch-title">لم يُتعرّف على الكود: <b id="scanNoMatchCode"></b></div>
+                <input type="text" id="scanAssignSearch" placeholder="ابحث عن الصنف لربط هذا الباركود به..." oninput="scanAssignSearchInput()">
+                <div id="scanAssignResults"></div>
+            </div>
+
+            <div class="scan-manual-box" id="scanManualBox" style="display:none">
+                <input type="text" id="scanManualInput" placeholder="الكاميرا غير متاحة — أدخل الكود يدوياً" onkeydown="if(event.key==='Enter') manualScanSubmit()">
+                <button class="btn btn-info" onclick="manualScanSubmit()">تحقق</button>
             </div>
         </div>
     </div>
