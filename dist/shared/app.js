@@ -1440,6 +1440,17 @@
         }
         let barcodeMap = loadBarcodeMap();
         function saveBarcodeMap() { try { localStorage.setItem(BARCODE_LS_KEY, JSON.stringify(barcodeMap)); } catch (e) {} }
+        // يدمج باركودات معرَّفة مسبقاً بـ data.js (pkgBarcode/unitBarcode) داخل كل صنف —
+        // لا تُكتب فوق أي ربط يدوي محفوظ مسبقاً بنفس الكود، ويُعاد تشغيلها بعد أي تعديل على data.js
+        function mergeStaticBarcodesFromData() {
+            let added = 0;
+            inventoryData.forEach(item => {
+                if (item.pkgBarcode && !barcodeMap[item.pkgBarcode]) { barcodeMap[item.pkgBarcode] = { sku: item.sku, type: 'pkg' }; added++; }
+                if (item.unitBarcode && !barcodeMap[item.unitBarcode]) { barcodeMap[item.unitBarcode] = { sku: item.sku, type: 'unit' }; added++; }
+            });
+            if (added) saveBarcodeMap();
+        }
+        mergeStaticBarcodesFromData();
         function findByBarcode(code) {
             const m = barcodeMap[code];
             if (!m) return null;
