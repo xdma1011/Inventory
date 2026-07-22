@@ -10,7 +10,7 @@
 
         // ─── معامل التحويل إلى باتش لكل 1000 من الوحدة الحالية ───
         // القيم الافتراضية مأخوذة من جداول Foodics (إدخال 1000 → كم باتش ظهر)
-        const BATCH_LS_KEY = 'batchFactors_gardens_v1';
+        const BATCH_LS_KEY = 'batchFactors_' + (window.BRANCH_ID || 'gardens') + '_v1';
         /* DEFINED IN data.js */
         function loadBatchFactorsFromLS() {
             const f = Object.assign({}, batchDefaults);
@@ -596,14 +596,14 @@
                 };
             });
             const payload = JSON.stringify({ data, systemData, timestamp: new Date().toISOString() });
-            localStorage.setItem('inventoryData_22FEB2026_v8', payload);
+            localStorage.setItem(window.LS_KEY, payload);
             document.getElementById('lastSave').textContent = new Date().toLocaleString('ar-EG');
             if (!isAuto) showToast('تم حفظ البيانات بنجاح!', 'success');
         }
         function loadSavedData() {
             // Try new SKU-keyed format first, fall back to old index format
-            const saved = localStorage.getItem('inventoryData_22FEB2026_v8')
-                || localStorage.getItem('inventoryData_22FEB2026_v7');
+            const saved = localStorage.getItem(window.LS_KEY)
+                || null;
             if (!saved) return;
             try {
                 const parsed = JSON.parse(saved);
@@ -661,8 +661,8 @@
 
         // ─── COPY / PASTE localStorage ───
         function copyLocalStorage() {
-            const raw = localStorage.getItem('inventoryData_22FEB2026_v8')
-                || localStorage.getItem('inventoryData_22FEB2026_v7');
+            const raw = localStorage.getItem(window.LS_KEY)
+                || null;
             if (!raw) { showToast('لا توجد بيانات محفوظة للنسخ', 'warning'); return; }
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(raw)
@@ -677,7 +677,7 @@
             try {
                 const parsed = JSON.parse(text);
                 if (!parsed.data) throw new Error('صيغة غير صحيحة');
-                localStorage.setItem('inventoryData_22FEB2026_v8', JSON.stringify(parsed));
+                localStorage.setItem(window.LS_KEY, JSON.stringify(parsed));
                 closeLsModal();
                 loadSavedData();
                 showToast('✅ تم استيراد البيانات بنجاح', 'success');
@@ -747,8 +747,8 @@
                 if (bf) bf.value = batchFactors[factorKey(i)] !== undefined ? batchFactors[factorKey(i)] : '';
                 updateBatchDisplay(i);
             });
-            localStorage.removeItem('inventoryData_22FEB2026_v7');
-            localStorage.removeItem('inventoryData_22FEB2026_v8');
+            void 0;
+            localStorage.removeItem(window.LS_KEY);
             document.getElementById('lastSave').textContent = 'لم يتم الحفظ';
             showToast('تم مسح جميع البيانات', 'success');
         }
@@ -768,9 +768,9 @@
             const escHtml = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             // حمولات localStorage تُوضع بعيداً في الأسفل: A300 و A301 و A302
             const zPayloads = [
-                localStorage.getItem('inventoryData_22FEB2026_v8') || localStorage.getItem('inventoryData_22FEB2026_v7') || '',
+                localStorage.getItem(window.LS_KEY) || '',
                 localStorage.getItem(BATCH_LS_KEY) || JSON.stringify(batchFactors),
-                JSON.stringify({ exported: new Date().toISOString(), items: inventoryData.length, keys: ['inventoryData_22FEB2026_v8', BATCH_LS_KEY] })
+                JSON.stringify({ exported: new Date().toISOString(), items: inventoryData.length, keys: [window.LS_KEY, BATCH_LS_KEY] })
             ];
             let html = '<table border="1" dir="rtl"><thead><tr><th>الناتج</th><th>باتش/1000</th><th>الكمية الخام</th><th>الفرق</th><th>الحد الأدنى</th><th>المادة</th><th>SKU</th><th>وحدة</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr></thead><tbody>';
             inventoryData.forEach((_, i) => {
@@ -1584,7 +1584,7 @@
         if (shop) shop.style.display = isShop ? '' : 'none';
         document.getElementById('mtab-inv').classList.toggle('active', !isShop);
         document.getElementById('mtab-shop').classList.toggle('active', isShop);
-        try { localStorage.setItem('activeTab_v1', which); } catch (e) {}
+        try { localStorage.setItem((window.BRANCH_ID==='marj'?'activeTab_marj_v1':'activeTab_v1'), which); } catch (e) {}
         if (isShop && window.refreshShopTab) window.refreshShopTab();
     }
 
@@ -1830,6 +1830,6 @@
         buildItems(); render();
 
         /* استرجاع آخر تبويب مفتوح */
-        try { if (localStorage.getItem('activeTab_v1') === 'shop') switchMainTab('shop'); } catch (e) {}
+        try { if (localStorage.getItem((window.BRANCH_ID==='marj'?'activeTab_marj_v1':'activeTab_v1')) === 'shop') switchMainTab('shop'); } catch (e) {}
     })();
     
