@@ -2,13 +2,7 @@
 /* jshint esversion:6 */
 
 const inventoryData = [
-            { name: "ماتركس تفاح", sku: "sk-0148", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
             { name: "ماتركس كولا", sku: "sk-0080", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
-            { name: "ماتركس كولا زيرو", sku: "sk-0081", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
-            { name: "ماتركس اب", sku: "sk-0083", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
-            { name: "ماتركس اب زيرو", sku: "sk-0084", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
-            { name: "ماتركس فروت", sku: "sk-0085", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
-            { name: "ماتركس اورانج", sku: "sk-0082", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
             { name: "مياه معدنية - ماتركس", sku: "sk-0079", unit: "PC", packageSize: 12.0, secondOp: "*", secondVal: 1, isFixed: false, category: "water", note: "صندوق = 12 حبة", pkgBarcode: "", unitBarcode: "" },
             { name: "كريمة طبخ", sku: "sk-0058", unit: "G", packageSize: 12.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "ملح", sku: "sk-0038", unit: "G", packageSize: 13.5, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
@@ -85,7 +79,7 @@ const inventoryData = [
             { name: "حليب ام علي المطبوخ", sku: "P-0111", unit: "ML", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, note: "Batch — لكل 1000 مل × 0.40816", pkgBarcode: "", unitBarcode: "" }
         ];
 
-const sectionStarts = { 0: "🥤 المشروبات", 8: "🧂 الجرد العام", 16: "🍝 المعكرونة", 36: "🍛 الكشري", 54: "🍮 الحلويات", 70: "🏭 جرد الإنتاج الأسبوعي" };
+const sectionStarts = { 0: "🥤 المشروبات", 2: "🧂 الجرد العام", 10: "🍝 المعكرونة", 30: "🍛 الكشري", 48: "🍮 الحلويات", 64: "🏭 جرد الإنتاج الأسبوعي" };
 
 const batchDefaults = {
             'P-0112||بصل مقلي منتج': 0.7326,
@@ -116,13 +110,7 @@ const countSheets = [
                 { n: 'حليب ام علي المطبوخ', s: 'P-0111' }
             ]},
             { id: 'drinks', title: 'المشروبات', icon: '🥤', items: [
-                { n: 'ماتريكس تفاح', s: 'sk-0148' },
                 { n: 'ماتركس كولا', s: 'sk-0080' },
-                { n: 'ماتركس كولا زيرو', s: 'sk-0081' },
-                { n: 'ماتركس اب', s: 'sk-0083' },
-                { n: 'ماتركس اب زيرو', s: 'sk-0084' },
-                { n: 'ماتركس فروت', s: 'sk-0085' },
-                { n: 'ماتركس اورانج', s: 'sk-0082' },
                 { n: 'مياه معدنية', s: 'sk-0079' }
             ]},
             { id: 'general', title: 'الجرد العام', icon: '🧂', items: [
