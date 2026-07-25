@@ -1253,15 +1253,38 @@
                 const el = e.target;
                 if (!el.matches || !el.matches('input[id^="input"], input[id^="batchf-"]')) { lastTapEl = null; return; }
                 const now = Date.now();
-                if (lastTapEl === el && now - lastTapT < 350 && el.readOnly) {
+                if (lastTapEl === el && now - lastTapT < 500 && el.readOnly) {
                     e.preventDefault(); // يمنع تكبير الشاشة
                     dblGuard = now;
                     if (el.id.indexOf('batchf-') === 0) unlockFactor(el); else unlockInput(el);
+                    lastTapEl = null; lastTapT = 0;
+                    return;
                 }
                 lastTapEl = el; lastTapT = now;
             }, { passive: false });
         }
         document.addEventListener('DOMContentLoaded', setupDoubleTap);
+
+        // ═══════════ دبل-تاب موحّد عبر Pointer Events — لا يتأثر بـtouch-action ولا بفروق dblclick بين المتصفحات ═══════════
+        // هذا المسار أشمل من الاثنين أعلاه؛ نبقيه كطبقة حماية إضافية لا تلغي القديم
+        let lastPtrEl = null, lastPtrT = 0;
+        function setupPointerDoubleTap() {
+            if (!window.PointerEvent) return;
+            document.addEventListener('pointerup', e => {
+                const el = e.target;
+                if (!el.matches || !el.matches('input[id^="input"], input[id^="batchf-"]')) { lastPtrEl = null; return; }
+                if (!el.readOnly) { lastPtrEl = null; return; } // الخانات المفتوحة أصلاً لا تحتاج شيئاً
+                const now = Date.now();
+                if (lastPtrEl === el && now - lastPtrT < 500) {
+                    dblGuard = now;
+                    if (el.id.indexOf('batchf-') === 0) unlockFactor(el); else unlockInput(el);
+                    lastPtrEl = null; lastPtrT = 0;
+                    return;
+                }
+                lastPtrEl = el; lastPtrT = now;
+            });
+        }
+        document.addEventListener('DOMContentLoaded', setupPointerDoubleTap);
 
         // ═══════════ فتح اللوحة يدوياً لخانة محددة (يعمل حتى لو مفتاح اللوحة مطفي) ═══════════
         function openPadFor(el) {
@@ -1620,6 +1643,131 @@
             document.getElementById('scanMatchPanel').style.display = 'none';
             document.getElementById('scanNoMatchPanel').style.display = 'none';
             document.getElementById('scanStatus').textContent = 'جاري تشغيل الكاميرا...';
+        }
+
+
+        // ═══════════ إدارة الباركودات يدوياً — تخزين مستقل + بحث مفلتر + تصدير/استيراد خاص ═══════════
+        let bcSelectedIndex = null;
+        function openBarcodeManager() {
+            document.getElementById('bcModal').classList.add('show');
+            bcClearSelection();
+            renderBcList();
+        }
+        function closeBarcodeManager() { document.getElementById('bcModal').classList.remove('show'); }
+        function bcSearchInput() {
+            const q = document.getElementById('bcSearchInput').value.trim().toLowerCase();
+            const results = document.getElementById('bcSearchResults');
+            if (!q) { results.innerHTML = ''; return; }
+            const matches = inventoryData
+                .map((it, i) => ({ it, i }))
+                .filter(({ it }) => it.name.toLowerCase().includes(q) || it.sku.toLowerCase().includes(q))
+                .slice(0, 8);
+            results.innerHTML = matches.length
+                ? matches.map(({ it, i }) => `<div class="bc-search-row" onclick="bcSelectItem(${i})"><span>${it.name}</span><span style="color:#90a4ae">${it.sku}</span></div>`).join('')
+                : '<div class="bc-empty">لا نتائج</div>';
+        }
+        function bcSelectItem(index) {
+            bcSelectedIndex = index;
+            document.getElementById('bcAddSection').style.display = 'none';
+            const sel = document.getElementById('bcSelected');
+            sel.style.display = 'flex';
+            document.getElementById('bcSelectedName').textContent = inventoryData[index].name + ' (' + inventoryData[index].sku + ')';
+            document.getElementById('bcFormRow').style.display = 'flex';
+            document.getElementById('bcCodeInput').value = '';
+            document.getElementById('bcCodeInput').focus();
+        }
+        function bcClearSelection() {
+            bcSelectedIndex = null;
+            document.getElementById('bcAddSection').style.display = '';
+            document.getElementById('bcSelected').style.display = 'none';
+            document.getElementById('bcFormRow').style.display = 'none';
+            document.getElementById('bcSearchInput').value = '';
+            document.getElementById('bcSearchResults').innerHTML = '';
+        }
+        // يبحث عن كود محفوظ مسبقاً لنفس الصنف ونفس النوع (طرد/حبة)
+        function findExistingCodeForItem(sku, type) {
+            return Object.keys(barcodeMap).find(c => barcodeMap[c].sku === sku && barcodeMap[c].type === type) || null;
+        }
+        function bcSaveMapping() {
+            if (bcSelectedIndex === null) { showToast('اختر الصنف أولاً', 'error'); return; }
+            const code = document.getElementById('bcCodeInput').value.trim();
+            if (!code) { showToast('اكتب الباركود أولاً', 'error'); return; }
+            const type = document.getElementById('bcTypeSelect').value;
+            const item = inventoryData[bcSelectedIndex];
+            const typeLabel = type === 'pkg' ? 'طرد' : 'حبة';
+
+            const existingCode = findExistingCodeForItem(item.sku, type);
+            if (existingCode && existingCode !== code) {
+                if (!confirm('الصنف "' + item.name + '" له باركود ' + typeLabel + ' محفوظ مسبقاً: ' + existingCode + '\n\nهل تريد استبداله بالكود الجديد ' + code + '؟')) return;
+                delete barcodeMap[existingCode];
+            }
+            const collision = barcodeMap[code];
+            if (collision && collision.sku !== item.sku) {
+                const otherIdx = inventoryData.findIndex(x => x.sku === collision.sku);
+                const otherName = otherIdx >= 0 ? inventoryData[otherIdx].name : collision.sku;
+                if (!confirm('هذا الباركود (' + code + ') مستخدم حالياً لصنف آخر: "' + otherName + '"\n\nهل تريد نقله ليصير خاصاً بـ "' + item.name + '"؟')) return;
+            }
+            assignBarcode(code, bcSelectedIndex, type);
+            showToast('✅ حُفظ: ' + item.name + ' (' + typeLabel + ')', 'success');
+            document.getElementById('bcCodeInput').value = '';
+            document.getElementById('bcCodeInput').focus();
+            renderBcList();
+        }
+        function renderBcList() {
+            const list = document.getElementById('bcList');
+            const codes = Object.keys(barcodeMap);
+            document.getElementById('bcCount').textContent = codes.length;
+            if (!codes.length) { list.innerHTML = '<div class="bc-empty">لا توجد باركودات محفوظة بعد</div>'; return; }
+            list.innerHTML = codes.map(code => {
+                const m = barcodeMap[code];
+                const idx = inventoryData.findIndex(x => x.sku === m.sku);
+                const name = idx >= 0 ? inventoryData[idx].name : '(صنف محذوف: ' + m.sku + ')';
+                return `<div class="bc-row"><span class="bc-code">${code}</span><span class="bc-item"><span class="bc-type-badge ${m.type}">${m.type === 'pkg' ? '📦' : '🔢'}</span>${name}</span><button class="bc-del" onclick="bcDeleteMapping('${code}')">🗑</button></div>`;
+            }).join('');
+        }
+        function bcDeleteMapping(code) {
+            delete barcodeMap[code];
+            saveBarcodeMap();
+            renderBcList();
+            showToast('تم حذف الباركود', 'success');
+        }
+        function bcExport() {
+            const payload = { __app: 'barcode_backup', __branch: (window.BRANCH_ID || 'gardens'), __when: new Date().toISOString(), map: barcodeMap };
+            const stamp = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-');
+            const blob = new Blob(['\uFEFF' + JSON.stringify(payload, null, 2)], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'barcodes_' + (window.BRANCH_ID || 'gardens') + '_' + stamp + '.txt';
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+            showToast('تم تنزيل ملف الباركودات', 'success');
+        }
+        function bcImportFile(inputEl) {
+            const file = inputEl.files[0];
+            inputEl.value = '';
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const txt = decodeSysBuffer(e.target.result);
+                    if (txt === '__XLSX__') throw new Error('هذا ليس ملف باركودات صالحاً');
+                    const parsed = JSON.parse(String(txt).replace(/^\uFEFF/, ''));
+                    // يقبل ملف تصدير الباركود المخصص، أو ملف النسخة الاحتياطية الكامل (يستخرج منه فقط مفتاح الباركود)
+                    let incoming = null;
+                    if (parsed && parsed.map && typeof parsed.map === 'object') incoming = parsed.map;
+                    else if (parsed && parsed.keys && parsed.keys[BARCODE_LS_KEY]) incoming = JSON.parse(parsed.keys[BARCODE_LS_KEY]);
+                    else if (parsed && typeof parsed === 'object') incoming = parsed;
+                    if (!incoming || !Object.keys(incoming).length) throw new Error('لا توجد باركودات صالحة بالملف');
+                    const n = Object.keys(incoming).length;
+                    if (!confirm('سيُضاف/يُحدَّث ' + n + ' باركود لقائمتك الحالية. متابعة؟')) return;
+                    Object.assign(barcodeMap, incoming);
+                    saveBarcodeMap();
+                    renderBcList();
+                    showToast('تم استيراد ' + n + ' باركود', 'success');
+                } catch (err) { showToast('فشل الاستيراد: ' + err.message, 'error'); }
+            };
+            reader.onerror = () => showToast('تعذر قراءة الملف', 'error');
+            reader.readAsArrayBuffer(file);
         }
 
         const NUMPAD_LS_KEY = 'numpadEnabled_v1';

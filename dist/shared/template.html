@@ -58,6 +58,7 @@
                 <button class="btn btn-numpad" id="numpadToggle" onclick="toggleNumpad()">🔢 لوحة الأرقام</button>
                 <button class="btn btn-info" onclick="openScanner('search')">📷 مسح للبحث</button>
                 <button class="btn btn-success" onclick="openScanner('add')">➕ مسح وإضافة</button>
+                <button class="btn btn-info" onclick="openBarcodeManager()">🔗 إدارة الباركودات</button>
             </div>
             <div class="csv-bar">
                 <span class="csv-bar-label">📥 CSV للاستيراد في Foodics:</span>
@@ -345,6 +346,46 @@
                 <input type="text" id="scanManualInput" placeholder="الكاميرا غير متاحة — أدخل الكود يدوياً" onkeydown="if(event.key==='Enter') manualScanSubmit()">
                 <button class="btn btn-info" onclick="manualScanSubmit()">تحقق</button>
             </div>
+        </div>
+    </div>
+
+
+    <!-- إدارة الباركودات (تخزين مستقل تماماً عن قائمة المواد) -->
+    <div class="modal-overlay" id="bcModal">
+        <div class="modal-box bc-box">
+            <div class="scan-header">
+                <h3>🔗 إدارة الباركودات</h3>
+                <button class="scan-close" onclick="closeBarcodeManager()">✕</button>
+            </div>
+            <p class="bc-hint">تُحفظ هذه الربطات في تخزين منفصل تماماً عن قائمة المواد — تقدر تضيف أو تعدّل أو تصدّر/تستورد بدون المساس بالـdata.js</p>
+
+            <div class="bc-add-section" id="bcAddSection">
+                <input type="text" id="bcSearchInput" placeholder="🔍 ابحث عن الصنف بالاسم أو الكود..." oninput="bcSearchInput()">
+                <div id="bcSearchResults"></div>
+            </div>
+            <div class="bc-selected" id="bcSelected" style="display:none">
+                <span id="bcSelectedName"></span>
+                <button class="bc-change-btn" onclick="bcClearSelection()">تغيير الصنف ✕</button>
+            </div>
+            <div class="bc-form-row" id="bcFormRow" style="display:none">
+                <input type="text" id="bcCodeInput" placeholder="امسح الباركود أو اكتبه هنا" onkeydown="if(event.key==='Enter') bcSaveMapping()">
+                <select id="bcTypeSelect">
+                    <option value="pkg">📦 طرد</option>
+                    <option value="unit">🔢 حبة</option>
+                </select>
+                <button class="btn btn-success" onclick="bcSaveMapping()">💾 حفظ</button>
+            </div>
+
+            <hr>
+            <div class="bc-list-header">
+                <span>الباركودات المحفوظة (<b id="bcCount">0</b>)</span>
+                <span class="bc-list-actions">
+                    <button class="btn btn-info" onclick="bcExport()">💾 تصدير</button>
+                    <button class="btn btn-info" onclick="document.getElementById('bcImportFile').click()">📂 استيراد</button>
+                    <input type="file" id="bcImportFile" style="display:none" accept=".txt,.json,application/json,text/plain" onchange="bcImportFile(this)">
+                </span>
+            </div>
+            <div id="bcList"></div>
         </div>
     </div>
 
