@@ -326,11 +326,11 @@
                 }
             });
             document.getElementById('searchInput').addEventListener('input', function () {
-                const term = this.value.toLowerCase();
+                const term = normalizeSearch(this.value);
                 document.querySelectorAll('#tableBody tr').forEach((row) => {
                     if (row.classList.contains('section-row')) { row.classList.toggle('hidden', !!term || isSorted); return; }
                     const i = parseInt(row.dataset.index);
-                    const nm = inventoryData[i].name.toLowerCase();
+                    const nm = normalizeSearch(inventoryData[i].name);
                     const sk = inventoryData[i].sku.toLowerCase();
                     if (nm.includes(term) || sk.includes(term)) { row.classList.remove('hidden'); if (term) row.classList.add('highlighted'); else row.classList.remove('highlighted'); }
                     else { row.classList.add('hidden'); row.classList.remove('highlighted'); }
@@ -339,12 +339,12 @@
             document.getElementById('searchInput').addEventListener('keydown', function (e) {
                 if (e.key !== 'Enter') return;
                 e.preventDefault();
-                const term = this.value.toLowerCase();
+                const term = normalizeSearch(this.value);
                 let firstVisible = null;
                 document.querySelectorAll('#tableBody tr').forEach((row) => {
                     if (row.classList.contains('section-row')) { row.classList.toggle('hidden', !!term || isSorted); return; }
                     const i = parseInt(row.dataset.index);
-                    const nm = inventoryData[i].name.toLowerCase();
+                    const nm = normalizeSearch(inventoryData[i].name);
                     const sk = inventoryData[i].sku.toLowerCase();
                     if (nm.includes(term) || sk.includes(term)) { row.classList.remove('hidden'); if (term && !firstVisible) firstVisible = row; }
                     else row.classList.add('hidden');
@@ -401,6 +401,14 @@
             document.getElementById('noteModal').classList.add('show');
         }
         function closeNoteModal() { document.getElementById('noteModal').classList.remove('show'); }
+        // تطبيع البحث العربي: ة=ه، أ/إ/آ=ا، ى=ي — "بندورة" و"بندوره" سيان
+        function normalizeSearch(str) {
+            return String(str || '')
+                .toLowerCase()
+                .replace(/[ةه]/g, 'ه')
+                .replace(/[أإآا]/g, 'ا')
+                .replace(/[يى]/g, 'ي');
+        }
         function showToast(msg, type = 'success') {
             const t = document.getElementById('toast');
             t.textContent = msg; t.className = `toast ${type} show`;
@@ -814,7 +822,11 @@
         }
         function lockInput(input) {
             // القفل فقط إذا فيها قيمة (غير فارغة وغير صفر) — ثم الإغلاق
-            if (cellHasValue(input)) { input.readOnly = true; input.classList.add('cell-locked'); }
+            if (cellHasValue(input)) {
+                input.readOnly = true;
+                input.classList.add('cell-locked');
+                if (navigator.vibrate) navigator.vibrate(12);
+            }
             input.blur();
         }
         function unlockInput(input) { input.readOnly = false; input.classList.remove('cell-locked'); input.style.background = ''; input.style.cursor = ''; input.focus(); try { input.select(); } catch (e) {} if (typeof maybeOpenPadAfterUnlock === 'function' && input.id.indexOf('input') === 0) maybeOpenPadAfterUnlock(input); }
@@ -991,10 +1003,14 @@
         function exportSheetXLSX(sheetId) {
             const sheet = countSheets.find(s => s.id === sheetId);
             if (!sheet) return;
+            exportSheetObjXLSX(sheet);
+        }
+        function exportSheetObjXLSX(sheet) {
+            if (!sheet) return;
             const { rows, missing } = buildSheetRows(sheet);
             const bytes = xlsxFromRows(rows, sheet.title);
             const d = new Date().toISOString().slice(0, 10);
-            downloadFile(bytes, `foodics_${sheetId}_${d}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            downloadFile(bytes, `foodics_${sheet.id}_${d}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             if (missing.length) showToast(`⚠️ ${sheet.title}: بدون كمية (${missing.join('، ')})`, 'warning');
             else showToast(`✅ Excel ${sheet.title} جاهز للاستيراد في Foodics`, 'success');
         }
@@ -1003,6 +1019,8 @@
             // شيتات مرج الحمام المرقمة أولاً (عناوينها تحوي كلمات تتقاطع مع شيتات الجاردنز)
             if (label.includes('شيت الجرد ١')) return 'sheet1';
             if (label.includes('شيت الجرد ٢')) return 'sheet2';
+            if (label.includes('الترتيب الرسمي') || label.includes('شيت الجرد \u2014')) return 'main';
+            if (label.includes('خارج الشيت')) return null;
             if (label.includes('مشروبات')) return 'drinks';
             if (label.includes('الجرد العام')) return 'general';
             if (label.includes('معكرونة')) return 'pasta';
@@ -1012,8 +1030,34 @@
             return null;
         }
 
+        function renderCsvBar() {
+            const bar = document.getElementById('csvBar');
+            if (!bar || typeof countSheets === 'undefined') return;
+            let html = '<span class="csv-bar-label">\uD83D\uDCE5 للاستيراد في Foodics:</span>';
+            countSheets.forEach(sh => {
+                html += `<button class="btn csv-btn" onclick="exportSheetCSV('${sh.id}')">${sh.icon} ${sh.title} CSV</button>`;
+                html += `<button class="btn csv-btn" onclick="exportSheetXLSX('${sh.id}')">${sh.icon} ${sh.title} Excel</button>`;
+            });
+            if (countSheets.length > 1) {
+                html += `<button class="btn csv-btn csv-all" onclick="exportAllCSV()">\uD83D\uDCE6 الكل CSV</button>`;
+                html += `<button class="btn csv-btn csv-all" onclick="exportAllXLSX()">\uD83D\uDCE6 الكل Excel</button>`;
+            }
+            bar.innerHTML = html;
+        }
+        function mergedSheet() {
+            // يدمج كل الشيتات بنفس ترتيبها الحالي بشيت واحد للتصدير الموحد
+            const items = [];
+            countSheets.forEach(sh => sh.items.forEach(it => items.push(it)));
+            return { id: '_all', title: 'كل الشيتات', icon: '\uD83D\uDCE6', items };
+        }
+        function exportAllCSV() { exportSheetObjCSV(mergedSheet()); }
+        function exportAllXLSX() { exportSheetObjXLSX(mergedSheet()); }
         function exportSheetCSV(sheetId) {
             const sheet = countSheets.find(s => s.id === sheetId);
+            if (!sheet) return;
+            exportSheetObjCSV(sheet);
+        }
+        function exportSheetObjCSV(sheet) {
             if (!sheet) return;
             const rows = ['Inventory Item Name,Inventory Item SKU,Storage quantity,Ingredients quantity,Inventory Count ID'];
             let missing = [];
@@ -1028,15 +1072,32 @@
             });
             const csv = '\uFEFF' + rows.join('\r\n');
             const d = new Date().toISOString().slice(0, 10);
-            downloadFile(csv, `foodics_${sheetId}_${d}.csv`, 'text/csv;charset=utf-8');
+            downloadFile(csv, `foodics_${sheet.id}_${d}.csv`, 'text/csv;charset=utf-8');
             if (missing.length) showToast(`⚠️ ${sheet.title}: بدون كمية (${missing.join('، ')}) — عبّئها يدوياً`, 'warning');
             else showToast(`✅ CSV ${sheet.title} جاهز للاستيراد`, 'success');
         }
 
         // ═══════════ شريط الرموز الحسابية للهاتف ═══════════
         let opBarTarget = null;
+        let lastZeroTap = 0;
         function insertOp(ch) {
-            if (!opBarTarget || opBarTarget.readOnly) return;
+            if (!opBarTarget) return;
+            // دبل-0 على خانة مقفلة → فتح القفل (يعمل بأي متصفح: كبستان عاديتان)
+            if (opBarTarget.readOnly && ch === '0') {
+                const now = Date.now();
+                if (now - lastZeroTap < 500) {
+                    lastZeroTap = 0;
+                    const cm = opBarTarget.id.match(/^cinput(\d)-(\d+)$/);
+                    if (cm) unlockCardCell(parseInt(cm[1]), parseInt(cm[2]));
+                    else if (opBarTarget.id.indexOf('batchf-') === 0) unlockFactor(opBarTarget);
+                    else unlockInput(opBarTarget);
+                    if (navigator.vibrate) navigator.vibrate(20);
+                    return;
+                }
+                lastZeroTap = now;
+                return;
+            }
+            if (opBarTarget.readOnly) return;
             const el = opBarTarget;
             if (ch === '⌫') {
                 const s = el.selectionStart, e = el.selectionEnd;
@@ -1155,12 +1216,17 @@
         }
         // اعتماد الخلية: قفلها إذا فيها قيمة (غير فارغة وغير صفر) ثم الرجوع للبحث
         function commitCell(el) {
-            if (el) lockInput(el);
+            const fromCard = el && el.id && el.id.indexOf('cinput') === 0;
+            if (fromCard) {
+                const m = el.id.match(/^cinput(\d)-(\d+)$/);
+                if (m) lockCardCell(parseInt(m[1]), parseInt(m[2]));
+            } else if (el) lockInput(el);
             const bar = document.getElementById('opBar');
             if (bar) bar.classList.remove('show');
             opBarTarget = null;
             restoreTempInputModes();
-            jumpToSearch();
+            if (fromCard) { const cs = document.getElementById('cardSearchInput'); if (cs) cs.focus(); }
+            else jumpToSearch();
         }
         let dblGuard = 0;
         function setupCellLocking() {
@@ -1251,7 +1317,7 @@
         function setupDoubleTap() {
             document.addEventListener('touchend', e => {
                 const el = e.target;
-                if (!el.matches || !el.matches('input[id^="input"], input[id^="batchf-"]')) { lastTapEl = null; return; }
+                if (!el.matches || !el.matches('input[id^="input"], input[id^="batchf-"], input[id^="cinput"]')) { lastTapEl = null; return; }
                 const now = Date.now();
                 if (lastTapEl === el && now - lastTapT < 500 && el.readOnly) {
                     e.preventDefault(); // يمنع تكبير الشاشة
@@ -1272,7 +1338,7 @@
             if (!window.PointerEvent) return;
             document.addEventListener('pointerup', e => {
                 const el = e.target;
-                if (!el.matches || !el.matches('input[id^="input"], input[id^="batchf-"]')) { lastPtrEl = null; return; }
+                if (!el.matches || !el.matches('input[id^="input"], input[id^="batchf-"], input[id^="cinput"]')) { lastPtrEl = null; return; }
                 if (!el.readOnly) { lastPtrEl = null; return; } // الخانات المفتوحة أصلاً لا تحتاج شيئاً
                 const now = Date.now();
                 if (lastPtrEl === el && now - lastPtrT < 500) {
@@ -1285,6 +1351,23 @@
             });
         }
         document.addEventListener('DOMContentLoaded', setupPointerDoubleTap);
+
+        // كيبورد فيزيائي: كبستان سريعتان على مفتاح "0" فوق خانة مقفلة → فتح
+        let lastZeroKey = 0;
+        document.addEventListener('keydown', e => {
+            if (e.key !== '0') return;
+            const el = document.activeElement;
+            if (!el || !el.matches || !el.matches('input[id^="input"], input[id^="batchf-"], input[id^="cinput"]')) return;
+            if (!el.readOnly) return;
+            const now = Date.now();
+            if (now - lastZeroKey < 500) {
+                lastZeroKey = 0;
+                const cm = el.id.match(/^cinput(\d)-(\d+)$/);
+                if (cm) unlockCardCell(parseInt(cm[1]), parseInt(cm[2]));
+                else if (el.id.indexOf('batchf-') === 0) unlockFactor(el);
+                else unlockInput(el);
+            } else lastZeroKey = now;
+        });
 
         // ═══════════ فتح اللوحة يدوياً لخانة محددة (يعمل حتى لو مفتاح اللوحة مطفي) ═══════════
         function openPadFor(el) {
@@ -1324,6 +1407,24 @@
         function goToGroupCell(startN) {
             const cur = opBarTarget;
             if (!cur) return;
+            // داخل بطاقة: تنقّل بين مرايا cinput لنفس الصنف
+            if (cur.id.indexOf('cinput') === 0) {
+                const m = cur.id.match(/^cinput(\d)-(\d+)$/);
+                if (!m) return;
+                const idx = m[2];
+                if (!cur.readOnly && typeof cellHasValue === 'function' && cellHasValue(cur)) lockCardCell(parseInt(m[1]), parseInt(idx));
+                let t = null;
+                for (let k = startN; k < startN + 4; k++) {
+                    const el = document.getElementById(`cinput${k}-${idx}`);
+                    if (el && !el.readOnly && !cellHasValue(el)) { t = el; break; }
+                }
+                if (!t) for (let k = startN; k < startN + 4; k++) {
+                    const el = document.getElementById(`cinput${k}-${idx}`);
+                    if (el && !el.readOnly) { t = el; break; }
+                }
+                if (t) openPadFor(t);
+                return;
+            }
             const row = cur.closest('tr[data-index]');
             if (!row) return;
             const idx = row.dataset.index;
@@ -1366,7 +1467,7 @@
             const bar = document.getElementById('opBar');
             if (!fab || !bar) return;
             const a = document.activeElement;
-            const activeIsRow = a && a.matches && a.matches('input[id^="input"], input[id^="batchf-"]');
+            const activeIsRow = a && a.matches && a.matches('input[id^="input"], input[id^="batchf-"], input[id^="cinput"]');
             fab.classList.toggle('show', !!activeIsRow && !bar.classList.contains('show'));
         }
         function setupPadFab() {
@@ -1374,7 +1475,7 @@
             const bar = document.getElementById('opBar');
             if (!fab || !bar) return;
             document.addEventListener('focusin', e => {
-                if (e.target.matches && e.target.matches('input[id^="input"], input[id^="batchf-"]')) lastRowInput = e.target;
+                if (e.target.matches && e.target.matches('input[id^="input"], input[id^="batchf-"], input[id^="cinput"]')) lastRowInput = e.target;
                 updateFab();
             });
             document.addEventListener('focusout', () => setTimeout(updateFab, 160));
@@ -1398,7 +1499,7 @@
 
         // ═══════════ ترتيب وتثبيت الأعمدة (غير الإدخالية) ═══════════
         const COL_LS_KEY = 'colLayout_v2';
-        const COL_DEFAULT = { order: ['name', 'result', 'batch', 'diff', 'min', 'pkg'], pinned: 'name' };
+        const COL_DEFAULT = { order: ['name', 'result', 'batch', 'diff', 'min', 'pkg'], pinned: 'name', hidden: [] };
         const COL_LABELS = { name: 'اسم المادة', result: 'الناتج', batch: 'باتش /1000', diff: 'الفرق', min: 'الحد الأدنى', pkg: 'حجم الطرد' };
         function loadColLayout() {
             try {
@@ -1420,8 +1521,9 @@
                 const cells = [...tr.children];
                 const anchor = cells.find(c => !c.dataset.col) || null;
                 order.forEach(k => { if (tagged[k]) tr.insertBefore(tagged[k], anchor); });
-                Object.values(tagged).forEach(c => c.classList.remove('col-pinned'));
+                Object.values(tagged).forEach(c => { c.classList.remove('col-pinned'); c.classList.remove('col-hidden'); });
                 if (tagged[colLayout.pinned]) tagged[colLayout.pinned].classList.add('col-pinned');
+                (colLayout.hidden || []).forEach(k => { if (tagged[k] && k !== colLayout.pinned) tagged[k].classList.add('col-hidden'); });
             };
             const headRow = document.querySelector('#inventoryTable thead tr');
             if (headRow) applyRow(headRow);
@@ -1437,13 +1539,19 @@
             const list = document.getElementById('colList');
             list.innerHTML = colLayout.order.map((k, i) => `
                 <div class="col-row">
-                    <label class="col-pin" title="العمود المثبت (يصير أول عمود ومجمّداً)"><input type="radio" name="pinCol" value="${k}" ${colLayout.pinned === k ? 'checked' : ''} onchange="colLayout.pinned=this.value"> \U0001F4CC</label>
+                    <label class="col-pin" title="العمود المثبت (يصير أول عمود ومجمّداً)"><input type="radio" name="pinCol" value="${k}" ${colLayout.pinned === k ? 'checked' : ''} onchange="colLayout.pinned=this.value"> 📌</label>
+                    <label class="col-show" title="إظهار/إخفاء العمود"><input type="checkbox" ${(colLayout.hidden||[]).includes(k) ? '' : 'checked'} ${colLayout.pinned === k ? 'disabled' : ''} onchange="toggleColHidden('${k}', this.checked)"> 👁</label>
                     <span class="col-name">${COL_LABELS[k]}</span>
                     <span class="col-arrows">
                         <button onclick="moveCol(${i},-1)" ${i === 0 ? 'disabled' : ''}>\u25B2</button>
                         <button onclick="moveCol(${i},1)" ${i === colLayout.order.length - 1 ? 'disabled' : ''}>\u25BC</button>
                     </span>
                 </div>`).join('');
+        }
+        function toggleColHidden(k, visible) {
+            if (!Array.isArray(colLayout.hidden)) colLayout.hidden = [];
+            if (visible) colLayout.hidden = colLayout.hidden.filter(x => x !== k);
+            else if (!colLayout.hidden.includes(k)) colLayout.hidden.push(k);
         }
         function moveCol(i, d) {
             const j = i + d;
@@ -1604,6 +1712,7 @@
         function doDirectAdd(index, type) {
             addToGroup(index, type, 1);
             showToast('✅ +1: ' + inventoryData[index].name, 'success');
+            if (navigator.vibrate) navigator.vibrate([15, 40, 15]);
         }
         function addToGroup(index, type, amount) {
             const target = groupFirstAvailable(index, type);
@@ -1622,12 +1731,12 @@
             p.dataset.code = code;
         }
         function scanAssignSearchInput() {
-            const q = document.getElementById('scanAssignSearch').value.trim().toLowerCase();
+            const q = normalizeSearch(document.getElementById('scanAssignSearch').value.trim());
             const results = document.getElementById('scanAssignResults');
             if (!q) { results.innerHTML = ''; return; }
             const matches = inventoryData
                 .map((it, i) => ({ it, i }))
-                .filter(({ it }) => it.name.toLowerCase().includes(q) || it.sku.toLowerCase().includes(q))
+                .filter(({ it }) => normalizeSearch(it.name).includes(q) || it.sku.toLowerCase().includes(q))
                 .slice(0, 6);
             results.innerHTML = matches.length
                 ? matches.map(({ it, i }) => `<div class="scan-result-row"><span>${it.name} (${it.sku})</span><span class="scan-result-btns"><button onclick="confirmAssign(${i},'pkg')">📦 طرد</button><button onclick="confirmAssign(${i},'unit')">🔢 حبة</button></span></div>`).join('')
@@ -1655,12 +1764,12 @@
         }
         function closeBarcodeManager() { document.getElementById('bcModal').classList.remove('show'); }
         function bcSearchInput() {
-            const q = document.getElementById('bcSearchInput').value.trim().toLowerCase();
+            const q = normalizeSearch(document.getElementById('bcSearchInput').value.trim());
             const results = document.getElementById('bcSearchResults');
             if (!q) { results.innerHTML = ''; return; }
             const matches = inventoryData
                 .map((it, i) => ({ it, i }))
-                .filter(({ it }) => it.name.toLowerCase().includes(q) || it.sku.toLowerCase().includes(q))
+                .filter(({ it }) => normalizeSearch(it.name).includes(q) || it.sku.toLowerCase().includes(q))
                 .slice(0, 8);
             results.innerHTML = matches.length
                 ? matches.map(({ it, i }) => `<div class="bc-search-row" onclick="bcSelectItem(${i})"><span>${it.name}</span><span style="color:#90a4ae">${it.sku}</span></div>`).join('')
@@ -1770,6 +1879,179 @@
             reader.readAsArrayBuffer(file);
         }
 
+
+        // ═══════════ 🎤 البحث الصوتي (Web Speech API — كروم) ═══════════
+        let recActive = null;
+        function startVoiceSearch() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const btns = document.querySelectorAll('.mic-btn');
+            if (!SR) { showToast('متصفحك لا يدعم البحث الصوتي — جرّب Chrome', 'error'); btns.forEach(b => b.style.display = 'none'); return; }
+            if (recActive) { try { recActive.stop(); } catch (e) {} recActive = null; btns.forEach(b => b.classList.remove('listening')); return; }
+            const rec = new SR();
+            rec.lang = 'ar';
+            rec.interimResults = false;
+            rec.maxAlternatives = 1;
+            const cardsVisible = document.getElementById('cardsTab') && document.getElementById('cardsTab').style.display !== 'none';
+            const target = cardsVisible ? document.getElementById('cardSearchInput') : document.getElementById('searchInput');
+            btns.forEach(b => b.classList.add('listening'));
+            rec.onresult = ev => {
+                const text = ev.results[0][0].transcript.trim();
+                if (target) {
+                    target.value = text;
+                    target.dispatchEvent(new Event('input'));
+                    target.focus();
+                }
+            };
+            rec.onend = () => { btns.forEach(b => b.classList.remove('listening')); recActive = null; };
+            rec.onerror = () => { btns.forEach(b => b.classList.remove('listening')); recActive = null; showToast('لم أسمع بوضوح — حاول ثانية', 'error'); };
+            recActive = rec;
+            rec.start();
+        }
+
+        // ═══════════ 🗂️ تبويب البطاقات — مرايا متزامنة مع محرك الجدول نفسه ═══════════
+        let cardIdx = null;
+        function cardSearchLive() {
+            const q = normalizeSearch(document.getElementById('cardSearchInput').value.trim());
+            const res = document.getElementById('cardSearchResults');
+            document.getElementById('itemCard').style.display = 'none';
+            cardIdx = null;
+            if (!q) { res.innerHTML = ''; return; }
+            const matches = inventoryData
+                .map((it, i) => ({ it, i }))
+                .filter(({ it }) => normalizeSearch(it.name).includes(q) || it.sku.toLowerCase().includes(q))
+                .slice(0, 8);
+            res.innerHTML = matches.length
+                ? matches.map(({ it, i }) => `<div class="csr-row" onclick="openItemCard(${i})"><span>${it.name}</span><span class="csr-sku">${it.sku}</span></div>`).join('')
+                : '<div class="bc-empty">لا نتائج</div>';
+        }
+        function openItemCard(idx) {
+            cardIdx = idx;
+            const item = inventoryData[idx];
+            document.getElementById('cardSearchResults').innerHTML = '';
+            document.getElementById('itemCard').style.display = '';
+            document.getElementById('icardName').textContent = item.name;
+            document.getElementById('icardSku').textContent = item.sku;
+            document.getElementById('icardPkgInfo').textContent = '× ' + item.packageSize + ' ' + item.unit;
+            document.getElementById('icardUnitInfo').textContent = item.secondOp === '/' ? '÷ ' + item.secondVal : '× ' + item.secondVal;
+            document.getElementById('icardUnit').textContent = item.unit;
+            const pkgRow = document.getElementById('icardPkgRow');
+            const unitRow = document.getElementById('icardUnitRow');
+            const build = (row, from) => {
+                row.innerHTML = '';
+                for (let k = from; k < from + 4; k++) {
+                    const src = document.getElementById(`input${k}-${idx}`);
+                    const mi = document.createElement('input');
+                    mi.type = 'text'; mi.inputMode = 'decimal'; mi.autocomplete = 'off';
+                    mi.id = `cinput${k}-${idx}`;
+                    mi.placeholder = k === 8 ? '-0' : '0';
+                    mi.value = src ? src.value : '';
+                    if (src && src.readOnly) { mi.readOnly = true; mi.classList.add('cell-locked'); }
+                    mi.addEventListener('input', () => syncCardCell(k, idx));
+                    mi.addEventListener('keydown', e => { if (e.key === 'Enter') lockCardCell(k, idx); });
+                    mi.addEventListener('dblclick', () => unlockCardCell(k, idx));
+                    row.appendChild(mi);
+                }
+            };
+            build(pkgRow, 1);
+            build(unitRow, 5);
+            refreshCardResults(idx);
+        }
+        function syncCardCell(k, idx) {
+            const mi = document.getElementById(`cinput${k}-${idx}`);
+            const src = document.getElementById(`input${k}-${idx}`);
+            if (!mi || !src) return;
+            src.value = mi.value;
+            onExprInput(src, idx); // نفس محرك الحساب حرفياً
+            if (typeof triggerAutoSave === 'function') triggerAutoSave();
+            refreshCardResults(idx);
+        }
+        function lockCardCell(k, idx) {
+            const mi = document.getElementById(`cinput${k}-${idx}`);
+            const src = document.getElementById(`input${k}-${idx}`);
+            if (src) lockInput(src);
+            if (mi && src && src.readOnly) { mi.readOnly = true; mi.classList.add('cell-locked'); }
+            const cs = document.getElementById('cardSearchInput');
+            if (cs) cs.focus();
+        }
+        function unlockCardCell(k, idx) {
+            const mi = document.getElementById(`cinput${k}-${idx}`);
+            const src = document.getElementById(`input${k}-${idx}`);
+            if (src) { src.readOnly = false; src.classList.remove('cell-locked'); src.style.background = ''; }
+            if (mi) { mi.readOnly = false; mi.classList.remove('cell-locked'); mi.focus(); }
+            if (navigator.vibrate) navigator.vibrate(15);
+        }
+        function refreshCardResults(idx) {
+            const resEl = document.getElementById(`result-${idx}`);
+            const diffEl = document.getElementById(`diffValue-${idx}`);
+            document.getElementById('icardTotal').textContent = resEl ? resEl.textContent : '0';
+            const d = document.getElementById('icardDiff');
+            const raw = diffEl ? diffEl.textContent : '-';
+            d.classList.remove('diff-pos', 'diff-neg');
+            if (raw === '-' || raw === '') { d.textContent = 'الفرق: —'; return; }
+            d.textContent = 'الفرق: ' + raw;
+            const v = parseFloat(String(raw).replace(/,/g, '')) || 0;
+            if (v > 0) d.classList.add('diff-pos');
+            else if (v < 0) d.classList.add('diff-neg');
+        }
+        // دبل-تاب لمسي على مرايا البطاقة (فتح القفل بالهاتف)
+        let lastCardTapEl = null, lastCardTapT = 0;
+        document.addEventListener('touchend', e => {
+            const el = e.target;
+            if (!el.matches || !el.matches('input[id^="cinput"]')) { lastCardTapEl = null; return; }
+            const now = Date.now();
+            if (lastCardTapEl === el && now - lastCardTapT < 500 && el.readOnly) {
+                e.preventDefault();
+                const m = el.id.match(/^cinput(\d)-(\d+)$/);
+                if (m) unlockCardCell(parseInt(m[1]), parseInt(m[2]));
+                lastCardTapEl = null;
+                return;
+            }
+            lastCardTapEl = el; lastCardTapT = now;
+        }, { passive: false });
+
+        // ═══════════ 📊 طي الملخص ═══════════
+        const SUMMARY_LS = 'summaryCollapsed_v1';
+        function toggleSummaryCollapse() {
+            const wrap = document.querySelector('.summary-section') || document.body;
+            const collapsed = wrap.classList.toggle('summary-collapsed');
+            const b = document.getElementById('summaryCollapseBtn');
+            if (b) b.textContent = collapsed ? '\uD83D\uDCCA إظهار الملخص' : '\uD83D\uDCCA إخفاء الملخص';
+            try { localStorage.setItem(SUMMARY_LS, collapsed ? '1' : '0'); } catch (e) {}
+        }
+        function applySummaryCollapse() {
+            if (localStorage.getItem(SUMMARY_LS) === '1') {
+                const wrap = document.querySelector('.summary-section') || document.body;
+                wrap.classList.add('summary-collapsed');
+                const b = document.getElementById('summaryCollapseBtn');
+                if (b) b.textContent = '\uD83D\uDCCA إظهار الملخص';
+            }
+        }
+
+        // ═══════════ 🌙 الوضع الليلي ═══════════
+        const DARK_LS = 'darkMode_v1';
+        function toggleDarkMode() {
+            const on = document.body.classList.toggle('dark');
+            const b = document.getElementById('darkModeBtn');
+            if (b) b.textContent = on ? '\u2600\uFE0F الوضع النهاري' : '\uD83C\uDF19 الوضع الليلي';
+            try { localStorage.setItem(DARK_LS, on ? '1' : '0'); } catch (e) {}
+        }
+        function applyDarkMode() {
+            if (localStorage.getItem(DARK_LS) === '1') {
+                document.body.classList.add('dark');
+                const b = document.getElementById('darkModeBtn');
+                if (b) b.textContent = '\u2600\uFE0F الوضع النهاري';
+            }
+        }
+
+        // ═══════════ إقلاع الميزات الجديدة ═══════════
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCsvBar();
+            applySummaryCollapse();
+            applyDarkMode();
+            // تركيز البحث تلقائياً عند الفتح
+            setTimeout(() => { const si = document.getElementById('searchInput'); if (si && document.querySelector('.container') && document.querySelector('.container').style.display !== 'none') si.focus(); }, 400);
+        });
+
         const NUMPAD_LS_KEY = 'numpadEnabled_v1';
         function numpadEnabled() {
             const saved = localStorage.getItem(NUMPAD_LS_KEY);
@@ -1860,7 +2142,7 @@
             updateNumpadToggleUI();
 
             document.addEventListener('focusin', e => {
-                if (e.target.matches && e.target.matches('input[id^="input"]') && !e.target.readOnly && numpadEnabled()) {
+                if (e.target.matches && e.target.matches('input[id^="input"], input[id^="cinput"]') && !e.target.readOnly && numpadEnabled()) {
                     opBarTarget = e.target;
                     const desktop = useAnchoredPad();
                     bar.classList.toggle('anchored', desktop);
@@ -1880,7 +2162,7 @@
             document.addEventListener('focusout', e => {
                 setTimeout(() => {
                     const a = document.activeElement;
-                    if (!a || !(a.matches && a.matches('input[id^="input"], input[id^="batchf-"]'))) {
+                    if (!a || !(a.matches && a.matches('input[id^="input"], input[id^="batchf-"], input[id^="cinput"]'))) {
                         bar.classList.remove('show');
                         opBarTarget = null;
                         restoreTempInputModes();
@@ -1918,14 +2200,36 @@
     function switchMainTab(which) {
         const inv = document.querySelector('.container');
         const shop = document.getElementById('shopTab');
-        const isShop = which === 'shop';
-        if (inv) inv.style.display = isShop ? 'none' : '';
-        if (shop) shop.style.display = isShop ? '' : 'none';
-        document.getElementById('mtab-inv').classList.toggle('active', !isShop);
-        document.getElementById('mtab-shop').classList.toggle('active', isShop);
+        const cards = document.getElementById('cardsTab');
+        if (inv) inv.style.display = which === 'inv' ? '' : 'none';
+        if (shop) shop.style.display = which === 'shop' ? '' : 'none';
+        if (cards) cards.style.display = which === 'cards' ? '' : 'none';
+        const mi = document.getElementById('mtab-inv'), ms = document.getElementById('mtab-shop');
+        if (mi) mi.classList.toggle('active', which === 'inv');
+        if (ms) ms.classList.toggle('active', which === 'shop');
+        ['bn-cards', 'bn-inv', 'bn-shop'].forEach(id => {
+            const b = document.getElementById(id);
+            if (b) b.classList.toggle('active', id === 'bn-' + (which === 'inv' ? 'inv' : which === 'shop' ? 'shop' : 'cards'));
+        });
         try { localStorage.setItem((window.BRANCH_ID==='marj'?'activeTab_marj_v1':'activeTab_v1'), which); } catch (e) {}
-        if (isShop && window.refreshShopTab) window.refreshShopTab();
+        if (which === 'shop' && window.refreshShopTab) window.refreshShopTab();
+        if (which === 'cards') { const ci = document.getElementById('cardSearchInput'); if (ci) setTimeout(() => ci.focus(), 60); }
     }
+    function navSearch() {
+        const cardsVisible = document.getElementById('cardsTab') && document.getElementById('cardsTab').style.display !== 'none';
+        if (cardsVisible) { document.getElementById('cardSearchInput').focus(); return; }
+        switchMainTab('inv');
+        const si = document.getElementById('searchInput');
+        if (si) { si.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => si.focus(), 150); }
+    }
+    function toggleMoreMenu() {
+        const m = document.getElementById('moreMenu');
+        if (m) m.classList.toggle('show');
+    }
+    document.addEventListener('click', e => {
+        const m = document.getElementById('moreMenu');
+        if (m && m.classList.contains('show') && !m.contains(e.target) && !(e.target.closest && e.target.closest('#bn-more'))) m.classList.remove('show');
+    });
 
     (function () {
         const LS_KEY = "kitchen_inv_v3";

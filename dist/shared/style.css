@@ -913,13 +913,13 @@
 
         /* عمود الفاصل: لون قوي مريح وعرض صغير */
         th.gap-head {
-            background: #00838f !important;
-            color: #e0f7fa !important;
+            background: #546e7a !important;
+            color: #eceff1 !important;
             font-size: 11px;
         }
 
         td.gap-col {
-            background: linear-gradient(180deg, #00838f, #006064) !important;
+            background: linear-gradient(180deg, #546e7a, #455a64) !important; /* رمادي أزرق هادئ بدل التركواز الصارخ */
             width: 44px;
             min-width: 44px;
         }
@@ -929,8 +929,8 @@
         input[id^="input6-"],
         input[id^="input7-"],
         input[id^="input8-"] {
-            background: #ede7f6;
-            border-color: #b39ddb;
+            background: #eef3f8; /* أزرق رمادي خفيف — تمييز بلا صراخ */
+            border-color: #b0bec5;
         }
 
         .sec-actions {
@@ -952,13 +952,14 @@
         }
 
         .sec-btn-xlsx {
-            background: #1b5e20;
-            color: #c8e6c9;
+            background: #00695c;
+            color: #e0f2f1;
         }
 
         .sec-btn-csv {
-            background: #4a148c;
-            color: #e1bee7;
+            background: transparent;
+            color: #00695c;
+            border: 1.5px solid #00695c;
         }
 
         tr.section-row:hover td {
@@ -996,7 +997,7 @@
         /* ─── لوحة الأرقام ─── */
         .op-bar {
             position: fixed;
-            bottom: 0;
+            bottom: 52px; /* فوق الشريط السفلي */
             left: 50%;
             transform: translateX(-50%) translateY(110%);
             visibility: hidden;
@@ -1089,7 +1090,7 @@
 
         .pad-fab {
             position: fixed;
-            bottom: 24px;
+            bottom: 84px; /* فوق الشريط السفلي */
             left: 14px;
             width: 56px;
             height: 56px;
@@ -1901,4 +1902,388 @@
     color: #9e9e9e;
     font-size: 12.5px;
     padding: 16px;
+}
+
+
+/* ═══════════ تسلسل بصري بالخط ═══════════ */
+.item-name {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: #1a237e;
+}
+
+.result-cell {
+    font-size: 16px !important;
+    font-weight: 900 !important;
+}
+
+.min-cell input {
+    font-size: 11.5px;
+    color: #90a4ae;
+}
+
+/* ═══════════ عمود مخفي (إعدادات الأعمدة) ═══════════ */
+th.col-hidden,
+td.col-hidden {
+    display: none !important;
+}
+
+/* ═══════════ زر المايك ═══════════ */
+.mic-btn {
+    border: none;
+    background: #eceff1;
+    border-radius: 10px;
+    width: 42px;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    touch-action: manipulation;
+}
+
+.mic-btn.listening {
+    background: #ffcdd2;
+    animation: micPulse 1s infinite;
+}
+
+@keyframes micPulse {
+    50% { transform: scale(1.12); }
+}
+
+/* ═══════════ الشريط السفلي — رفيع لا يغطي ═══════════ */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    background: #16213e;
+    display: flex;
+    z-index: 2900;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.bottom-nav button {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #b0bec5;
+    font-size: 10.5px;
+    font-weight: 700;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    cursor: pointer;
+    touch-action: manipulation;
+    padding: 4px 0;
+}
+
+.bottom-nav button span {
+    font-size: 17px;
+    line-height: 1;
+}
+
+.bottom-nav button.active {
+    color: #ffd54f;
+}
+
+body {
+    padding-bottom: 60px; /* حتى لا يغطي الشريط آخر المحتوى */
+}
+
+/* القائمة العلوية القديمة تختفي — الشريط السفلي بديلها */
+.main-tabs {
+    display: none;
+}
+
+/* ═══════════ قائمة المزيد ═══════════ */
+.more-menu {
+    position: fixed;
+    bottom: 60px;
+    left: 10px;
+    right: 10px;
+    max-width: 420px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.25);
+    z-index: 2950;
+    display: none;
+    overflow: hidden;
+}
+
+.more-menu.show {
+    display: block;
+    animation: fabPop 0.15s ease;
+}
+
+.more-menu button {
+    display: block;
+    width: 100%;
+    padding: 13px 18px;
+    border: none;
+    background: none;
+    text-align: right;
+    font-size: 14.5px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    color: #263238;
+}
+
+.more-menu button:active {
+    background: #f5f5f5;
+}
+
+/* ═══════════ تبويب البطاقات ═══════════ */
+.cards-tab {
+    padding: 12px 12px 70px;
+    max-width: 560px;
+    margin: 0 auto;
+}
+
+.card-search-wrap {
+    display: flex;
+    gap: 8px;
+}
+
+#cardSearchInput {
+    flex: 1;
+    padding: 12px;
+    font-size: 16px;
+    border: 2px solid #b0bec5;
+    border-radius: 12px;
+    font-family: inherit;
+}
+
+#cardSearchResults {
+    margin-top: 6px;
+}
+
+.csr-row {
+    padding: 11px 12px;
+    background: #fff;
+    border-bottom: 1px solid #eceff1;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    border-radius: 8px;
+}
+
+.csr-row:active {
+    background: #e3f2fd;
+}
+
+.csr-row .csr-sku {
+    color: #90a4ae;
+    font-size: 12px;
+    font-weight: 400;
+    direction: ltr;
+}
+
+#itemCard {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 22px rgba(0, 0, 0, 0.12);
+    padding: 16px;
+    margin-top: 10px;
+}
+
+.icard-name {
+    font-size: 21px;
+    font-weight: 900;
+    color: #1a237e;
+    text-align: center;
+}
+
+.icard-sku {
+    text-align: center;
+    color: #90a4ae;
+    font-size: 12.5px;
+    direction: ltr;
+    margin-bottom: 10px;
+}
+
+.icard-grouplabel {
+    font-size: 13px;
+    font-weight: 800;
+    color: #455a64;
+    margin: 10px 2px 5px;
+}
+
+.icard-grouplabel span {
+    color: #90a4ae;
+    font-weight: 400;
+    font-size: 11.5px;
+}
+
+.icard-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 7px;
+}
+
+.icard-row input {
+    width: 100%;
+    padding: 13px 4px;
+    font-size: 17px;
+    font-weight: 800;
+    text-align: center;
+    border: 2px solid #cfd8dc;
+    border-radius: 12px;
+    font-family: inherit;
+    box-sizing: border-box;
+    touch-action: manipulation;
+}
+
+.icard-row input:focus {
+    border-color: #1a73e8;
+    outline: none;
+}
+
+.icard-row input[id^="cinput5"],
+.icard-row input[id^="cinput6"],
+.icard-row input[id^="cinput7"],
+.icard-row input[id^="cinput8"] {
+    background: #eef3f8;
+}
+
+.icard-row input.cell-locked {
+    background: #e0e0e0 !important;
+    color: #757575;
+}
+
+.icard-results {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 2px dashed #eceff1;
+}
+
+.icard-total {
+    font-size: 17px;
+    font-weight: 900;
+    color: #1b5e20;
+}
+
+.icard-diff {
+    font-size: 14px;
+    font-weight: 800;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: #f5f5f5;
+    color: #78909c;
+}
+
+.icard-diff.diff-pos {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.icard-diff.diff-neg {
+    background: #ffebee;
+    color: #c62828;
+}
+
+/* ═══════════ طي الملخص ═══════════ */
+.summary-collapse-btn {
+    display: block;
+    margin: 4px auto 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.12);
+    color: #cfd8dc;
+    border-radius: 999px;
+    padding: 5px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.summary-collapsed .summary-pair {
+    display: none !important;
+}
+
+/* ═══════════ الوضع الليلي ═══════════ */
+body.dark {
+    background: #10131a;
+    color: #cfd8dc;
+}
+
+body.dark .container,
+body.dark .table-container,
+body.dark #itemCard,
+body.dark .modal-box,
+body.dark .more-menu {
+    background: #1a1f2b;
+    color: #cfd8dc;
+}
+
+body.dark #inventoryTable td {
+    background: #1a1f2b;
+    color: #cfd8dc;
+    border-color: #2c3446;
+}
+
+body.dark #inventoryTable input,
+body.dark #inventoryTable select,
+body.dark #cardSearchInput,
+body.dark .icard-row input {
+    background: #232a3a;
+    color: #eceff1;
+    border-color: #3a445c;
+}
+
+body.dark input[id^="input5-"],
+body.dark input[id^="input6-"],
+body.dark input[id^="input7-"],
+body.dark input[id^="input8-"],
+body.dark .icard-row input[id^="cinput5"],
+body.dark .icard-row input[id^="cinput6"],
+body.dark .icard-row input[id^="cinput7"],
+body.dark .icard-row input[id^="cinput8"] {
+    background: #1e2a3d;
+}
+
+body.dark #inventoryTable input.cell-locked,
+body.dark .icard-row input.cell-locked {
+    background: #12161f !important;
+    color: #607d8b;
+}
+
+body.dark td.col-pinned {
+    background: #202638;
+}
+
+body.dark .item-name {
+    color: #90caf9;
+}
+
+body.dark .tools-panel,
+body.dark .search-section,
+body.dark .csv-bar {
+    background: #1a1f2b;
+}
+
+body.dark .csr-row {
+    background: #1a1f2b;
+    border-color: #2c3446;
+    color: #cfd8dc;
+}
+
+body.dark .icard-name {
+    color: #90caf9;
+}
+
+body.dark .more-menu button {
+    color: #cfd8dc;
+    border-color: #2c3446;
 }

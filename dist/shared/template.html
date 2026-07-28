@@ -35,6 +35,7 @@
         <div class="controls">
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="🔍 بحث عن مادة أو SKU...">
+                <button type="button" class="mic-btn" id="micBtn" onclick="startVoiceSearch()" title="بحث صوتي">🎤</button>
             </div>
             <button class="btn btn-tools" id="toolsToggle" onclick="toggleTools()">⚙️ الأدوات</button>
         </div>
@@ -60,15 +61,7 @@
                 <button class="btn btn-success" onclick="openScanner('add')">➕ مسح وإضافة</button>
                 <button class="btn btn-info" onclick="openBarcodeManager()">🔗 إدارة الباركودات</button>
             </div>
-            <div class="csv-bar">
-                <span class="csv-bar-label">📥 CSV للاستيراد في Foodics:</span>
-                <button class="btn csv-btn" onclick="exportSheetCSV('drinks')">🥤 المشروبات</button>
-                <button class="btn csv-btn" onclick="exportSheetCSV('general')">🧂 الجرد العام</button>
-                <button class="btn csv-btn" onclick="exportSheetCSV('pasta')">🍝 المعكرونة</button>
-                <button class="btn csv-btn" onclick="exportSheetCSV('koshari')">🍛 الكشري</button>
-                <button class="btn csv-btn" onclick="exportSheetCSV('desserts')">🍮 الحلويات</button>
-                <button class="btn csv-btn" onclick="exportSheetCSV('production')">🏭 الإنتاج الأسبوعي</button>
-            </div>
+            <div class="csv-bar" id="csvBar"><!-- يُملأ ديناميكياً من countSheets --></div>
         </div>
 
         <!-- SORT BANNER -->
@@ -136,6 +129,7 @@
                     <div class="s-value" id="matrixBoxes">0</div>
                 </div>
             </div>
+            <button class="summary-collapse-btn" id="summaryCollapseBtn" onclick="toggleSummaryCollapse()">📊 إخفاء الملخص</button>
             <!-- Water group (مخفي: المياه صارت ضمن الماتركس) -->
             <div class="summary-pair" id="waterGroup">
                 <div class="pair-label">WATER</div>
@@ -387,6 +381,48 @@
             </div>
             <div id="bcList"></div>
         </div>
+    </div>
+
+
+    <!-- ═══════════ تبويب البطاقات ═══════════ -->
+    <div class="cards-tab" id="cardsTab" style="display:none">
+        <div class="card-search-wrap">
+            <input type="text" id="cardSearchInput" placeholder="🔍 ابحث عن الصنف..." oninput="cardSearchLive()">
+            <button type="button" class="mic-btn" onclick="startVoiceSearch()" title="بحث صوتي">🎤</button>
+        </div>
+        <div id="cardSearchResults"></div>
+        <div id="itemCard" style="display:none">
+            <div class="icard-name" id="icardName"></div>
+            <div class="icard-sku" id="icardSku"></div>
+            <div class="icard-grouplabel">📦 الطرود <span id="icardPkgInfo"></span></div>
+            <div class="icard-row" id="icardPkgRow"></div>
+            <div class="icard-grouplabel">🔢 الحبات <span id="icardUnitInfo"></span></div>
+            <div class="icard-row" id="icardUnitRow"></div>
+            <div class="icard-results">
+                <div class="icard-total">الناتج: <b id="icardTotal">0</b> <span id="icardUnit"></span></div>
+                <div class="icard-diff" id="icardDiff">—</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ الشريط السفلي ═══════════ -->
+    <nav class="bottom-nav" id="bottomNav">
+        <button onclick="navSearch()" id="bn-search"><span>🔍</span>بحث</button>
+        <button onclick="openScanner('search')" id="bn-scan"><span>📷</span>مسح</button>
+        <button onclick="switchMainTab('cards')" id="bn-cards"><span>🗂</span>بطاقات</button>
+        <button onclick="switchMainTab('inv')" id="bn-inv"><span>📋</span>الجرد</button>
+        <button onclick="switchMainTab('shop')" id="bn-shop"><span>🛒</span>المشتريات</button>
+        <button onclick="toggleMoreMenu()" id="bn-more"><span>⚙️</span>المزيد</button>
+    </nav>
+
+    <!-- قائمة المزيد -->
+    <div class="more-menu" id="moreMenu">
+        <button onclick="toggleMoreMenu(); toggleTools()">🔧 لوحة الأدوات</button>
+        <button onclick="toggleMoreMenu(); openColModal()">🧱 الأعمدة</button>
+        <button onclick="toggleMoreMenu(); openBarcodeManager()">🔗 الباركودات</button>
+        <button onclick="toggleMoreMenu(); exportLsFile()">💾 تصدير نسخة احتياطية</button>
+        <button onclick="toggleMoreMenu(); importLsFile()">📂 استيراد نسخة</button>
+        <button onclick="toggleDarkMode()" id="darkModeBtn">🌙 الوضع الليلي</button>
     </div>
 
     <div class="toast" id="toast"></div>
