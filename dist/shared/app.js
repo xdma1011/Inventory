@@ -1377,6 +1377,7 @@
             opBarTarget = el;
             const desktop = (typeof useAnchoredPad === 'function') && useAnchoredPad();
             bar.classList.toggle('anchored', desktop);
+            bar.classList.toggle('card-compact', el.id.indexOf('cinput') === 0);
             bar.classList.add('show');
             // لو كيبورد الهاتف كان سيفتح (المفتاح مطفي): نمنعه مؤقتاً لهذه الخانة
             if (el.getAttribute('inputmode') !== 'none') {
@@ -1941,7 +1942,8 @@
                 for (let k = from; k < from + 4; k++) {
                     const src = document.getElementById(`input${k}-${idx}`);
                     const mi = document.createElement('input');
-                    mi.type = 'text'; mi.inputMode = 'decimal'; mi.autocomplete = 'off';
+                    mi.type = 'text'; mi.autocomplete = 'off';
+                    mi.inputMode = (typeof numpadEnabled === 'function' && numpadEnabled()) ? 'none' : 'decimal';
                     mi.id = `cinput${k}-${idx}`;
                     mi.placeholder = k === 8 ? '-0' : '0';
                     mi.value = src ? src.value : '';
@@ -2066,6 +2068,7 @@
                     const el = document.getElementById(`input${n}-${i}`);
                     if (el) el.setAttribute('inputmode', mode);
                 }
+            document.querySelectorAll('input[id^="cinput"]').forEach(el => el.setAttribute('inputmode', mode));
         }
         function toggleNumpad() {
             const on = !numpadEnabled();
@@ -2146,6 +2149,7 @@
                     opBarTarget = e.target;
                     const desktop = useAnchoredPad();
                     bar.classList.toggle('anchored', desktop);
+                    bar.classList.toggle('card-compact', e.target.id.indexOf('cinput') === 0);
                     bar.classList.add('show');
                     if (desktop) {
                         positionOpBarUnder(e.target); // تحت الخلية مباشرة (يشمل حالة البحث + إنتر لأنها تستدعي focus() أيضاً)

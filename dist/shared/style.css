@@ -2287,3 +2287,60 @@ body.dark .more-menu button {
     color: #cfd8dc;
     border-color: #2c3446;
 }
+
+
+/* ═══════════ اللوحة المضغوطة داخل البطاقات: حبة/طرد صف أفقي فوق الأرقام ═══════════ */
+.op-bar.card-compact {
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-areas:
+        "opitem opitem opitem opitem opitem"
+        "oplive oplive oplive oplive opdiff"
+        "opunit opunit opunit oppkg oppkg";
+    gap: 5px;
+    padding: 6px 8px calc(8px + env(safe-area-inset-bottom));
+}
+
+.op-bar.card-compact .op-item {
+    grid-area: opitem;
+    font-size: 12px;
+    padding: 2px 4px;
+}
+
+.op-bar.card-compact .op-live {
+    grid-area: oplive;
+    min-height: 30px;
+    padding: 4px 8px;
+}
+
+.op-bar.card-compact .op-diff {
+    grid-area: opdiff;
+}
+
+.op-bar.card-compact .op-nav {
+    grid-row: auto; /* إلغاء العمود الجانبي الطويل */
+    padding: 8px 4px;
+    font-size: 13.5px;
+    line-height: 1.2;
+}
+
+.op-bar.card-compact .op-unit {
+    grid-area: opunit;
+}
+
+.op-bar.card-compact .op-pkg {
+    grid-area: oppkg;
+}
+
+.op-bar.card-compact .op-nav br {
+    display: none; /* سطر واحد أفقي: 🔢 حبة */
+}
+
+.op-bar.card-compact button {
+    padding: 9px 0;
+    font-size: 16.5px;
+}
+
+.op-bar.card-compact [data-op="done"] {
+    grid-column: 1 / -1;
+    padding: 10px 0;
+}
