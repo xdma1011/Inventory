@@ -387,7 +387,7 @@
     <!-- ═══════════ تبويب البطاقات ═══════════ -->
     <div class="cards-tab" id="cardsTab" style="display:none">
         <div class="card-search-wrap">
-            <input type="text" id="cardSearchInput" placeholder="🔍 ابحث عن الصنف..." oninput="cardSearchLive()">
+            <input type="text" id="cardSearchInput" placeholder="🔍 ابحث عن الصنف..." oninput="cardSearchLive()" onkeydown="cardSearchEnter(event)">
             <button type="button" class="mic-btn" onclick="startVoiceSearch()" title="بحث صوتي">🎤</button>
         </div>
         <div id="cardSearchResults"></div>

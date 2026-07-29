@@ -1889,8 +1889,9 @@
             if (!SR) { showToast('متصفحك لا يدعم البحث الصوتي — جرّب Chrome', 'error'); btns.forEach(b => b.style.display = 'none'); return; }
             if (recActive) { try { recActive.stop(); } catch (e) {} recActive = null; btns.forEach(b => b.classList.remove('listening')); return; }
             const rec = new SR();
-            rec.lang = 'ar';
+            rec.lang = 'ar-JO';
             rec.interimResults = false;
+            rec.continuous = false;
             rec.maxAlternatives = 1;
             const cardsVisible = document.getElementById('cardsTab') && document.getElementById('cardsTab').style.display !== 'none';
             const target = cardsVisible ? document.getElementById('cardSearchInput') : document.getElementById('searchInput');
@@ -1904,13 +1905,34 @@
                 }
             };
             rec.onend = () => { btns.forEach(b => b.classList.remove('listening')); recActive = null; };
-            rec.onerror = () => { btns.forEach(b => b.classList.remove('listening')); recActive = null; showToast('لم أسمع بوضوح — حاول ثانية', 'error'); };
+            rec.onerror = ev => {
+                btns.forEach(b => b.classList.remove('listening'));
+                recActive = null;
+                if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed')
+                    showToast('\u26D4 المايك محجوب — اسمح به من إعدادات الموقع بالمتصفح (أيقونة القفل بجانب العنوان)', 'error');
+                else if (ev.error === 'no-speech')
+                    showToast('لم أسمع شيئاً — قرّب الهاتف وحاول ثانية', 'error');
+                else if (ev.error === 'network')
+                    showToast('البحث الصوتي يحتاج إنترنت', 'error');
+                else showToast('لم أسمع بوضوح — حاول ثانية', 'error');
+            };
             recActive = rec;
-            rec.start();
+            try { rec.start(); showToast('\uD83C\uDFA4 تكلم الآن...', 'success'); }
+            catch (e) { recActive = null; btns.forEach(b => b.classList.remove('listening')); }
         }
+        // منع قائمة الضغط الطويل (تحميل الصفحة/تحديد) على أزرار المايك
+        document.addEventListener('contextmenu', e => {
+            if (e.target.closest && e.target.closest('.mic-btn')) e.preventDefault();
+        });
 
         // ═══════════ 🗂️ تبويب البطاقات — مرايا متزامنة مع محرك الجدول نفسه ═══════════
         let cardIdx = null;
+        function cardSearchEnter(e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            const first = document.querySelector('#cardSearchResults .csr-row');
+            if (first) first.click();
+        }
         function cardSearchLive() {
             const q = normalizeSearch(document.getElementById('cardSearchInput').value.trim());
             const res = document.getElementById('cardSearchResults');
@@ -2221,10 +2243,10 @@
     }
     function navSearch() {
         const cardsVisible = document.getElementById('cardsTab') && document.getElementById('cardsTab').style.display !== 'none';
-        if (cardsVisible) { document.getElementById('cardSearchInput').focus(); return; }
+        if (cardsVisible) { const ci = document.getElementById('cardSearchInput'); ci.focus(); try { ci.select(); } catch (e) {} return; }
         switchMainTab('inv');
         const si = document.getElementById('searchInput');
-        if (si) { si.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => si.focus(), 150); }
+        if (si) { si.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => { si.focus(); try { si.select(); } catch (e) {} }, 150); }
     }
     function toggleMoreMenu() {
         const m = document.getElementById('moreMenu');
