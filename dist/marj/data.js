@@ -36,7 +36,7 @@ const inventoryData = [
             { name: "سكر", sku: "sk-0039", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "حليب بودرة", sku: "sk-0057", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "كريمة طبخ", sku: "sk-0058", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "خلطة حليب ام علي", sku: "SP-0157", unit: "Batch", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "خلطة حليب ام علي", sku: "SP-0157", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "عدس كشري حب مطبوخ", sku: "SP-0177", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
         ];
 
@@ -44,7 +44,7 @@ const sectionStarts = { 0: "🏭 شيت الجرد ١ — الإنتاج", 11: "
 
 const batchDefaults = {
     'P-0110||حمص مطبوخ': 2240,
-    'SP-0157||خلطة حليب ام علي': 550
+    // SP-0157 خلطة حليب ام علي: PC مباشرة — بلا معامل باتش
 };
 
 const countSheets = [
