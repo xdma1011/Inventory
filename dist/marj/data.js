@@ -31,12 +31,21 @@ const inventoryData = [
             { name: "مياه معدنية - ماتركس", sku: "sk-0079", unit: "PC", packageSize: 12.0, secondOp: "*", secondVal: 1, isFixed: false, category: "water", pkgBarcode: "", unitBarcode: "" },
             { name: "ماتركس كولا", sku: "sk-0080", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" },
             { name: "اكياس الطلبات - صغير", sku: "sk-0147", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "علبة مهلبية", sku: "sk-0177", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
+            { name: "علبة مهلبية", sku: "sk-0177", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "حمص مطبوخ", sku: "P-0110", unit: "Batch", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "سكر", sku: "sk-0039", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "حليب بودرة", sku: "sk-0057", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "كريمة طبخ", sku: "sk-0058", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "خلطة حليب ام علي", sku: "SP-0157", unit: "Batch", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "عدس كشري حب مطبوخ", sku: "SP-0177", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
         ];
 
 const sectionStarts = { 0: "🏭 شيت الجرد ١ — الإنتاج", 11: "📦 شيت الجرد ٢ — المواد والمشروبات" };
 
-const batchDefaults = {};
+const batchDefaults = {
+    'P-0110||حمص مطبوخ': 2240,
+    'SP-0157||خلطة حليب ام علي': 550
+};
 
 const countSheets = [
             { id: 'sheet1', title: 'شيت الجرد ١ — الإنتاج', icon: '🏭', items: [
@@ -71,6 +80,12 @@ const countSheets = [
                 { n: 'مياه معدنية', s: 'sk-0079' },
                 { n: 'ماتركس كولا', s: 'sk-0080' },
                 { n: 'اكياس الطلبات - صغير', s: 'sk-0147' },
-                { n: 'علبة مهلبية', s: 'sk-0177' }
+                { n: 'علبة مهلبية', s: 'sk-0177' },
+                { n: 'حمص مطبوخ', s: 'P-0110' },
+                { n: 'سكر', s: 'sk-0039' },
+                { n: 'حليب بودرة', s: 'sk-0057' },
+                { n: 'كريمة طبخ', s: 'sk-0058' },
+                { n: 'خلطة حليب ام علي', s: 'SP-0157' },
+                { n: 'عدس كشري حب مطبوخ', s: 'SP-0177' },
             ]}
         ];
