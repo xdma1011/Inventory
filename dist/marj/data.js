@@ -37,7 +37,13 @@ const inventoryData = [
             { name: "حليب بودرة", sku: "sk-0057", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "كريمة طبخ", sku: "sk-0058", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "خلطة حليب ام علي", sku: "SP-0157", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "عدس كشري حب مطبوخ", sku: "SP-0177", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
+            { name: "عدس كشري حب مطبوخ", sku: "SP-0177", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "ماتريكس تفاح", sku: "sk-0148", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" },
+            { name: "ماتركس كولا زيرو", sku: "sk-0081", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" },
+            { name: "ماتركس اب", sku: "sk-0083", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" },
+            { name: "ماتركس اب زيرو", sku: "sk-0084", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" },
+            { name: "ماتركس فروت", sku: "sk-0085", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" },
+            { name: "ماتركس اورانج", sku: "sk-0082", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" }
         ];
 
 const sectionStarts = { 0: "🏭 شيت الجرد ١ — الإنتاج", 11: "📦 شيت الجرد ٢ — المواد والمشروبات" };
@@ -79,6 +85,12 @@ const countSheets = [
                 { n: 'ليمون', s: 'sk-0102' },
                 { n: 'مياه معدنية', s: 'sk-0079' },
                 { n: 'ماتركس كولا', s: 'sk-0080' },
+                { n: 'ماتريكس تفاح', s: 'sk-0148' },
+                { n: 'ماتركس كولا زيرو', s: 'sk-0081' },
+                { n: 'ماتركس اب', s: 'sk-0083' },
+                { n: 'ماتركس اب زيرو', s: 'sk-0084' },
+                { n: 'ماتركس فروت', s: 'sk-0085' },
+                { n: 'ماتركس اورانج', s: 'sk-0082' },
                 { n: 'اكياس الطلبات - صغير', s: 'sk-0147' },
                 { n: 'علبة مهلبية', s: 'sk-0177' },
                 { n: 'حمص مطبوخ', s: 'P-0110' },

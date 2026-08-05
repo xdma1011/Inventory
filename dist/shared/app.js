@@ -1030,6 +1030,81 @@
             return null;
         }
 
+
+        // ═══════════ 📸 صورة فرق الماتركس (بدون المياه) ═══════════
+        function exportMatrixPhoto() {
+            const rows = inventoryData
+                .map((it, i) => ({ it, i }))
+                .filter(({ it }) => it.category === 'matrix');
+            if (!rows.length) { showToast('لا توجد أصناف ماتركس', 'error'); return; }
+            const W = 640;
+            const rowH = 46;
+            const headH = 92;
+            const footH = 60;
+            const H = headH + rows.length * rowH + footH;
+            const canvas = document.createElement('canvas');
+            canvas.width = W; canvas.height = H;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#0f1420'; ctx.fillRect(0, 0, W, H);
+            ctx.textBaseline = 'middle';
+            ctx.direction = 'rtl';
+            // العنوان
+            ctx.fillStyle = '#ffd54f';
+            ctx.font = 'bold 24px Tahoma, Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('\uD83E\uDD64 فرق الماتركس', W - 20, 34);
+            ctx.fillStyle = '#90a4ae';
+            ctx.font = '13px Tahoma, Arial';
+            ctx.fillText(new Date().toLocaleDateString('ar-EG'), W - 20, 60);
+            // رأس الجدول
+            let y = headH;
+            ctx.fillStyle = '#1a1f2e';
+            ctx.fillRect(0, y - 30, W, 30);
+            ctx.fillStyle = '#cfd8dc';
+            ctx.font = 'bold 13px Tahoma, Arial';
+            ctx.textAlign = 'right'; ctx.fillText('الصنف', W - 16, y - 15);
+            ctx.textAlign = 'center'; ctx.fillText('الجرد', W - 260, y - 15);
+            ctx.fillText('النظام', W - 400, y - 15);
+            ctx.fillText('الفرق', 80, y - 15);
+            // الصفوف
+            let totalDiff = 0;
+            rows.forEach(({ it, i }, r) => {
+                const qty = parseFloat((document.getElementById(`result-${i}`) || { textContent: '0' }).textContent.replace(/,/g, '')) || 0;
+                const sysQty = systemData[it.sku.toLowerCase()];
+                const diff = sysQty !== undefined ? qty - sysQty : null;
+                if (diff !== null) totalDiff += diff;
+                const ry = y + r * rowH;
+                ctx.fillStyle = r % 2 === 0 ? '#161b28' : '#1a1f2e';
+                ctx.fillRect(0, ry, W, rowH);
+                ctx.fillStyle = '#e8eaf0';
+                ctx.font = '14px Tahoma, Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(it.name, W - 16, ry + rowH / 2);
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#90caf9';
+                ctx.fillText(qty.toLocaleString('en-US'), W - 260, ry + rowH / 2);
+                ctx.fillStyle = '#90a4ae';
+                ctx.fillText(sysQty !== undefined ? sysQty.toLocaleString('en-US') : '—', W - 400, ry + rowH / 2);
+                ctx.fillStyle = diff === null ? '#607d8b' : diff > 0 ? '#66bb6a' : diff < 0 ? '#ef5350' : '#90a4ae';
+                ctx.font = 'bold 14px Tahoma, Arial';
+                ctx.fillText(diff === null ? '—' : diff.toLocaleString('en-US', { maximumFractionDigits: 2 }), 80, ry + rowH / 2);
+            });
+            // المجموع
+            const fy = y + rows.length * rowH + 30;
+            ctx.strokeStyle = '#37474f'; ctx.beginPath(); ctx.moveTo(16, fy - 20); ctx.lineTo(W - 16, fy - 20); ctx.stroke();
+            ctx.fillStyle = '#ffd54f';
+            ctx.font = 'bold 18px Tahoma, Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText('إجمالي فرق الماتركس: ' + totalDiff.toLocaleString('en-US', { maximumFractionDigits: 2 }), W - 16, fy);
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `matrix_diff_${new Date().toISOString().slice(0, 10)}.png`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('\u2705 تم تنزيل صورة فرق الماتركس', 'success');
+            }, 'image/png');
+        }
         function renderCsvBar() {
             const bar = document.getElementById('csvBar');
             if (!bar || typeof countSheets === 'undefined') return;
@@ -2239,7 +2314,7 @@
         });
         try { localStorage.setItem((window.BRANCH_ID==='marj'?'activeTab_marj_v1':'activeTab_v1'), which); } catch (e) {}
         if (which === 'shop' && window.refreshShopTab) window.refreshShopTab();
-        if (which === 'cards') { const ci = document.getElementById('cardSearchInput'); if (ci) setTimeout(() => ci.focus(), 60); }
+        if (which === 'cards') { const ci = document.getElementById('cardSearchInput'); if (ci) setTimeout(() => { if (document.getElementById('itemCard').style.display === 'none') ci.focus(); }, 60); }
     }
     function navSearch() {
         const cardsVisible = document.getElementById('cardsTab') && document.getElementById('cardsTab').style.display !== 'none';
