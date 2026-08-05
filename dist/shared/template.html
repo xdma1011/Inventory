@@ -71,7 +71,7 @@
         <!-- UPLOAD -->
         <div class="upload-section">
             <span>📤 بيانات النظام:</span>
-            <input type="file" id="systemFile" onchange="uploadSystemData()"
+            <input type="file" id="systemFile" multiple onchange="uploadSystemData()"
                 accept=".csv,.txt,.json,.xlsx,.xls,text/csv,text/comma-separated-values,text/plain,application/json,application/vnd.ms-excel,application/octet-stream">
             <button class="btn btn-info" onclick="uploadSystemData()">🔄 تحميل</button>
             <button class="btn btn-warning" onclick="togglePasteBox()">📋 لصق</button>
@@ -80,6 +80,7 @@
         <div class="paste-sys" id="pasteSysBox" style="display:none">
             <textarea id="pasteSysArea" placeholder="افتح ملف CSV بأي تطبيق نصوص، انسخ محتواه كاملاً والصقه هنا&#10;Name,SKU,Barcode,Storage Unit,Quantity&#10;بندق,sk-0062,,G,600"></textarea>
             <button class="btn btn-info" onclick="pasteSystemData()">✔ اقرأ الملصوق</button>
+            <button class="btn btn-success" onclick="pasteSystemData(true)">➕ أضف للموجود (دمج)</button>
         </div>
 
         <!-- TABLE -->

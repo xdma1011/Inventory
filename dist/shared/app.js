@@ -51,15 +51,23 @@
         function createTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
+            const sectionKeys = Object.keys(sectionStarts).map(Number).sort((a, b) => a - b);
             inventoryData.forEach((item, index) => {
                 if (sectionStarts[index]) {
                     const sr = document.createElement('tr');
                     sr.className = 'section-row';
                     const secLabel = sectionStarts[index];
                     const secSheet = sheetIdForSectionLabel(secLabel);
-                    const secBtns = secSheet
-                        ? `<span class="sec-actions"><button class="sec-btn sec-btn-xlsx" onclick="exportSheetXLSX('${secSheet}')">📊 Excel</button><button class="sec-btn sec-btn-csv" onclick="exportSheetCSV('${secSheet}')">📥 CSV</button></span>`
-                        : '';
+                    const kIdx = sectionKeys.indexOf(index);
+                    const secEnd = kIdx >= 0 && kIdx < sectionKeys.length - 1 ? sectionKeys[kIdx + 1] : inventoryData.length;
+                    let secBtns = '';
+                    if (secSheet) {
+                        secBtns = `<span class="sec-actions"><button class="sec-btn sec-btn-xlsx" onclick="exportSheetXLSX('${secSheet}')">📊 Excel</button><button class="sec-btn sec-btn-csv" onclick="exportSheetCSV('${secSheet}')">📥 CSV</button></span>`;
+                    } else {
+                        // قسم بصري لا يقابل شيت فوديكس واحد (مثل: الماتركس والمياه، خارج الشيت) — نصدّر أصنافه بالفهرس مباشرة
+                        const rid = 'sec' + index;
+                        secBtns = `<span class="sec-actions"><button class="sec-btn sec-btn-xlsx" onclick="exportRangeXLSX('${rid}', '${secLabel.replace(/'/g, "\\'")}', ${index}, ${secEnd})">📊 Excel</button><button class="sec-btn sec-btn-csv" onclick="exportRangeCSV('${rid}', '${secLabel.replace(/'/g, "\\'")}', ${index}, ${secEnd})">📥 CSV</button></span>`;
+                    }
                     sr.innerHTML = `<td colspan="18"><span class="sec-label">${secLabel}</span>${secBtns}</td>`;
                     tbody.appendChild(sr);
                 }
@@ -474,10 +482,10 @@
             return res.map(c => c.trim());
         }
         // تحليل نص النظام (CSV أو JSON) — يرجع عدد المواد أو يرمي خطأ برسالة واضحة
-        function parseSystemText(content) {
+        function parseSystemText(content, mergeMode) {
             content = String(content || '').replace(/^\uFEFF/, '').trim();
             if (!content) throw new Error('المحتوى فارغ');
-            systemData = {};
+            if (!mergeMode) systemData = {};
             if (content[0] === '[' || content[0] === '{') {
                 const arr = JSON.parse(content);
                 (Array.isArray(arr) ? arr : [arr]).forEach(item => {
@@ -522,7 +530,11 @@
             const matched = Object.keys(systemData).filter(sku => inventoryData.some(item => item.sku.toLowerCase() === sku)).length;
                     inventoryData.forEach((_, i) => updateDiff(i));
                     updateSummaryTotals();
-                    document.getElementById('systemStatus').textContent = `متصل (${matched} مادة)`;
+                    const noMatch = inventoryData.filter(it => systemData[it.sku.toLowerCase()] === undefined);
+                    const st = document.getElementById('systemStatus');
+                    st.textContent = `متصل — ${matched} من ${inventoryData.length} لها فرق` + (noMatch.length ? ` (${noMatch.length} بلا مقابل)` : ' \u2713 الكل');
+                    st.title = noMatch.length ? 'بلا مقابل بملف النظام: ' + noMatch.map(x => x.name).join('، ') : 'كل أصناف الجدول لها مقابل بالنظام';
+                    st.style.color = noMatch.length ? '#ffb74d' : '#66bb6a';
                     let sysTotal = 0;
                     inventoryData.forEach(item => { if (systemData[item.sku.toLowerCase()] !== undefined) sysTotal += systemData[item.sku.toLowerCase()]; });
                     document.getElementById('systemTotal').textContent = `💻 المجموع الكلي من النظام: ${sysTotal.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
@@ -532,35 +544,47 @@
             refreshLiveAfterSystemUpdate();
         }
         function uploadSystemData() {
-            const file = document.getElementById('systemFile').files[0];
-            if (!file) { showToast('الرجاء اختيار ملف أولاً', 'error'); return; }
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                try {
-                    const content = decodeSysBuffer(e.target.result);
-                    if (content === '__XLSX__') {
-                        showToast('هذا ملف Excel — من فوديكس صدّر بصيغة CSV، أو افتح الملف وانسخ محتواه بزر 📋 لصق', 'error');
-                        return;
-                    }
-                    parseSystemText(content);
-                    applySystemData();
-                } catch (err) { showToast('خطأ في قراءة الملف: ' + err.message + ' — جرّب زر 📋 لصق', 'error'); }
-            };
-            reader.onerror = function () { showToast('المتصفح منع قراءة الملف — استخدم زر 📋 لصق', 'error'); };
-            reader.readAsArrayBuffer(file);
+            const files = Array.from(document.getElementById('systemFile').files || []);
+            if (!files.length) { showToast('الرجاء اختيار ملف أولاً', 'error'); return; }
+            let done = 0, ok = 0, failed = [];
+            // ملفات متعددة تُدمج معاً: كل شيت فوديكس يغطي جزءاً من الأصناف، والدمج يعطي فروقات للجميع
+            files.forEach((file, fi) => {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const content = decodeSysBuffer(e.target.result);
+                        if (content === '__XLSX__') { failed.push(file.name + ' (Excel — صدّره CSV)'); }
+                        else { parseSystemText(content, fi > 0 || ok > 0); ok++; }
+                    } catch (err) { failed.push(file.name + ' (' + err.message + ')'); }
+                    if (++done === files.length) finishUpload(ok, failed, files.length);
+                };
+                reader.onerror = function () {
+                    failed.push(file.name + ' (المتصفح منع القراءة)');
+                    if (++done === files.length) finishUpload(ok, failed, files.length);
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+        function finishUpload(ok, failed, total) {
+            if (ok > 0) applySystemData();
+            if (failed.length) showToast('⚠️ تعذّر: ' + failed.join('، ') + ' — جرّب زر \uD83D\uDCCB لصق', 'error');
+            else if (total > 1) showToast(`✅ دُمج ${ok} ملفات — ${Object.keys(systemData).length} كود بالنظام`, 'success');
         }
         function togglePasteBox() {
             const b = document.getElementById('pasteSysBox');
             b.style.display = b.style.display === 'none' ? '' : 'none';
             if (b.style.display === '') document.getElementById('pasteSysArea').focus();
         }
-        function pasteSystemData() {
+        function pasteSystemData(merge) {
             try {
                 const txt = document.getElementById('pasteSysArea').value;
                 if (!txt.trim()) { showToast('الصق محتوى الملف أولاً', 'error'); return; }
-                parseSystemText(txt);
+                const before = Object.keys(systemData).length;
+                parseSystemText(txt, !!merge);
                 applySystemData();
-                document.getElementById('pasteSysBox').style.display = 'none';
+                document.getElementById('pasteSysArea').value = '';
+                if (merge) showToast(`➕ أُضيف ${Object.keys(systemData).length - before} كوداً — الإجمالي ${Object.keys(systemData).length}`, 'success');
+                else document.getElementById('pasteSysBox').style.display = 'none';
             } catch (err) { showToast('خطأ في القراءة: ' + err.message, 'error'); }
         }
         function clearSystemData() {
@@ -1015,11 +1039,21 @@
             else showToast(`✅ Excel ${sheet.title} جاهز للاستيراد في Foodics`, 'success');
         }
         // ربط عنوان القسم بالجدول بشيت الجرد الموافق له
+        // يبني كائن شيت مؤقت من نطاق أصناف بالجدول (للأقسام البصرية التي ليست شيت فوديكس واحد مباشر)
+        function rangeSheet(id, title, startIdx, endIdx) {
+            const items = [];
+            for (let i = startIdx; i < endIdx; i++) {
+                if (inventoryData[i]) items.push({ n: inventoryData[i].name, s: inventoryData[i].sku });
+            }
+            return { id, title, items };
+        }
+        function exportRangeCSV(id, title, startIdx, endIdx) { exportSheetObjCSV(rangeSheet(id, title, startIdx, endIdx)); }
+        function exportRangeXLSX(id, title, startIdx, endIdx) { exportSheetObjXLSX(rangeSheet(id, title, startIdx, endIdx)); }
         function sheetIdForSectionLabel(label) {
             // شيتات مرج الحمام المرقمة أولاً (عناوينها تحوي كلمات تتقاطع مع شيتات الجاردنز)
             if (label.includes('شيت الجرد ١')) return 'sheet1';
             if (label.includes('شيت الجرد ٢')) return 'sheet2';
-            if (label.includes('الترتيب الرسمي') || label.includes('شيت الجرد \u2014')) return 'main';
+            // ملاحظة: "main" (الشيت الموحد القديم) لم يعد موجوداً — قسم "الترتيب الرسمي" الآن يُصدَّر بالفهرس مباشرة (rangeSheet)
             if (label.includes('خارج الشيت')) return null;
             if (label.includes('مشروبات')) return 'drinks';
             if (label.includes('الجرد العام')) return 'general';

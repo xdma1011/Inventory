@@ -11,8 +11,6 @@ const inventoryData = [
             { name: "علبة دقة منتجة", sku: "p-0125", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة صوص الكشري كمالة", sku: "sk-0099", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 50 علبة", pkgBarcode: "", unitBarcode: "" },
             { name: "علبة خبز مقلي منتجة", sku: "p-0127", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "مياه معدنية - ماتركس", sku: "sk-0079", unit: "PC", packageSize: 12.0, secondOp: "*", secondVal: 1, isFixed: false, category: "water", note: "صندوق = 12 حبة", pkgBarcode: "", unitBarcode: "" },
-            { name: "ماتركس كولا", sku: "sk-0080", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
             { name: "شوك", sku: "sk-0041", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, note: "كل ربطة = 25 حبة — الناتج عدد القطع الكلي", pkgBarcode: "", unitBarcode: "" },
             { name: "معالق - ملاعق", sku: "sk-0040", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, note: "كل ربطة = 25 حبة — الناتج عدد القطع الكلي", pkgBarcode: "", unitBarcode: "" },
             { name: "معكرونة كشري خام كوع", sku: "sk-0033", unit: "G", packageSize: 9.6, secondOp: "*", secondVal: 1, isFixed: false, note: "كيس = 9.6 كيلو", pkgBarcode: "", unitBarcode: "" },
@@ -77,16 +75,18 @@ const inventoryData = [
             { name: "جزر", sku: "sk-0037", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "كرفس", sku: "sk-0075", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "ليمون", sku: "sk-0102", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "خبز", sku: "sk-0101", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "مياه معدنية - ماتركس", sku: "sk-0079", unit: "PC", packageSize: 12.0, secondOp: "*", secondVal: 1, isFixed: false, category: "water", note: "صندوق = 12 حبة", pkgBarcode: "", unitBarcode: "" },
+            { name: "ماتركس كولا", sku: "sk-0080", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
             { name: "ماتريكس تفاح", sku: "sk-0148", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
             { name: "ماتركس كولا زيرو", sku: "sk-0081", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
             { name: "ماتركس اب", sku: "sk-0083", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
             { name: "ماتركس اب زيرو", sku: "sk-0084", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
             { name: "ماتركس فروت", sku: "sk-0085", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
-            { name: "ماتركس اورانج", sku: "sk-0082", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" }
+            { name: "ماتركس اورانج", sku: "sk-0082", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
+            { name: "خبز", sku: "sk-0101", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
         ];
 
-const sectionStarts = { 0: "🧾 شيت الجرد — الترتيب الرسمي", 75: "📁 خارج الشيت (لا تُصدَّر)" };
+const sectionStarts = { 0: "🧾 شيت الجرد — الترتيب الرسمي", 73: "🥤 الماتركس والمياه", 81: "📁 خارج الشيت" };
 
 const batchDefaults = {
             'P-0112||بصل مقلي منتج': 0.7326,
