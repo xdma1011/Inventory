@@ -1318,10 +1318,17 @@
         function lockExprCell(el) { el.readOnly = true; el.classList.add('cell-locked'); }
         function unlockExprCell(el) { el.readOnly = false; el.classList.remove('cell-locked'); el.focus(); try { el.select(); } catch (e) {} }
         function jumpToSearch() {
+            // لا تخطف التركيز إذا كنا بتبويب البطاقات — بحث البطاقات هو الهدف هناك
+            const cardsTab = document.getElementById('cardsTab');
+            if (cardsTab && cardsTab.style.display !== 'none') return;
             const si = document.getElementById('searchInput');
             if (!si) return;
             si.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(() => { si.focus(); si.select(); }, 250);
+            setTimeout(() => {
+                const ct = document.getElementById('cardsTab');
+                if (ct && ct.style.display !== 'none') return; // تبدّل التبويب أثناء الانتظار
+                si.focus(); si.select();
+            }, 250);
         }
         // اعتماد الخلية: قفلها إذا فيها قيمة (غير فارغة وغير صفر) ثم الرجوع للبحث
         function commitCell(el) {
@@ -1334,7 +1341,7 @@
             if (bar) bar.classList.remove('show');
             opBarTarget = null;
             restoreTempInputModes();
-            if (fromCard) { const cs = document.getElementById('cardSearchInput'); if (cs) cs.focus(); }
+            if (fromCard) { const cs = document.getElementById('cardSearchInput'); if (cs) { cs.focus(); try { cs.select(); } catch (e) {} } }
             else jumpToSearch();
         }
         let dblGuard = 0;
@@ -2102,9 +2109,9 @@
             const mi = document.getElementById(`cinput${k}-${idx}`);
             const src = document.getElementById(`input${k}-${idx}`);
             if (src) lockInput(src);
-            if (mi && src && src.readOnly) { mi.readOnly = true; mi.classList.add('cell-locked'); }
+            if (mi && src && src.readOnly) { mi.readOnly = true; mi.classList.add('cell-locked'); mi.blur(); }
             const cs = document.getElementById('cardSearchInput');
-            if (cs) cs.focus();
+            if (cs) { cs.focus(); try { cs.select(); } catch (e) {} }
         }
         function unlockCardCell(k, idx) {
             const mi = document.getElementById(`cinput${k}-${idx}`);
