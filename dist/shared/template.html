@@ -391,6 +391,7 @@
         <div class="card-search-wrap">
             <input type="text" id="cardSearchInput" placeholder="🔍 ابحث عن الصنف..." oninput="cardSearchLive()" onkeydown="cardSearchEnter(event)">
             <button type="button" class="mic-btn" onclick="startVoiceSearch()" title="بحث صوتي">🎤</button>
+            <button type="button" class="grid-toggle-btn" id="cardViewToggle" onclick="toggleCardViewMode()">🔲 عرض شبكي</button>
         </div>
         <div id="cardSearchResults"></div>
         <div id="itemCard" style="display:none">
@@ -405,6 +406,7 @@
                 <div class="icard-diff" id="icardDiff">—</div>
             </div>
         </div>
+        <div class="grid-view" id="gridView" style="display:none"></div>
     </div>
 
     <!-- ═══════════ الشريط السفلي ═══════════ -->

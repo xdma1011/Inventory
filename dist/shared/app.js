@@ -373,7 +373,7 @@
                 }
             });
             document.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' && e.target.tagName !== 'BUTTON' && e.target.type !== 'file' && e.target.type !== 'password' && e.target.id !== 'searchInput' && !(e.target.id || '').startsWith('batchf-')) {
+                if (e.key === 'Enter' && e.target.tagName !== 'BUTTON' && e.target.type !== 'file' && e.target.type !== 'password' && e.target.id !== 'searchInput' && e.target.id !== 'cardSearchInput' && !(e.target.id || '').startsWith('batchf-') && !(e.target.id || '').startsWith('cinput')) {
                     e.preventDefault();
                     const bar = document.getElementById('opBar');
                     if (bar) bar.classList.remove('show');
@@ -2046,10 +2046,13 @@
         function cardSearchEnter(e) {
             if (e.key !== 'Enter') return;
             e.preventDefault();
-            const first = document.querySelector('#cardSearchResults .csr-row');
-            if (first) first.click();
+            const results = document.querySelectorAll('#cardSearchResults .csr-row');
+            if (!results.length) return;
+            const m = results[0].getAttribute('onclick').match(/openItemCard\((\d+)\)/);
+            if (m) openItemCard(parseInt(m[1]), true); // true = اقفز لأول خلية فاضية بعد الفتح
         }
         function cardSearchLive() {
+            if (cardViewMode === 'grid') { buildGridView(document.getElementById('cardSearchInput').value); return; }
             const q = normalizeSearch(document.getElementById('cardSearchInput').value.trim());
             const res = document.getElementById('cardSearchResults');
             document.getElementById('itemCard').style.display = 'none';
@@ -2063,7 +2066,90 @@
                 ? matches.map(({ it, i }) => `<div class="csr-row" onclick="openItemCard(${i})"><span>${it.name}</span><span class="csr-sku">${it.sku}</span></div>`).join('')
                 : '<div class="bc-empty">لا نتائج</div>';
         }
-        function openItemCard(idx) {
+        // يبني صفاً من مرايا cinput لخلايا الجدول [from..to] لصنف idx — تُستخدم بالبطاقة المفردة وبالشبكة
+        function buildMirrorRow(row, idx, from, to) {
+            row.innerHTML = '';
+            for (let k = from; k <= to; k++) {
+                const src = document.getElementById(`input${k}-${idx}`);
+                const mi = document.createElement('input');
+                mi.type = 'text'; mi.autocomplete = 'off';
+                mi.inputMode = (typeof numpadEnabled === 'function' && numpadEnabled()) ? 'none' : 'decimal';
+                mi.id = `cinput${k}-${idx}`;
+                mi.placeholder = k === 8 ? '-0' : '0';
+                mi.value = src ? src.value : '';
+                if (src && src.readOnly) { mi.readOnly = true; mi.classList.add('cell-locked'); }
+                mi.addEventListener('input', () => syncCardCell(k, idx));
+                mi.addEventListener('keydown', e => { if (e.key === 'Enter') lockCardCell(k, idx); });
+                mi.addEventListener('dblclick', () => unlockCardCell(k, idx));
+                row.appendChild(mi);
+            }
+        }
+
+        // ═══════════ 🔲 عرض الشبكة (بطاقتين بالصف — للمراجعة السريعة) ═══════════
+        let cardViewMode = 'single';
+        function clearGridView() {
+            const gv = document.getElementById('gridView');
+            if (gv) { gv.innerHTML = ''; gv.style.display = 'none'; }
+        }
+        function toggleCardViewMode() {
+            cardViewMode = cardViewMode === 'single' ? 'grid' : 'single';
+            const btn = document.getElementById('cardViewToggle');
+            if (cardViewMode === 'grid') {
+                // نظّف البطاقة المفردة أولاً لتفادي تكرار معرّفات cinput بين الوضعين
+                document.getElementById('itemCard').style.display = 'none';
+                document.getElementById('icardPkgRow').innerHTML = '';
+                document.getElementById('icardUnitRow').innerHTML = '';
+                document.getElementById('cardSearchResults').innerHTML = '';
+                const gv = document.getElementById('gridView');
+                gv.style.display = '';
+                if (btn) btn.textContent = '🗂️ بطاقة مفردة';
+                buildGridView(document.getElementById('cardSearchInput').value);
+            } else {
+                clearGridView();
+                if (btn) btn.textContent = '🔲 عرض شبكي';
+            }
+        }
+        function buildGridView(term) {
+            const gv = document.getElementById('gridView');
+            if (!gv) return;
+            term = normalizeSearch(term || '');
+            gv.innerHTML = '';
+            const frag = document.createDocumentFragment();
+            const shown = [];
+            inventoryData.forEach((item, i) => {
+                if (term && !normalizeSearch(item.name).includes(term) && !item.sku.toLowerCase().includes(term)) return;
+                shown.push(i);
+                const card = document.createElement('div');
+                card.className = 'gcard';
+                card.innerHTML = `
+                    <div class="gcard-head" data-idx="${i}">
+                        <span class="gcard-name">${item.name}</span>
+                        <span class="gcard-sku">${item.sku}</span>
+                    </div>
+                    <div class="gcard-inputs" id="gcardInputs-${i}"></div>
+                    <div class="gcard-foot">
+                        <span class="gcard-result" id="gridResult-${i}">0</span>
+                        <span class="gcard-diff" id="gridDiff-${i}">—</span>
+                    </div>`;
+                frag.appendChild(card);
+            });
+            gv.appendChild(frag);
+            shown.forEach(i => {
+                const holder = document.getElementById('gcardInputs-' + i);
+                if (holder) buildMirrorRow(holder, i, 1, 4);
+                refreshCardResults(i);
+            });
+            gv.querySelectorAll('.gcard-head').forEach(h => {
+                h.addEventListener('click', () => openItemCard(parseInt(h.dataset.idx)));
+            });
+        }
+        function openItemCard(idx, focusFirstEmpty) {
+            if (cardViewMode === 'grid') {
+                cardViewMode = 'single';
+                clearGridView();
+                const btn = document.getElementById('cardViewToggle');
+                if (btn) btn.textContent = '🔲 عرض شبكي';
+            }
             cardIdx = idx;
             const item = inventoryData[idx];
             document.getElementById('cardSearchResults').innerHTML = '';
@@ -2075,26 +2161,23 @@
             document.getElementById('icardUnit').textContent = item.unit;
             const pkgRow = document.getElementById('icardPkgRow');
             const unitRow = document.getElementById('icardUnitRow');
-            const build = (row, from) => {
-                row.innerHTML = '';
-                for (let k = from; k < from + 4; k++) {
-                    const src = document.getElementById(`input${k}-${idx}`);
-                    const mi = document.createElement('input');
-                    mi.type = 'text'; mi.autocomplete = 'off';
-                    mi.inputMode = (typeof numpadEnabled === 'function' && numpadEnabled()) ? 'none' : 'decimal';
-                    mi.id = `cinput${k}-${idx}`;
-                    mi.placeholder = k === 8 ? '-0' : '0';
-                    mi.value = src ? src.value : '';
-                    if (src && src.readOnly) { mi.readOnly = true; mi.classList.add('cell-locked'); }
-                    mi.addEventListener('input', () => syncCardCell(k, idx));
-                    mi.addEventListener('keydown', e => { if (e.key === 'Enter') lockCardCell(k, idx); });
-                    mi.addEventListener('dblclick', () => unlockCardCell(k, idx));
-                    row.appendChild(mi);
-                }
-            };
-            build(pkgRow, 1);
-            build(unitRow, 5);
+            buildMirrorRow(pkgRow, idx, 1, 4);
+            buildMirrorRow(unitRow, idx, 5, 8);
             refreshCardResults(idx);
+            if (focusFirstEmpty) {
+                let target = null;
+                for (let k = 1; k <= 8; k++) {
+                    const el = document.getElementById(`cinput${k}-${idx}`);
+                    if (el && !el.readOnly && !el.value) { target = el; break; }
+                }
+                if (!target) { // كل الخلايا معبأة أو مقفلة: أول خلية غير مقفلة على الأقل
+                    for (let k = 1; k <= 8; k++) {
+                        const el = document.getElementById(`cinput${k}-${idx}`);
+                        if (el && !el.readOnly) { target = el; break; }
+                    }
+                }
+                if (target) openPadFor(target);
+            }
         }
         function syncCardCell(k, idx) {
             const mi = document.getElementById(`cinput${k}-${idx}`);
@@ -2123,15 +2206,27 @@
         function refreshCardResults(idx) {
             const resEl = document.getElementById(`result-${idx}`);
             const diffEl = document.getElementById(`diffValue-${idx}`);
-            document.getElementById('icardTotal').textContent = resEl ? resEl.textContent : '0';
-            const d = document.getElementById('icardDiff');
+            const totalTxt = resEl ? resEl.textContent : '0';
             const raw = diffEl ? diffEl.textContent : '-';
-            d.classList.remove('diff-pos', 'diff-neg');
-            if (raw === '-' || raw === '') { d.textContent = 'الفرق: —'; return; }
-            d.textContent = 'الفرق: ' + raw;
-            const v = parseFloat(String(raw).replace(/,/g, '')) || 0;
-            if (v > 0) d.classList.add('diff-pos');
-            else if (v < 0) d.classList.add('diff-neg');
+            const v = (raw === '-' || raw === '') ? null : (parseFloat(String(raw).replace(/,/g, '')) || 0);
+            // البطاقة المفردة (لو مفتوحة)
+            const ict = document.getElementById('icardTotal');
+            if (ict) ict.textContent = totalTxt;
+            const d = document.getElementById('icardDiff');
+            if (d) {
+                d.classList.remove('diff-pos', 'diff-neg');
+                d.textContent = v === null ? 'الفرق: —' : 'الفرق: ' + raw;
+                if (v !== null) d.classList.add(v > 0 ? 'diff-pos' : v < 0 ? 'diff-neg' : '');
+            }
+            // بطاقة الشبكة المقابلة (لو معروضة)
+            const gr = document.getElementById('gridResult-' + idx);
+            if (gr) gr.textContent = totalTxt;
+            const gd = document.getElementById('gridDiff-' + idx);
+            if (gd) {
+                gd.classList.remove('diff-pos', 'diff-neg');
+                gd.textContent = v === null ? '—' : raw;
+                if (v !== null && v !== 0) gd.classList.add(v > 0 ? 'diff-pos' : 'diff-neg');
+            }
         }
         // دبل-تاب لمسي على مرايا البطاقة (فتح القفل بالهاتف)
         let lastCardTapEl = null, lastCardTapT = 0;
