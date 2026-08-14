@@ -2483,3 +2483,21 @@ body.dark .grid-toggle-btn {
     background: #232a3a;
     color: #cfd8dc;
 }
+
+/* ═══════════ مفتاح عمود Ingredients quantity ═══════════ */
+.csv-btn.ing-toggle {
+    background: transparent;
+    color: #78909c;
+    border: 1.5px dashed #b0bec5;
+}
+
+.csv-btn.ing-toggle.ing-on {
+    background: #00695c;
+    color: #e0f2f1;
+    border: 1.5px solid #00695c;
+}
+
+body.dark .csv-btn.ing-toggle {
+    color: #90a4ae;
+    border-color: #3a445c;
+}

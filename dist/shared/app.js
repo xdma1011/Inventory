@@ -1012,6 +1012,44 @@
             ]);
         }
         // صفوف شيت الجرد (مشتركة بين CSV وExcel) — بقالب Foodics حرفياً
+        // ═══════════ عمود Ingredients quantity لأصناف الباتش ═══════════
+        const ING_LS_KEY = 'exportIngredients_v1';
+        let exportIngredients = localStorage.getItem(ING_LS_KEY) === '1';
+        function toggleExportIngredients() {
+            exportIngredients = !exportIngredients;
+            try { localStorage.setItem(ING_LS_KEY, exportIngredients ? '1' : '0'); } catch (e) {}
+            applyIngredientsBtn();
+            showToast(exportIngredients
+                ? '\u2705 أصناف الباتش سيُملأ لها عمود Ingredients quantity'
+                : 'عمود Ingredients quantity سيبقى فارغاً (الوضع الأصلي)', 'success');
+        }
+        function applyIngredientsBtn() {
+            const b = document.getElementById('ingToggleBtn');
+            if (b) {
+                b.textContent = exportIngredients ? '\uD83E\uDDEA Ingredients: نعم' : '\uD83E\uDDEA Ingredients: لا';
+                b.classList.toggle('ing-on', exportIngredients);
+            }
+        }
+        // القيمة الخام قبل تحويل الباتش (بوحدة الصنف الأصلية) — تُكتب بعمود Ingredients
+        function ingredientsValueFor(idx) {
+            if (!exportIngredients || idx < 0) return '';
+            const bf = getBatchFactor(idx);
+            if (!bf) return ''; // ليس صنف باتش — يبقى فارغاً كما هو
+            const item = inventoryData[idx];
+            const pkgEl = document.getElementById(`package-${idx}`);
+            const packageSize = pkgEl ? (parseFloat(pkgEl.value) || 1) : (parseFloat(item.packageSize) || 1);
+            let total = 0;
+            for (let k = 1; k <= 8; k++) {
+                const el = document.getElementById(`input${k}-${idx}`);
+                if (!el) continue;
+                const v = evaluateExpression(el.value);
+                if (!isFinite(v)) continue;
+                total += (k <= 4) ? v * packageSize : v;
+            }
+            // نفس قاعدة المحرك: الإدخال بالكيلو/اللتر لهذه الوحدات
+            if (item.unit === 'G' || item.unit === 'ML') total = total * 1000;
+            return total ? parseFloat(total.toFixed(5)) : '';
+        }
         function buildSheetRows(sheet) {
             const rows = [['Inventory Item Name', 'Inventory Item SKU', 'Storage quantity', 'Ingredients quantity', 'Inventory Count ID']];
             const missing = [];
@@ -1020,7 +1058,7 @@
                 let qty = '';
                 if (idx >= 0) qty = parseFloat(getRawResult(idx).toFixed(5));
                 else missing.push(entry.n);
-                rows.push([entry.n, entry.s, qty, '', '']);
+                rows.push([entry.n, entry.s, qty, ingredientsValueFor(idx), '']);
             });
             return { rows, missing };
         }
@@ -1143,6 +1181,7 @@
             const bar = document.getElementById('csvBar');
             if (!bar || typeof countSheets === 'undefined') return;
             let html = '<span class="csv-bar-label">\uD83D\uDCE5 للاستيراد في Foodics:</span>';
+            html += `<button class="btn csv-btn ing-toggle" id="ingToggleBtn" onclick="toggleExportIngredients()" title="تعبئة عمود Ingredients quantity لأصناف الباتش">\uD83E\uDDEA Ingredients: لا</button>`;
             countSheets.forEach(sh => {
                 html += `<button class="btn csv-btn" onclick="exportSheetCSV('${sh.id}')">${sh.icon} ${sh.title} CSV</button>`;
                 html += `<button class="btn csv-btn" onclick="exportSheetXLSX('${sh.id}')">${sh.icon} ${sh.title} Excel</button>`;
@@ -1177,7 +1216,7 @@
                     // الناتج المعروض بالباتش أصلاً عند وجود معامل — نستخدمه مباشرة
                     qty = parseFloat(getRawResult(idx).toFixed(5));
                 } else { missing.push(entry.n); }
-                rows.push([csvEscape(entry.n), csvEscape(entry.s), qty, '', ''].join(','));
+                rows.push([csvEscape(entry.n), csvEscape(entry.s), qty, ingredientsValueFor(idx), ''].join(','));
             });
             const csv = '\uFEFF' + rows.join('\r\n');
             const d = new Date().toISOString().slice(0, 10);
@@ -2281,6 +2320,7 @@
         // ═══════════ إقلاع الميزات الجديدة ═══════════
         document.addEventListener('DOMContentLoaded', () => {
             renderCsvBar();
+            applyIngredientsBtn();
             applySummaryCollapse();
             applyDarkMode();
             // تركيز البحث تلقائياً عند الفتح
