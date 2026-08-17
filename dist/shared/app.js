@@ -1056,9 +1056,13 @@
             sheet.items.forEach(entry => {
                 const idx = findPageIndex(entry);
                 let qty = '';
-                if (idx >= 0) qty = parseFloat(getRawResult(idx).toFixed(5));
-                else missing.push(entry.n);
-                rows.push([entry.n, entry.s, qty, ingredientsValueFor(idx), '']);
+                let ing = '';
+                if (idx >= 0) {
+                    ing = ingredientsValueFor(idx);
+                    // لو صنف باتش وفعّلنا عمود Ingredients: يكفي عمود واحد، لا داعي لتكرار نفس الكمية بوحدتين
+                    qty = (exportIngredients && ing !== '') ? '' : parseFloat(getRawResult(idx).toFixed(5));
+                } else { missing.push(entry.n); }
+                rows.push([entry.n, entry.s, qty, ing, '']);
             });
             return { rows, missing };
         }
@@ -1212,11 +1216,13 @@
             sheet.items.forEach(entry => {
                 const idx = findPageIndex(entry);
                 let qty = '';
+                let ing = '';
                 if (idx >= 0) {
-                    // الناتج المعروض بالباتش أصلاً عند وجود معامل — نستخدمه مباشرة
-                    qty = parseFloat(getRawResult(idx).toFixed(5));
+                    ing = ingredientsValueFor(idx);
+                    // لو صنف باتش وفعّلنا عمود Ingredients: يكفي عمود واحد، لا داعي لتكرار نفس الكمية بوحدتين
+                    qty = (exportIngredients && ing !== '') ? '' : parseFloat(getRawResult(idx).toFixed(5));
                 } else { missing.push(entry.n); }
-                rows.push([csvEscape(entry.n), csvEscape(entry.s), qty, ingredientsValueFor(idx), ''].join(','));
+                rows.push([csvEscape(entry.n), csvEscape(entry.s), qty, ing, ''].join(','));
             });
             const csv = '\uFEFF' + rows.join('\r\n');
             const d = new Date().toISOString().slice(0, 10);
@@ -1684,6 +1690,44 @@
             const headRow = document.querySelector('#inventoryTable thead tr');
             if (headRow) applyRow(headRow);
             document.querySelectorAll('#tableBody tr[data-index]').forEach(applyRow);
+        }
+        // ═══════════ 📭 المواد اللي لسا ما اتعد إطلاقاً ═══════════
+        // "لم تُعد" = الخانات الثمانية كلها فارغة تماماً (حتى صفر مقصود يُعتبر عدّ فعلي، فلا يظهر هون)
+        function isItemUncounted(idx) {
+            for (let k = 1; k <= 8; k++) {
+                const el = document.getElementById(`input${k}-${idx}`);
+                if (el && String(el.value || '').trim() !== '') return false;
+            }
+            return true;
+        }
+        function getUncountedItems() {
+            const list = [];
+            inventoryData.forEach((it, i) => { if (isItemUncounted(i)) list.push({ it, i }); });
+            return list;
+        }
+        function openUncountedModal() {
+            const list = getUncountedItems();
+            document.getElementById('uncountedTitle').textContent = `📭 لسا ما اتعد (${list.length} من ${inventoryData.length})`;
+            const box = document.getElementById('uncountedList');
+            box.innerHTML = list.length
+                ? list.map(({ it, i }) => `<div class="uncounted-row" onclick="jumpToUncountedItem(${i})"><span>${it.name}</span><span class="uncounted-sku">${it.sku}</span></div>`).join('')
+                : '<div class="bc-empty">🎉 كل المواد اتعدّت</div>';
+            document.getElementById('uncountedModal').classList.add('show');
+        }
+        function closeUncountedModal() { document.getElementById('uncountedModal').classList.remove('show'); }
+        function jumpToUncountedItem(idx) {
+            closeUncountedModal();
+            const item = inventoryData[idx];
+            switchMainTab('inv');
+            const si = document.getElementById('searchInput');
+            if (si) {
+                si.value = item.name;
+                si.dispatchEvent(new Event('input'));
+            }
+            setTimeout(() => {
+                const row = document.querySelector(`#tableBody tr[data-index="${idx}"]`);
+                if (row) { row.scrollIntoView({ behavior: 'smooth', block: 'center' }); row.classList.add('highlighted'); }
+            }, 100);
         }
         function openColModal() {
             const m = document.getElementById('colModal');

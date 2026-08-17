@@ -423,10 +423,23 @@
     <div class="more-menu" id="moreMenu">
         <button onclick="toggleMoreMenu(); toggleTools()">🔧 لوحة الأدوات</button>
         <button onclick="toggleMoreMenu(); openColModal()">🧱 الأعمدة</button>
+        <button onclick="toggleMoreMenu(); openUncountedModal()">📭 اللي لسا ما اتعد</button>
         <button onclick="toggleMoreMenu(); openBarcodeManager()">🔗 الباركودات</button>
         <button onclick="toggleMoreMenu(); exportLsFile()">💾 تصدير نسخة احتياطية</button>
         <button onclick="toggleMoreMenu(); importLsFile()">📂 استيراد نسخة</button>
         <button onclick="toggleDarkMode()" id="darkModeBtn">🌙 الوضع الليلي</button>
+    </div>
+
+    <!-- المواد التي لم تُعد إطلاقاً -->
+    <div class="modal-overlay" id="uncountedModal" onclick="if(event.target===this)closeUncountedModal()">
+        <div class="modal-box" style="max-width:380px;text-align:right">
+            <h3 style="margin-bottom:4px" id="uncountedTitle">📭 لسا ما اتعد</h3>
+            <p style="font-size:12px;color:#666;margin-bottom:10px">اضغط على أي صنف لتنتقل إليه مباشرة بالجدول</p>
+            <div id="uncountedList" style="max-height:60vh;overflow-y:auto"></div>
+            <div style="display:flex;gap:8px;margin-top:14px">
+                <button class="btn btn-danger" style="flex:1" onclick="closeUncountedModal()">إغلاق</button>
+            </div>
+        </div>
     </div>
 
     <div class="toast" id="toast"></div>

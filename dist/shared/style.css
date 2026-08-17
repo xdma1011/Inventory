@@ -2501,3 +2501,35 @@ body.dark .csv-btn.ing-toggle {
     color: #90a4ae;
     border-color: #3a445c;
 }
+
+/* ═══════════ 📭 قائمة المواد اللي لسا ما اتعد ═══════════ */
+.uncounted-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 10px;
+    background: #fff;
+    border-bottom: 1px solid #eceff1;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 8px;
+    touch-action: manipulation;
+}
+
+.uncounted-row:active {
+    background: #fff3e0;
+}
+
+.uncounted-sku {
+    color: #90a4ae;
+    font-size: 11.5px;
+    font-weight: 400;
+    direction: ltr;
+}
+
+body.dark .uncounted-row {
+    background: #1a1f2b;
+    border-color: #2c3446;
+    color: #cfd8dc;
+}
