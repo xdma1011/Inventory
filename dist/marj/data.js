@@ -9,7 +9,7 @@ const inventoryData = [
             { name: "علبة خبز مقلي منتجة", sku: "sp-0162", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "بصل مقلي", sku: "sp-0154", unit: "KG", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "صلصة البندورة للكشري", sku: "sp-0174", unit: "KG", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "صلصة البولونيز", sku: "sp-0150", unit: "KG", packageSize: 1.0, secondOp: "/", secondVal: 3.5, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "صلصة البولونيز", sku: "sp-0182", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 3.5, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "شوربة عدس", sku: "sp-0175", unit: "Batch", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "شعرية مطبوخة", sku: "sp-0160", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 0.4, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة مهلبية منتجة", sku: "p-0163", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
@@ -62,7 +62,7 @@ const countSheets = [
                 { n: 'علبة خبز مقلي منتجة', s: 'sp-0162' },
                 { n: 'بصل مقلي - نقطة بيع مرج الحمام', s: 'sp-0154' },
                 { n: 'صلصة البندورة للكشري - نقطة مبيعات مرج الحمام', s: 'sp-0174' },
-                { n: 'صلصة البولونيز - نقطة بيع مرج الحمام', s: 'sp-0150' },
+                { n: 'صلصة البولونيز - نقطة بيع مرج الحمام', s: 'sp-0182' },
                 { n: 'شوربة عدس - نقطة مبيعات مرج الحمام', s: 'sp-0175' },
                 { n: 'شعرية مطبوخة - نقطة بيع مرج الحمام', s: 'sp-0160' },
                 { n: 'علبة مهلبية منتجة', s: 'p-0163' }
