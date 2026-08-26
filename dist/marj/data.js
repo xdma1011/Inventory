@@ -9,8 +9,7 @@ const inventoryData = [
             { name: "علبة خبز مقلي منتجة", sku: "sp-0162", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "بصل مقلي", sku: "sp-0154", unit: "KG", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "صلصة البندورة للكشري", sku: "sp-0174", unit: "KG", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "صلصة البولونيز", sku: "sp-0182", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal:1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "شوربة عدس", sku: "sp-0175", unit: "Batch", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+                        { name: "شوربة عدس", sku: "sp-0175", unit: "Batch", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "شعرية مطبوخة", sku: "sp-0160", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 0.4, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة مهلبية منتجة", sku: "p-0163", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "طبق كشري", sku: "sk-0042", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
@@ -27,8 +26,7 @@ const inventoryData = [
             { name: "سمن", sku: "sk-0069", unit: "G", packageSize: 1.7, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "ملح", sku: "sk-0038", unit: "G", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "سماق", sku: "sk-0070", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "ليمون", sku: "sk-0102", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "مياه معدنية - ماتركس", sku: "sk-0079", unit: "PC", packageSize: 12.0, secondOp: "*", secondVal: 1, isFixed: false, category: "water", pkgBarcode: "", unitBarcode: "" },
+                        { name: "مياه معدنية - ماتركس", sku: "sk-0079", unit: "PC", packageSize: 12.0, secondOp: "*", secondVal: 1, isFixed: false, category: "water", pkgBarcode: "", unitBarcode: "" },
             { name: "ماتركس كولا", sku: "sk-0080", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" },
             { name: "اكياس الطلبات - صغير", sku: "sk-0147", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة مهلبية", sku: "sk-0177", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
@@ -38,13 +36,8 @@ const inventoryData = [
             { name: "كريمة طبخ", sku: "sk-0058", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "خلطة حليب ام علي", sku: "SP-0157", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "عدس كشري حب مطبوخ", sku: "SP-0177", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "ماتريكس تفاح", sku: "sk-0148", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" },
-            { name: "ماتركس كولا زيرو", sku: "sk-0081", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" },
-            { name: "ماتركس اب", sku: "sk-0083", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" },
-            { name: "ماتركس اب زيرو", sku: "sk-0084", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" },
-            { name: "ماتركس فروت", sku: "sk-0085", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" },
-            { name: "ماتركس اورانج", sku: "sk-0082", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" }
-        ];
+            { name: "صلصة بولونيز علب", sku: "sp-0182", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
+                                                                                ];
 
 const sectionStarts = { 0: "🏭 شيت الجرد ١ — الإنتاج", 11: "📦 شيت الجرد ٢ — المواد والمشروبات" };
 
@@ -62,7 +55,7 @@ const countSheets = [
                 { n: 'علبة خبز مقلي منتجة', s: 'sp-0162' },
                 { n: 'بصل مقلي - نقطة بيع مرج الحمام', s: 'sp-0154' },
                 { n: 'صلصة البندورة للكشري - نقطة مبيعات مرج الحمام', s: 'sp-0174' },
-                { n: 'صلصة البولونيز - نقطة بيع مرج الحمام', s: 'sp-0182' },
+                { n: 'صلصة بولونيز علب', s: 'sp-0182' },
                 { n: 'شوربة عدس - نقطة مبيعات مرج الحمام', s: 'sp-0175' },
                 { n: 'شعرية مطبوخة - نقطة بيع مرج الحمام', s: 'sp-0160' },
                 { n: 'علبة مهلبية منتجة', s: 'p-0163' }
@@ -82,15 +75,8 @@ const countSheets = [
                 { n: 'سمن', s: 'sk-0069' },
                 { n: 'ملح', s: 'sk-0038' },
                 { n: 'سماق', s: 'sk-0070' },
-                { n: 'ليمون', s: 'sk-0102' },
                 { n: 'مياه معدنية', s: 'sk-0079' },
                 { n: 'ماتركس كولا', s: 'sk-0080' },
-                { n: 'ماتريكس تفاح', s: 'sk-0148' },
-                { n: 'ماتركس كولا زيرو', s: 'sk-0081' },
-                { n: 'ماتركس اب', s: 'sk-0083' },
-                { n: 'ماتركس اب زيرو', s: 'sk-0084' },
-                { n: 'ماتركس فروت', s: 'sk-0085' },
-                { n: 'ماتركس اورانج', s: 'sk-0082' },
                 { n: 'اكياس الطلبات - صغير', s: 'sk-0147' },
                 { n: 'علبة مهلبية', s: 'sk-0177' },
                 { n: 'حمص مطبوخ', s: 'P-0110' },
@@ -99,5 +85,5 @@ const countSheets = [
                 { n: 'كريمة طبخ', s: 'sk-0058' },
                 { n: 'خلطة حليب ام علي', s: 'SP-0157' },
                 { n: 'عدس كشري حب مطبوخ', s: 'SP-0177' },
-            ]}
+            ]},
         ];
