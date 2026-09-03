@@ -1,0 +1,2207 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#17130f" />
+  <title>نقل المخزون بين الفروع</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800;900&family=Tajawal:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #17130f;
+      --surface: #221b15;
+      --surface-2: #2c241c;
+      --line: #3a3025;
+      --line-soft: #2a2219;
+      --accent: #dc9a3d;
+      --accent-dim: #8a6a34;
+      --accent-ink: #1a1309;
+      --good: #7fa06f;
+      --good-bg: rgba(127,160,111,0.14);
+      --local: #b9895a;
+      --local-bg: rgba(185,137,90,0.14);
+      --danger: #c15c4a;
+      --danger-bg: rgba(193,92,74,0.14);
+      --text: #f4ecdf;
+      --text-muted: #a89785;
+      --text-dim: #7d6f60;
+      --radius: 7px;
+      --radius-lg: 14px;
+      --shadow: 0 12px 30px rgba(0,0,0,0.45);
+      --font-display: 'Cairo', system-ui, sans-serif;
+      --font-body: 'Tajawal', system-ui, sans-serif;
+      --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background:
+        radial-gradient(circle at 12% -10%, rgba(220,154,61,0.06), transparent 40%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      padding-bottom: 92px;
+      line-height: 1.5;
+    }
+
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--bg);
+      border-bottom: 1px dashed var(--line);
+      padding: 18px 16px 14px;
+    }
+
+    .header .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      letter-spacing: 0.16em;
+      color: var(--accent);
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .header h1 {
+      font-family: var(--font-display);
+      font-size: 1.32rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .header h1 .tag-icon {
+      width: 30px;
+      height: 30px;
+      flex-shrink: 0;
+      border: 1.5px solid var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+    }
+
+    .header h1 span:not(.tag-icon) {
+      color: var(--text);
+    }
+
+    .date-bar {
+      display: flex;
+      gap: 0;
+      margin-top: 14px;
+      align-items: stretch;
+      flex-wrap: wrap;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .date-bar label {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      background: var(--surface-2);
+      white-space: nowrap;
+    }
+
+    .date-bar input[type="date"] {
+      background: var(--surface);
+      border: none;
+      border-left: 1px dashed var(--line);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 0;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      min-width: 0;
+      flex: 1;
+    }
+
+    /* Search */
+    .search-wrap {
+      padding: 14px 16px 12px;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      gap: 10px;
+    }
+
+    .search-box svg {
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .search-box input::placeholder {
+      color: var(--text-dim);
+    }
+
+    /* Items Grid */
+    .items-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 0 16px 20px;
+    }
+
+    @media (min-width: 480px) {
+      .items-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .item-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 13px 15px;
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .item-card:active {
+      transform: scale(0.98);
+      background: var(--surface-2);
+      border-color: var(--accent-dim);
+    }
+
+    .item-card.exportable::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 4px;
+      height: 100%;
+      background: repeating-linear-gradient(180deg, var(--accent) 0 6px, transparent 6px 12px);
+    }
+
+    .item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.02rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .item-total {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 1.02rem;
+      color: var(--accent);
+      text-align: left;
+      min-width: 64px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: 5px 8px;
+      line-height: 1.25;
+    }
+
+    .item-total small {
+      display: block;
+      font-size: 0.6rem;
+      font-weight: 500;
+      font-family: var(--font-body);
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .add-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 7px;
+      background: transparent;
+      border: 1.5px dashed var(--accent-dim);
+      color: var(--accent);
+      font-size: 1.35rem;
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .add-btn:active {
+      background: var(--accent);
+      border-color: var(--accent);
+      border-style: solid;
+      color: var(--accent-ink);
+    }
+
+    /* Empty state */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty .icon {
+      font-size: 2.6rem;
+      margin-bottom: 12px;
+      opacity: 0.8;
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg);
+      border-top: 1px dashed var(--line);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
+      z-index: 100;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-family: var(--font-display);
+      font-size: 0.66rem;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 6px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-width: 54px;
+    }
+
+    .nav-btn.active {
+      color: var(--accent);
+      background: rgba(220, 154, 61, 0.09);
+    }
+
+    .nav-btn .icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-btn .icon svg {
+      width: 21px;
+      height: 21px;
+      display: block;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 8, 6, 0.72);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-bottom: none;
+      border-radius: 18px 18px 0 0;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90dvh;
+      overflow-y: auto;
+      padding: 20px 20px calc(24px + env(safe-area-inset-bottom));
+      animation: slideUp 0.25s ease;
+    }
+
+    .modal::before {
+      content: '';
+      display: block;
+      width: 36px;
+      height: 4px;
+      background: var(--line);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .close-btn {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      color: var(--text);
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 7px;
+      font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--accent);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* Searchable Unit Select */
+    .unit-select-wrap {
+      position: relative;
+    }
+
+    .unit-select-wrap input.unit-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: var(--radius);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .unit-select-wrap input.unit-input:focus {
+      border-color: var(--accent);
+    }
+
+    .unit-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 50;
+      margin-top: 4px;
+      box-shadow: var(--shadow);
+    }
+
+    .unit-dropdown.show {
+      display: block;
+    }
+
+    .unit-option {
+      padding: 12px 14px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      border-bottom: 1px solid var(--line-soft);
+      transition: background 0.1s;
+    }
+
+    .unit-option:last-child {
+      border-bottom: none;
+    }
+
+    .unit-option:active,
+    .unit-option:hover {
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+
+    .unit-option.hidden {
+      display: none;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 0;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 22px;
+      height: 22px;
+      accent-color: var(--good);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 20px;
+      border-radius: var(--radius);
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.15s, background 0.15s;
+      width: 100%;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+
+    .btn-success {
+      background: var(--good);
+      color: #101a0d;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--text);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn-group .btn {
+      flex: 1;
+    }
+
+    /* Summary / Logs page */
+    .page {
+      display: none;
+      padding: 0 16px 20px;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .summary-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid var(--line);
+    }
+
+    .summary-card .name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.02rem;
+    }
+
+    .summary-card .qty {
+      font-family: var(--font-mono);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+
+    .summary-card .meta {
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .log-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .log-item:last-child {
+      border-bottom: none;
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.63rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+
+    .badge-export {
+      background: var(--good-bg);
+      color: var(--good);
+      border-color: rgba(127, 160, 111, 0.35);
+    }
+
+    .badge-local {
+      background: var(--local-bg);
+      color: var(--local);
+      border-color: rgba(185, 137, 90, 0.35);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--surface);
+      color: var(--text);
+      font-family: var(--font-body);
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      z-index: 300;
+      opacity: 0;
+      transition: all 0.3s;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Settings / Manage */
+    .manage-item {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .manage-item .info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .manage-item .actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 7px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-btn.danger {
+      color: var(--danger);
+      border-color: rgba(193, 92, 74, 0.35);
+    }
+
+    .vis-toggle {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .vis-toggle input[type="checkbox"] {
+      width: 26px;
+      height: 26px;
+      accent-color: var(--good);
+      cursor: pointer;
+    }
+
+    .summary-card .section-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 6px;
+    }
+
+    .summary-card .hint {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+      line-height: 1.55;
+    }
+
+    .qty-preview {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+      min-height: 1.2em;
+    }
+
+    .qty-preview.ok {
+      color: var(--accent);
+    }
+
+    .qty-preview.err {
+      color: var(--danger);
+    }
+
+    /* Quick qty buttons */
+    .qty-quick {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .qty-quick button {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .qty-quick button:active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-ink);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <span class="eyebrow">سجل النقل · حسب SKU</span>
+    <h1>
+      <span class="tag-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></span>
+      <span>نقل المخزون بين الفروع</span>
+    </h1>
+    <div class="date-bar">
+      <label>من</label>
+      <input type="date" id="dateFrom" />
+      <label>إلى</label>
+      <input type="date" id="dateTo" />
+    </div>
+  </div>
+
+  <!-- Search (only on home) -->
+  <div class="search-wrap" id="searchWrap">
+    <div class="search-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.6-3.6"/></svg>
+      <input type="text" id="searchInput" placeholder="ابحث عن صنف..." autocomplete="off" />
+    </div>
+  </div>
+
+  <!-- Pages -->
+  <div id="page-home" class="page active">
+    <div class="items-grid" id="itemsGrid"></div>
+    <div class="empty" id="emptyState" style="display:none;">
+      <div class="icon">📭</div>
+      <p>ما في أصناف بعد</p>
+      <p style="font-size:0.9rem;margin-top:8px;">اضغط «إدارة الأصناف» عشان تضيف</p>
+    </div>
+  </div>
+
+  <div id="page-summary" class="page">
+    <div id="summaryList"></div>
+  </div>
+
+  <div id="page-manage" class="page">
+    <button class="btn btn-primary" style="margin-bottom:16px;" onclick="openAddItemModal()">
+      ➕ إضافة صنف جديد
+    </button>
+    <div id="manageList"></div>
+  </div>
+
+  <div id="page-visibility" class="page">
+    <div class="search-box" style="margin-bottom:14px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-3.6-3.6"/></svg>
+      <input type="text" id="visSearchInput" placeholder="ابحث عن صنف..." autocomplete="off" oninput="renderVisibility()" />
+    </div>
+    <p class="hint" style="margin-bottom:12px;">فعّل الأصناف اللي بدك تظهر بصفحة المنقولات، وعطّل الباقي بدون ما تحذفها.</p>
+    <div id="visibilityList"></div>
+  </div>
+
+  <div id="page-export" class="page">
+    <div class="summary-card">
+      <div class="section-title">نسخة احتياطية — الأصناف</div>
+      <p class="hint">تصدير كل الأصناف كملف JSON مستقل، أو استيراد ملف أصناف محفوظ مسبقاً. الاستيراد يضيف الأصناف الجديدة فقط، والموجود مسبقاً (نفس الاسم أو الـSKU) ما ينضاف مرتين.</p>
+      <div class="btn-group">
+        <button class="btn btn-outline" onclick="exportItemsJSON()">⬇️ تصدير الأصناف</button>
+        <button class="btn btn-outline" onclick="document.getElementById('importItemsInput').click()">⬆️ استيراد الأصناف</button>
+      </div>
+      <input type="file" id="importItemsInput" accept="application/json" style="display:none" onchange="importItemsJSON(event)" />
+
+      <div class="btn-group" style="margin-top:10px;">
+        <button class="btn btn-outline" onclick="document.getElementById('importCsvInput').click()">📄 استيراد من CSV (Foodics)</button>
+      </div>
+      <input type="file" id="importCsvInput" accept=".csv,text/csv" style="display:none" onchange="importCSVFile(event)" />
+
+      <button class="btn btn-primary" style="margin-top:10px;" onclick="importDefaultSeed()">
+        ⚡ استيراد قائمة مستويات المخزون (115 صنف)
+      </button>
+    </div>
+
+    <div class="summary-card">
+      <div class="section-title">نسخة احتياطية — السجل</div>
+      <p class="hint">تصدير حركات السجل الحالية، أو استيراد سجل محفوظ مسبقاً. الحركات الأقدم من شهر تُحذف تلقائياً.</p>
+      <div class="btn-group">
+        <button class="btn btn-outline" onclick="exportLogsJSON()">⬇️ تصدير السجل</button>
+        <button class="btn btn-outline" onclick="document.getElementById('importLogsInput').click()">⬆️ استيراد السجل</button>
+      </div>
+      <input type="file" id="importLogsInput" accept="application/json" style="display:none" onchange="importLogsJSON(event)" />
+    </div>
+
+    <div class="summary-card">
+      <div class="section-title">تصدير Foodics</div>
+      <p class="hint">
+        يعتمد على نطاق التاريخ المختار فوق، ويصدّر فقط الأصناف اللي عليها علامة «للتصدير».
+      </p>
+      <button class="btn btn-success" onclick="exportCSV()">
+        📥 تصدير CSV لـ Foodics
+      </button>
+      <button class="btn btn-outline" style="margin-top:10px;" onclick="prepareApiPayload()">
+        🔌 تجهيز بيانات الـ API
+      </button>
+    </div>
+
+    <div id="apiPreview" style="display:none;margin-bottom:16px;">
+      <pre id="apiJson" style="background:var(--bg);padding:12px;border-radius:12px;font-size:0.75rem;overflow:auto;max-height:300px;direction:ltr;text-align:left;border:1px solid var(--line);"></pre>
+    </div>
+
+    <div class="summary-card" style="border-color:rgba(193,92,74,0.35);">
+      <div class="section-title" style="color:var(--danger);">منطقة الخطر</div>
+      <p class="hint">هذا يمسح حركات السجل فقط — الأصناف تبقى محفوظة كما هي.</p>
+      <button class="btn btn-danger" onclick="clearAllLogs()">
+        🗑️ مسح كل حركات السجل
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-page="home" onclick="switchPage('home')">
+      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg></span>
+      الرئيسية
+    </button>
+    <button class="nav-btn" data-page="summary" onclick="switchPage('summary')">
+      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
+      السجل
+    </button>
+    <button class="nav-btn" data-page="manage" onclick="switchPage('manage')">
+      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></span>
+      الأصناف
+    </button>
+    <button class="nav-btn" data-page="visibility" onclick="switchPage('visibility')">
+      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></span>
+      العرض
+    </button>
+    <button class="nav-btn" data-page="export" onclick="switchPage('export')">
+      <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 21h14a1 1 0 0 0 1-1v-5H4v5a1 1 0 0 0 1 1z"/></svg></span>
+      تصدير
+    </button>
+  </nav>
+
+  <!-- Modal: Add Quantity -->
+  <div class="modal-overlay" id="qtyModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="qtyModalTitle">إضافة كمية</h2>
+        <button class="close-btn" onclick="closeModal('qtyModal')">✕</button>
+      </div>
+      <input type="hidden" id="qtyItemId" />
+      <div class="form-group">
+        <label>التاريخ</label>
+        <input type="date" id="qtyDate" />
+      </div>
+      <div class="form-group">
+        <label>الكمية (<span id="qtyUnit"></span>) — تقبل عمليات حسابية</label>
+        <input type="text" id="qtyValue" placeholder="مثلاً: 12+3 أو (10-2)/4" inputmode="text" autocomplete="off" dir="ltr" style="text-align:left;" oninput="updateQtyPreview()" />
+        <div class="qty-preview" id="qtyPreview"></div>
+        <div class="qty-quick">
+          <button type="button" onclick="setQty(1)">1</button>
+          <button type="button" onclick="setQty(2)">2</button>
+          <button type="button" onclick="setQty(3)">3</button>
+          <button type="button" onclick="setQty(5)">5</button>
+          <button type="button" onclick="setQty(10)">10</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ملاحظة (اختياري)</label>
+        <input type="text" id="qtyNote" placeholder="مثلاً: دفعة الصباح" />
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-outline" onclick="closeModal('qtyModal')">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveQuantity()">حفظ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add / Edit Item -->
+  <div class="modal-overlay" id="itemModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="itemModalTitle">إضافة صنف</h2>
+        <button class="close-btn" onclick="closeModal('itemModal')">✕</button>
+      </div>
+      <input type="hidden" id="editItemId" />
+      <div class="form-group">
+        <label>اسم الصنف</label>
+        <input type="text" id="itemName" placeholder="مثلاً: حمص حب مطبوخ" />
+      </div>
+      <div class="form-group">
+        <label>SKU (كما في Foodics تماماً)</label>
+        <input type="text" id="itemSku" placeholder="SKU-001" dir="ltr" style="text-align:left;" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>وحدة الإدخال</label>
+          <div class="unit-select-wrap">
+            <input type="text" class="unit-input" id="itemUnitIn" placeholder="ابحث أو اختر..." autocomplete="off" />
+            <div class="unit-dropdown" id="unitInDropdown"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>وحدة الإخراج</label>
+          <div class="unit-select-wrap">
+            <input type="text" class="unit-input" id="itemUnitOut" placeholder="ابحث أو اختر..." autocomplete="off" />
+            <div class="unit-dropdown" id="unitOutDropdown"></div>
+          </div>
+        </div>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="itemExportable" checked />
+        <label for="itemExportable">للتصدير في CSV (Foodics)</label>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-outline" onclick="closeModal('itemModal')">إلغاء</button>
+        <button class="btn btn-primary" onclick="saveItem()">حفظ الصنف</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===================== Data Layer =====================
+    const STORAGE_KEYS = {
+      items: 'bt_items_v1',
+      logs: 'bt_logs_v1',
+      settings: 'bt_settings_v1'
+    };
+
+    // وحدات القياس — وحدة واحدة واضحة لكل مفهوم، بدون مرادفات مكررة
+    // type: 'weight' أساسها الجرام | 'volume' أساسها المل | 'count' بدون تحويل
+    const UNIT_DEFS = {
+      // وزن
+      'كيلوغرام':    { type: 'weight', factor: 1000 },
+      'غرام':        { type: 'weight', factor: 1 },
+      'رطل':         { type: 'weight', factor: 453.592 },
+      'أونصة':       { type: 'weight', factor: 28.3495 },
+
+      // حجم
+      'لتر':         { type: 'volume', factor: 1000 },
+      'مليلتر':      { type: 'volume', factor: 1 },
+      'غالون':       { type: 'volume', factor: 3785.41 },
+      'كوب':         { type: 'volume', factor: 240 },
+
+      // عدّ (لا تحويل)
+      'حبة':         { type: 'count', factor: 1 },
+      'قطعة':        { type: 'count', factor: 1 },
+      'كيس':         { type: 'count', factor: 1 },
+      'كرتون':       { type: 'count', factor: 1 },
+      'علبة':        { type: 'count', factor: 1 },
+      'باكيت':       { type: 'count', factor: 1 },
+      'صينية':       { type: 'count', factor: 1 },
+      'طبق':         { type: 'count', factor: 1 },
+      'رزمة':        { type: 'count', factor: 1 },
+      'دزينة':       { type: 'count', factor: 12 },
+      'صندوق':       { type: 'count', factor: 1 },
+      'تنكة':        { type: 'count', factor: 1 },
+      'برطمان':      { type: 'count', factor: 1 },
+      'زجاجة':       { type: 'count', factor: 1 },
+      'برميل':       { type: 'count', factor: 1 },
+      'رغيف':        { type: 'count', factor: 1 },
+      'شريحة':       { type: 'count', factor: 1 },
+      'دفعة':        { type: 'count', factor: 1 },
+      'وحدة':        { type: 'count', factor: 1 }
+    };
+
+    // قائمة الوحدات للـ dropdown (مرتبة ونظيفة)
+    const UNITS = Object.keys(UNIT_DEFS);
+
+    // قائمة أصناف افتراضية (من تقرير مستويات المخزون) — تُستخدم للاستيراد بضغطة واحدة
+    const DEFAULT_SEED_ITEMS = [
+      {name:"رز خام",sku:"sk-0032",unit:"G"},
+      {name:"معكرونة كشري خام",sku:"sk-0033",unit:"G"},
+      {name:"معكرونة سباغتي خام",sku:"sk-0034",unit:"G"},
+      {name:"معكرونة قلم خام",sku:"sk-0035",unit:"G"},
+      {name:"رب بندورة خام من الدره",sku:"sk-0036",unit:"G"},
+      {name:"جزر",sku:"sk-0037",unit:"G"},
+      {name:"ملح",sku:"sk-0038",unit:"G"},
+      {name:"سكر",sku:"sk-0039",unit:"G"},
+      {name:"معالق",sku:"sk-0040",unit:"PC"},
+      {name:"شوك",sku:"sk-0041",unit:"PC"},
+      {name:"طبق كشري",sku:"sk-0042",unit:"PC"},
+      {name:"زيت زيتون",sku:"sk-0043",unit:"ML"},
+      {name:"زيت قلي",sku:"sk-0044",unit:"ML"},
+      {name:"عدس مجروش خام",sku:"sk-0045",unit:"G"},
+      {name:"عدس حب خام",sku:"sk-0046",unit:"G"},
+      {name:"حمص خام",sku:"sk-0047",unit:"G"},
+      {name:"ثوم",sku:"sk-0048",unit:"G"},
+      {name:"خل",sku:"sk-0049",unit:"ML"},
+      {name:"كمون مطحون",sku:"sk-0050",unit:"G"},
+      {name:"ملح ليمون",sku:"sk-0051",unit:"G"},
+      {name:"كزبرة مطحون",sku:"sk-0052",unit:"G"},
+      {name:"شطة بودرة",sku:"sk-0053",unit:"G"},
+      {name:"شطة بلدية",sku:"sk-0054",unit:"G"},
+      {name:"شعيرية خام",sku:"sk-0055",unit:"G"},
+      {name:"بصل محمر خام",sku:"sk-0056",unit:"G"},
+      {name:"حليب بودرة",sku:"sk-0057",unit:"G"},
+      {name:"كريمة طبخ",sku:"sk-0058",unit:"G"},
+      {name:"زبدة",sku:"sk-0059",unit:"G"},
+      {name:"رقائق ام علي خام",sku:"sk-0060",unit:"G"},
+      {name:"خبز توست",sku:"sk-0061",unit:"G"},
+      {name:"بندق",sku:"sk-0062",unit:"G"},
+      {name:"جوز هند",sku:"sk-0063",unit:"G"},
+      {name:"لوز",sku:"sk-0064",unit:"G"},
+      {name:"كاجو",sku:"sk-0065",unit:"G"},
+      {name:"فستق حلبي",sku:"sk-0066",unit:"G"},
+      {name:"صنوبر",sku:"sk-0067",unit:"G"},
+      {name:"لبن رايب",sku:"sk-0068",unit:"G"},
+      {name:"سمن",sku:"sk-0069",unit:"G"},
+      {name:"سماق",sku:"sk-0070",unit:"G"},
+      {name:"لحمة مفرومة",sku:"sk-0071",unit:"G"},
+      {name:"حليب مبستر",sku:"sk-0072",unit:"ML"},
+      {name:"بصل خام",sku:"sk-0073",unit:"G"},
+      {name:"دبس رمان",sku:"sk-0074",unit:"ML"},
+      {name:"كرفس",sku:"sk-0075",unit:"G"},
+      {name:"فلفل اسمر",sku:"sk-0076",unit:"G"},
+      {name:"طحين",sku:"sk-0077",unit:"G"},
+      {name:"ماجي",sku:"sk-0078",unit:"PC"},
+      {name:"مياه معدنية",sku:"sk-0079",unit:"PC"},
+      {name:"ماتركس كولا",sku:"sk-0080",unit:"PC"},
+      {name:"ماتركس اورانج",sku:"sk-0082",unit:"PC"},
+      {name:"صحن ام علي",sku:"sk-0091",unit:"PC"},
+      {name:"صحن باشميل",sku:"sk-0092",unit:"PC"},
+      {name:"غطاء صحن ام علي",sku:"sk-0093",unit:"PC"},
+      {name:"غطاء صحن باشميل",sku:"sk-0094",unit:"PC"},
+      {name:"غطاء صحن كشري",sku:"sk-0095",unit:"PC"},
+      {name:"بابريكا",sku:"sk-0096",unit:"G"},
+      {name:"علبة الشطة والدقة",sku:"sk-0097",unit:"PC"},
+      {name:"اغطية علبة الشطة والدقة",sku:"sk-0098",unit:"PC"},
+      {name:"علبة صوص الكشري كمالة",sku:"sk-0099",unit:"PC"},
+      {name:"اغطية علبة صوص الكشري كمالة",sku:"sk-0100",unit:"PC"},
+      {name:"خبز",sku:"sk-0101",unit:"G"},
+      {name:"ليمون",sku:"sk-0102",unit:"G"},
+      {name:"فلفل ابيض",sku:"sk-0103",unit:"G"},
+      {name:"الرز المطبوخ",sku:"P-0104",unit:"Batch"},
+      {name:"شعرية مطبوخة",sku:"P-0105",unit:"Batch"},
+      {name:"معكرونة الكشري المطبوخة",sku:"P-0106",unit:"Batch"},
+      {name:"معكرونة سباغتي مطبوخة",sku:"P-0107",unit:"Batch"},
+      {name:"معكرونة بيني مطبوخة",sku:"P-0108",unit:"Batch"},
+      {name:"عدس كشري حب مطبوخ",sku:"P-0109",unit:"Batch"},
+      {name:"حمص مطبوخ",sku:"P-0110",unit:"Batch"},
+      {name:"حليب ام علي المطبوخ",sku:"P-0111",unit:"Batch"},
+      {name:"بصل مقلي",sku:"P-0112",unit:"Batch"},
+      {name:"شوربة عدس",sku:"P-0113",unit:"Batch"},
+      {name:"خبز مقلي",sku:"P-0114",unit:"Batch"},
+      {name:"صلصة البندورة للكشري",sku:"P-0115",unit:"Batch"},
+      {name:"صلصة البولونيز",sku:"P-0116",unit:"Batch"},
+      {name:"صوص لحمة الباشميل",sku:"P-0117",unit:"Batch"},
+      {name:"صوص الباشميل المطبوخ",sku:"P-0118",unit:"Batch"},
+      {name:"خلطة ام علي",sku:"P-0119",unit:"Batch"},
+      {name:"صوص الشطة",sku:"P-0120",unit:"Batch"},
+      {name:"صوص الدقة",sku:"P-0121",unit:"Batch"},
+      {name:"صحون الباشميل المنتجة",sku:"P-0123",unit:"PC"},
+      {name:"علبة شطة منتجة",sku:"P-0124",unit:"PC"},
+      {name:"علبة دقة منتجة",sku:"P-0125",unit:"PC"},
+      {name:"علبة خبز مقلي منتجة",sku:"P-0127",unit:"PC"},
+      {name:"علبة شوربة",sku:"sk-0128",unit:"PC"},
+      {name:"غطاء علبة شوربة",sku:"sk-0129",unit:"PC"},
+      {name:"خلطة المكسرات",sku:"P-0128",unit:"Batch"},
+      {name:"رقائق مطبوخة",sku:"P-0129",unit:"Batch"},
+      {name:"مهلبية مطبوخة",sku:"P-0141",unit:"Batch"},
+      {name:"فانيلا",sku:"sk-0142",unit:"PC"},
+      {name:"نشا",sku:"sk-0143",unit:"G"},
+      {name:"علبة مهلبية",sku:"sk-0177",unit:"PC"},
+      {name:"اكياس الطلبات - كبير",sku:"sk-0146",unit:"KG"},
+      {name:"اكياس الطلبات - صغير",sku:"sk-0147",unit:"KG"},
+      {name:"صحون الباشميل المنتجة - نقطة بيع مرج الحمام",sku:"SP-0149",unit:"PC"},
+      {name:"صلصة البولونيز - نقطة بيع مرج الحمام",sku:"SP-0150",unit:"KG"},
+      {name:"بصل مقلي - نقطة بيع مرج الحمام",sku:"SP-0154",unit:"KG"},
+      {name:"علبة دقة منتجة - نقطة بيع مرج الحمام",sku:"SP-0155",unit:"PC"},
+      {name:"علبة شطة منتجة -نقطة بيع مرج الحمام",sku:"SP-0156",unit:"PC"},
+      {name:"خلطة حليب ام علي - نقطة بيع مرج الحمام",sku:"SP-0157",unit:"Batch"},
+      {name:"شعرية مطبوخة - نقطة بيع مرج الحمام",sku:"SP-0160",unit:"G"},
+      {name:"علبة خبز مقلي منتجة - نقطة بيع مرج الحمام",sku:"SP-0162",unit:"PC"},
+      {name:"علبة مهلبية منتجة",sku:"P-0163",unit:"PC"},
+      {name:"صلصة البندورة للكشري - نقطة مبيعات مرج الحمام",sku:"SP-0174",unit:"KG"},
+      {name:"شوربة عدس - نقطة مبيعات مرج الحمام",sku:"SP-0175",unit:"Batch"},
+      {name:"عدس كشري حب مطبوخ - نقطة بيع مرج الحمام",sku:"SP-0177",unit:"KG"},
+      {name:"الرز المطبوخ - نقطة بيع مرج الحمام",sku:"SP-0178",unit:"Batch"},
+      {name:"معكرونة الكشري المطبوخة - نقطة مبيعات مرج الحمام",sku:"SP-0179",unit:"Batch"},
+      {name:"معكرونة سباغتي مطبوخة - نقطة مبيعات مرج الحمام",sku:"SP-0180",unit:"Batch"},
+      {name:"صحون ام علي المنتجة",sku:"P-0174",unit:"PC"},
+      {name:"صحون ام علي المنتجة - نقطة بيع مرج الحمام",sku:"SP-180",unit:"PC"},
+      {name:"خلطة مهلبية - نقطة بيع مرج الحمام",sku:"SP-200",unit:"BATCH"},
+      {name:"علبة بولونيز منتجة",sku:"P-0181",unit:"PC"},
+      {name:"علبة بولونيز منتجة - مرج الحمام",sku:"SP-0182",unit:"PC"}
+    ];
+
+    let items = [];
+    let logs = [];
+    let settings = { dateFrom: null, dateTo: null };
+
+    function loadData() {
+      try {
+        items = JSON.parse(localStorage.getItem(STORAGE_KEYS.items) || '[]');
+        logs = JSON.parse(localStorage.getItem(STORAGE_KEYS.logs) || '[]');
+        settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.settings) || '{}');
+      } catch (e) {
+        items = [];
+        logs = [];
+        settings = {};
+      }
+      pruneOldLogs();
+    }
+
+    function saveItems() {
+      localStorage.setItem(STORAGE_KEYS.items, JSON.stringify(items));
+    }
+
+    function saveLogs() {
+      localStorage.setItem(STORAGE_KEYS.logs, JSON.stringify(logs));
+    }
+
+    function saveSettings() {
+      localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(settings));
+    }
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+
+    // ===================== Date helpers =====================
+    function todayStr() {
+      const d = new Date();
+      return d.toISOString().slice(0, 10);
+    }
+
+    function initDates() {
+      const toInput = document.getElementById('dateTo');
+      const fromInput = document.getElementById('dateFrom');
+      const today = todayStr();
+
+      // النطاق الافتراضي هو اليوم — كل الحسابات تُبنى على السجل ضمن هذا النطاق
+      toInput.value = settings.dateTo || today;
+      fromInput.value = settings.dateFrom || today;
+
+      fromInput.addEventListener('change', () => {
+        settings.dateFrom = fromInput.value;
+        saveSettings();
+        renderHome();
+        renderSummary();
+      });
+      toInput.addEventListener('change', () => {
+        settings.dateTo = toInput.value;
+        saveSettings();
+        renderHome();
+        renderSummary();
+      });
+    }
+
+    function getDateRange() {
+      return {
+        from: document.getElementById('dateFrom').value,
+        to: document.getElementById('dateTo').value
+      };
+    }
+
+    // ===================== Log retention (شهر واحد فقط) =====================
+    function getOneMonthAgoStr() {
+      const d = new Date();
+      d.setMonth(d.getMonth() - 1);
+      return d.toISOString().slice(0, 10);
+    }
+
+    // يمسح نهائياً من الـ localStorage أي حركة سجل أقدم من شهر
+    function pruneOldLogs() {
+      const cutoff = getOneMonthAgoStr();
+      const before = logs.length;
+      logs = logs.filter(l => l.date >= cutoff);
+      const removed = before - logs.length;
+      if (removed > 0) {
+        saveLogs();
+      }
+      return removed;
+    }
+
+    // ===================== حاسبة الكمية (آمنة، بدون eval) =====================
+    // تدعم: + - * / ( ) وأرقام عشرية، وتُرجع NaN لأي صيغة غير صالحة
+    function evalExpr(expr) {
+      if (typeof expr !== 'string') return NaN;
+      const clean = expr.trim();
+      if (!clean) return NaN;
+      if (!/^[0-9+\-*/().\s]+$/.test(clean)) return NaN;
+
+      let i = 0;
+
+      function eatSpaces() { while (clean[i] === ' ') i++; }
+
+      function parseNumber() {
+        eatSpaces();
+        const start = i;
+        while (i < clean.length && /[0-9.]/.test(clean[i])) i++;
+        const numStr = clean.slice(start, i);
+        if (numStr === '' || numStr === '.') throw new Error('رقم غير صالح');
+        const n = parseFloat(numStr);
+        if (isNaN(n)) throw new Error('رقم غير صالح');
+        return n;
+      }
+
+      function parseFactor() {
+        eatSpaces();
+        if (clean[i] === '(') {
+          i++;
+          const val = parseExpr();
+          eatSpaces();
+          if (clean[i] !== ')') throw new Error('قوس غير مغلق');
+          i++;
+          return val;
+        }
+        if (clean[i] === '-') { i++; return -parseFactor(); }
+        if (clean[i] === '+') { i++; return parseFactor(); }
+        return parseNumber();
+      }
+
+      function parseTerm() {
+        let val = parseFactor();
+        eatSpaces();
+        while (clean[i] === '*' || clean[i] === '/') {
+          const op = clean[i]; i++;
+          const rhs = parseFactor();
+          if (op === '*') {
+            val *= rhs;
+          } else {
+            if (rhs === 0) throw new Error('قسمة على صفر');
+            val /= rhs;
+          }
+          eatSpaces();
+        }
+        return val;
+      }
+
+      function parseExpr() {
+        let val = parseTerm();
+        eatSpaces();
+        while (clean[i] === '+' || clean[i] === '-') {
+          const op = clean[i]; i++;
+          const rhs = parseTerm();
+          val = op === '+' ? val + rhs : val - rhs;
+          eatSpaces();
+        }
+        return val;
+      }
+
+      try {
+        const result = parseExpr();
+        eatSpaces();
+        if (i !== clean.length) throw new Error('صيغة غير صحيحة');
+        if (!isFinite(result)) throw new Error('نتيجة غير صالحة');
+        return result;
+      } catch (e) {
+        return NaN;
+      }
+    }
+
+    function updateQtyPreview() {
+      const raw = document.getElementById('qtyValue').value.trim();
+      const preview = document.getElementById('qtyPreview');
+      if (!raw) {
+        preview.textContent = '';
+        preview.className = 'qty-preview';
+        return;
+      }
+      const result = evalExpr(raw);
+      if (isNaN(result)) {
+        preview.textContent = /[+\-*/()]/.test(raw) ? 'صيغة غير صحيحة' : '';
+        preview.className = 'qty-preview err';
+        return;
+      }
+      // ما في داعي نعرض المعاينة إذا المستخدم كاتب رقم صريح بس بدون عمليات
+      if (/^[0-9.]+$/.test(raw)) {
+        preview.textContent = '';
+        preview.className = 'qty-preview';
+        return;
+      }
+      preview.textContent = `= ${formatNum(result)}`;
+      preview.className = 'qty-preview ok';
+    }
+
+    // ===================== Calculations =====================
+    function getItemTotal(itemId, from, to) {
+      return logs
+        .filter(l => l.itemId === itemId && l.date >= from && l.date <= to)
+        .reduce((sum, l) => sum + Number(l.qty || 0), 0);
+    }
+
+    function getTodayTotal(itemId) {
+      const t = todayStr();
+      return getItemTotal(itemId, t, t);
+    }
+
+    /**
+     * تحويل الكمية من وحدة الإدخال إلى وحدة الإخراج
+     * مثال: 5 كيلو → جرام = 5000
+     * إذا الوحدتين من نوع مختلف (وزن ↔ حجم) أو غير معروفتين → يرجع نفس الرقم
+     */
+    function convertQty(qty, unitIn, unitOut) {
+      if (!unitIn || !unitOut || unitIn === unitOut) return qty;
+
+      const from = UNIT_DEFS[unitIn];
+      const to   = UNIT_DEFS[unitOut];
+
+      // وحدات غير معرّفة أو أنواع مختلفة → لا تحويل
+      if (!from || !to || from.type !== to.type) {
+        return qty;
+      }
+
+      // حوّل إلى الوحدة الأساسية ثم إلى الوحدة المطلوبة
+      const base = qty * from.factor;
+      return base / to.factor;
+    }
+
+    // ===================== Render =====================
+    function renderHome() {
+      const grid = document.getElementById('itemsGrid');
+      const empty = document.getElementById('emptyState');
+      const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+      const { from, to } = getDateRange();
+
+      const visibleItems = items.filter(i => i.showOnHome !== false);
+
+      let filtered = visibleItems;
+      if (q) {
+        filtered = visibleItems.filter(i =>
+          i.name.toLowerCase().includes(q) ||
+          (i.sku || '').toLowerCase().includes(q)
+        );
+      }
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = visibleItems.length === 0 ? 'block' : 'none';
+        if (visibleItems.length > 0 && q) {
+          grid.innerHTML = '<div class="empty"><p>ما في نتائج للبحث</p></div>';
+        } else if (visibleItems.length === 0 && items.length > 0) {
+          grid.innerHTML = '<div class="empty"><p>كل الأصناف مخفية من هالصفحة — زبطها من صفحة «العرض»</p></div>';
+          empty.style.display = 'none';
+        }
+        return;
+      }
+      empty.style.display = 'none';
+
+      grid.innerHTML = filtered.map(item => {
+        const total = getItemTotal(item.id, from, to);
+        const today = getTodayTotal(item.id);
+        return `
+          <div class="item-card ${item.isExportable ? 'exportable' : ''}" onclick="openQtyModal('${item.id}')">
+            <div class="item-info">
+              <div class="item-name">${escapeHtml(item.name)}</div>
+              <div class="item-meta">
+                <span>${escapeHtml(item.unitIn || '')}</span>
+                ${item.isExportable ? '<span class="badge badge-export">تصدير</span>' : '<span class="badge badge-local">محلي</span>'}
+                ${today > 0 ? `<span style="color:var(--success)">اليوم: ${formatNum(today)}</span>` : ''}
+              </div>
+            </div>
+            <div class="item-total">
+              ${formatNum(total)}
+              <small>${escapeHtml(item.unitIn || '')}</small>
+            </div>
+            <button class="add-btn" onclick="event.stopPropagation(); openQtyModal('${item.id}')">+</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderSummary() {
+      const list = document.getElementById('summaryList');
+      const { from, to } = getDateRange();
+
+      // كل الحركات في النطاق كـ Log منفصل
+      const rangeLogs = logs
+        .filter(l => l.date >= from && l.date <= to)
+        .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+
+      if (rangeLogs.length === 0) {
+        list.innerHTML = '<div class="empty"><div class="icon">📋</div><p>ما في حركات بهالفترة</p></div>';
+        return;
+      }
+
+      // رأس بسيط
+      let html = `
+        <div style="margin-bottom:12px;color:var(--text-muted);font-size:0.9rem;">
+          ${rangeLogs.length} حركة · من ${from} إلى ${to}
+        </div>
+      `;
+
+      html += rangeLogs.map(l => {
+        const item = items.find(i => i.id === l.itemId);
+        const name = item ? item.name : 'صنف محذوف';
+        const unit = item ? (item.unitIn || '') : '';
+        const isExport = item ? item.isExportable : false;
+
+        const timeStr = l.time ? l.time.slice(0, 5) : ''; // HH:MM
+        const dateTime = timeStr ? `${l.date}  ${timeStr}` : l.date;
+
+        return `
+          <div class="summary-card" style="padding:12px 14px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+              <div style="flex:1;min-width:0;">
+                <div class="name" style="font-size:1rem;">
+                  ${escapeHtml(name)}
+                  ${isExport ? '<span class="badge badge-export">تصدير</span>' : '<span class="badge badge-local">محلي</span>'}
+                </div>
+                <div style="margin-top:4px;">
+                  <strong style="font-size:1.2rem;color:var(--primary);">${formatNum(l.qty)}</strong>
+                  <span style="color:var(--text-muted);font-size:0.9rem;"> ${escapeHtml(unit)}</span>
+                  ${l.note ? `<span style="color:var(--text-muted);font-size:0.85rem;"> · ${escapeHtml(l.note)}</span>` : ''}
+                </div>
+                <div class="meta" style="margin-top:4px;">${dateTime}</div>
+              </div>
+              <button class="icon-btn danger" onclick="deleteLog('${l.id}')" title="حذف الحركة">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      list.innerHTML = html;
+    }
+
+    function renderManage() {
+      const list = document.getElementById('manageList');
+      if (items.length === 0) {
+        list.innerHTML = '<div class="empty"><p>ما في أصناف بعد</p></div>';
+        return;
+      }
+      list.innerHTML = items.map(item => `
+        <div class="manage-item">
+          <div class="info">
+            <div class="item-name">${escapeHtml(item.name)}</div>
+            <div class="item-meta">
+              SKU: ${escapeHtml(item.sku || '—')} · 
+              إدخال: ${escapeHtml(item.unitIn || '—')} · 
+              إخراج: ${escapeHtml(item.unitOut || '—')}
+              ${item.isExportable ? ' · <span class="badge badge-export">تصدير</span>' : ' · <span class="badge badge-local">محلي</span>'}
+            </div>
+          </div>
+          <div class="actions">
+            <button class="icon-btn" onclick="openEditItem('${item.id}')">✏️</button>
+            <button class="icon-btn danger" onclick="deleteItem('${item.id}')">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ===================== Searchable Unit Dropdown =====================
+    function initUnitDropdowns() {
+      setupUnitSelect('itemUnitIn', 'unitInDropdown');
+      setupUnitSelect('itemUnitOut', 'unitOutDropdown');
+    }
+
+    function setupUnitSelect(inputId, dropdownId) {
+      const input = document.getElementById(inputId);
+      const dropdown = document.getElementById(dropdownId);
+
+      function renderOptions(filter = '') {
+        const q = filter.trim().toLowerCase();
+        const filtered = q
+          ? UNITS.filter(u => u.toLowerCase().includes(q))
+          : UNITS;
+
+        if (filtered.length === 0) {
+          dropdown.innerHTML = `<div class="unit-option" style="color:var(--text-muted);cursor:default;">لا توجد نتائج — اكتب وحدة مخصصة</div>`;
+        } else {
+          dropdown.innerHTML = filtered.map(u =>
+            `<div class="unit-option" data-value="${escapeHtml(u)}">${escapeHtml(u)}</div>`
+          ).join('');
+        }
+
+        dropdown.querySelectorAll('.unit-option[data-value]').forEach(opt => {
+          opt.addEventListener('click', () => {
+            input.value = opt.getAttribute('data-value');
+            dropdown.classList.remove('show');
+          });
+        });
+      }
+
+      input.addEventListener('focus', () => {
+        renderOptions(input.value);
+        dropdown.classList.add('show');
+      });
+
+      input.addEventListener('input', () => {
+        renderOptions(input.value);
+        dropdown.classList.add('show');
+      });
+
+      // Allow custom value (user can type anything)
+      input.addEventListener('blur', () => {
+        // small delay so click on option still works
+        setTimeout(() => dropdown.classList.remove('show'), 180);
+      });
+    }
+
+    // ===================== Modals =====================
+    function openQtyModal(itemId) {
+      const item = items.find(i => i.id === itemId);
+      if (!item) return;
+      document.getElementById('qtyItemId').value = itemId;
+      document.getElementById('qtyModalTitle').textContent = item.name;
+      document.getElementById('qtyUnit').textContent = item.unitIn || '';
+      document.getElementById('qtyDate').value = todayStr();
+      document.getElementById('qtyValue').value = '';
+      document.getElementById('qtyNote').value = '';
+      document.getElementById('qtyPreview').textContent = '';
+      document.getElementById('qtyPreview').className = 'qty-preview';
+      document.getElementById('qtyModal').classList.add('show');
+      setTimeout(() => document.getElementById('qtyValue').focus(), 200);
+    }
+
+    function setQty(n) {
+      document.getElementById('qtyValue').value = n;
+      updateQtyPreview();
+    }
+
+    function saveQuantity() {
+      const itemId = document.getElementById('qtyItemId').value;
+      const date = document.getElementById('qtyDate').value;
+      const rawValue = document.getElementById('qtyValue').value.trim();
+      const qty = evalExpr(rawValue);
+      const note = document.getElementById('qtyNote').value.trim();
+
+      if (!date) {
+        showToast('اختر التاريخ');
+        return;
+      }
+      if (isNaN(qty)) {
+        showToast('الصيغة الحسابية غير صحيحة');
+        return;
+      }
+      if (qty <= 0) {
+        showToast('لازم تكون الكمية أكبر من صفر');
+        return;
+      }
+
+      const now = new Date();
+      const time = now.toTimeString().slice(0, 8); // HH:MM:SS
+
+      logs.push({
+        id: uid(),
+        itemId,
+        date,
+        time,           // وقت التسجيل
+        qty,
+        note,
+        createdAt: Date.now()
+      });
+      saveLogs();
+      pruneOldLogs();
+      closeModal('qtyModal');
+      renderHome();
+      renderSummary();
+      showToast('تم الحفظ ✓');
+    }
+
+    function openAddItemModal() {
+      document.getElementById('editItemId').value = '';
+      document.getElementById('itemModalTitle').textContent = 'إضافة صنف جديد';
+      document.getElementById('itemName').value = '';
+      document.getElementById('itemSku').value = '';
+      document.getElementById('itemUnitIn').value = '';
+      document.getElementById('itemUnitOut').value = '';
+      document.getElementById('itemExportable').checked = true;
+      document.getElementById('itemModal').classList.add('show');
+      setTimeout(() => document.getElementById('itemName').focus(), 200);
+    }
+
+    function openEditItem(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      document.getElementById('editItemId').value = id;
+      document.getElementById('itemModalTitle').textContent = 'تعديل صنف';
+      document.getElementById('itemName').value = item.name;
+      document.getElementById('itemSku').value = item.sku || '';
+      document.getElementById('itemUnitIn').value = item.unitIn || '';
+      document.getElementById('itemUnitOut').value = item.unitOut || '';
+      document.getElementById('itemExportable').checked = !!item.isExportable;
+      document.getElementById('itemModal').classList.add('show');
+    }
+
+    function saveItem() {
+      const id = document.getElementById('editItemId').value;
+      const name = document.getElementById('itemName').value.trim();
+      const sku = document.getElementById('itemSku').value.trim();
+      const unitIn = document.getElementById('itemUnitIn').value.trim();
+      const unitOut = document.getElementById('itemUnitOut').value.trim();
+      const isExportable = document.getElementById('itemExportable').checked;
+
+      if (!name) {
+        showToast('الاسم مطلوب');
+        return;
+      }
+
+      // case-insensitive check for duplicate name (but keep exact case)
+      const nameLower = name.toLowerCase();
+      const exists = items.find(i => i.name.toLowerCase() === nameLower && i.id !== id);
+      if (exists) {
+        showToast('الصنف موجود مسبقاً');
+        return;
+      }
+
+      if (id) {
+        const idx = items.findIndex(i => i.id === id);
+        if (idx >= 0) {
+          items[idx] = { ...items[idx], name, sku, unitIn, unitOut, isExportable };
+        }
+      } else {
+        items.push({
+          id: uid(),
+          name,
+          sku,
+          unitIn,
+          unitOut,
+          isExportable,
+          createdAt: Date.now()
+        });
+      }
+      saveItems();
+      closeModal('itemModal');
+      renderHome();
+      renderManage();
+      renderSummary();
+      renderVisibility();
+      showToast('تم حفظ الصنف ✓');
+    }
+
+    function deleteItem(id) {
+      if (!confirm('حذف الصنف وكل عملياته؟')) return;
+      items = items.filter(i => i.id !== id);
+      logs = logs.filter(l => l.itemId !== id);
+      saveItems();
+      saveLogs();
+      renderHome();
+      renderManage();
+      renderSummary();
+      renderVisibility();
+      showToast('تم الحذف');
+    }
+
+    function deleteLog(id) {
+      if (!confirm('حذف هذه العملية؟')) return;
+      logs = logs.filter(l => l.id !== id);
+      saveLogs();
+      renderHome();
+      renderSummary();
+      showToast('تم حذف العملية');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    // ===================== Export =====================
+    function exportCSV() {
+      const { from, to } = getDateRange();
+
+      // كل حركة منفصلة للأصناف المفعّلة للتصدير
+      const exportLogs = logs
+        .filter(l => {
+          if (l.date < from || l.date > to) return false;
+          const item = items.find(i => i.id === l.itemId);
+          return item && item.isExportable;
+        })
+        .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt);
+
+      if (exportLogs.length === 0) {
+        showToast('ما في حركات للتصدير بهالفترة');
+        return;
+      }
+
+      // Exact headers as the template (case-sensitive)
+      const headers = ['name', 'sku', 'storage_quantity', 'ingredients_quantity'];
+      const rows = [headers.join(',')];
+
+      exportLogs.forEach(l => {
+        const item = items.find(i => i.id === l.itemId);
+        if (!item) return;
+
+        // تحويل الكمية من وحدة الإدخال إلى وحدة الإخراج
+        const qtyOut = convertQty(Number(l.qty), item.unitIn, item.unitOut);
+        const name = csvEscape(item.name);
+        const sku = csvEscape(item.sku || '');
+        const qtyStr = Number(qtyOut.toFixed(4));
+        rows.push(`${name},${sku},${qtyStr},0`);
+      });
+
+      const csvContent = rows.join('\n');
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `quantity_adjustment_${from}_to_${to}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`تم تصدير ${exportLogs.length} حركة ✓`);
+    }
+
+    function csvEscape(val) {
+      if (val == null) return '';
+      const s = String(val);
+      if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+        return `"${s.replace(/"/g, '""')}"`;
+      }
+      return s;
+    }
+
+    // ===================== API Ready =====================
+    function prepareApiPayload() {
+      const { from, to } = getDateRange();
+      const payload = {
+        dateFrom: from,
+        dateTo: to,
+        items: items,
+        logs: logs.filter(l => l.date >= from && l.date <= to),
+        generatedAt: new Date().toISOString()
+      };
+
+      document.getElementById('apiJson').textContent = JSON.stringify(payload, null, 2);
+      document.getElementById('apiPreview').style.display = 'block';
+      showToast('البيانات جاهزة للنسخ');
+
+      // Ready function for future backend
+      // You can call: await saveToServer(payload);
+    }
+
+    /**
+     * Future API call – ready to connect
+     * Example:
+     * async function saveToServer(data) {
+     *   const res = await fetch('https://your-api.com/transfers', {
+     *     method: 'POST',
+     *     headers: { 'Content-Type': 'application/json' },
+     *     body: JSON.stringify(data)
+     *   });
+     *   return res.json();
+     * }
+     */
+    async function saveToServer(data) {
+      // TODO: replace with your real endpoint
+      console.log('Ready to send:', data);
+      showToast('دالة الـ API جاهزة – اربطها بالسيرفر');
+      return { ok: true };
+    }
+
+    function clearAllLogs() {
+      if (logs.length === 0) {
+        showToast('السجل فارغ أصلاً');
+        return;
+      }
+      if (!confirm('مسح كل حركات السجل؟ الأصناف نفسها ما بتنمسح.')) return;
+      if (!confirm('تأكيد نهائي؟ ما فيك تتراجع عن هالخطوة.')) return;
+      logs = [];
+      saveLogs();
+      renderHome();
+      renderSummary();
+      document.getElementById('apiPreview').style.display = 'none';
+      showToast('تم مسح كل حركات السجل');
+    }
+
+    // ===================== Import / Export (JSON) =====================
+    function downloadJSON(obj, filename) {
+      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportItemsJSON() {
+      if (items.length === 0) {
+        showToast('ما في أصناف للتصدير');
+        return;
+      }
+      downloadJSON(
+        { type: 'branch-transfer-items', exportedAt: new Date().toISOString(), items },
+        `items_${todayStr()}.json`
+      );
+      showToast(`تم تصدير ${items.length} صنف ✓`);
+    }
+
+    function importItemsJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          const incoming = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : null);
+          if (!incoming) throw new Error('صيغة غير صحيحة');
+
+          let added = 0, updated = 0, skipped = 0;
+          incoming.forEach(raw => {
+            if (!raw || !raw.name || !String(raw.name).trim()) { skipped++; return; }
+            const clean = {
+              id: raw.id || uid(),
+              name: String(raw.name).trim(),
+              sku: raw.sku ? String(raw.sku).trim() : '',
+              unitIn: raw.unitIn || '',
+              unitOut: raw.unitOut || '',
+              isExportable: raw.isExportable !== false,
+              createdAt: raw.createdAt || Date.now()
+            };
+
+            const byId = items.findIndex(i => i.id === clean.id);
+            if (byId >= 0) {
+              items[byId] = { ...items[byId], ...clean };
+              updated++;
+              return;
+            }
+            const nameLower = clean.name.toLowerCase();
+            const byName = items.find(i => i.name.toLowerCase() === nameLower);
+            if (byName) { skipped++; return; }
+
+            items.push(clean);
+            added++;
+          });
+
+          saveItems();
+          renderHome();
+          renderManage();
+          renderSummary();
+          showToast(`استيراد الأصناف: ${added} جديد، ${updated} تحديث، ${skipped} تجاهل`);
+        } catch (err) {
+          showToast('ملف الأصناف غير صالح');
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    function exportLogsJSON() {
+      if (logs.length === 0) {
+        showToast('ما في حركات للتصدير');
+        return;
+      }
+      downloadJSON(
+        { type: 'branch-transfer-logs', exportedAt: new Date().toISOString(), logs },
+        `logs_${todayStr()}.json`
+      );
+      showToast(`تم تصدير ${logs.length} حركة ✓`);
+    }
+
+    function importLogsJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          const incoming = Array.isArray(data) ? data : (Array.isArray(data.logs) ? data.logs : null);
+          if (!incoming) throw new Error('صيغة غير صحيحة');
+
+          const existingIds = new Set(logs.map(l => l.id));
+          let added = 0, skipped = 0;
+          incoming.forEach(raw => {
+            if (!raw || !raw.itemId || !raw.date || raw.qty == null || isNaN(Number(raw.qty))) { skipped++; return; }
+            let id = raw.id;
+            if (!id || existingIds.has(id)) id = uid();
+            logs.push({
+              id,
+              itemId: raw.itemId,
+              date: raw.date,
+              time: raw.time || '00:00:00',
+              qty: Number(raw.qty),
+              note: raw.note || '',
+              createdAt: raw.createdAt || Date.now()
+            });
+            existingIds.add(id);
+            added++;
+          });
+
+          saveLogs();
+          const removed = pruneOldLogs();
+          renderHome();
+          renderSummary();
+          const removedMsg = removed > 0 ? ` (حُذف ${removed} أقدم من شهر)` : '';
+          showToast(`استيراد السجل: ${added} حركة، ${skipped} تجاهل${removedMsg}`);
+        } catch (err) {
+          showToast('ملف السجل غير صالح');
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    // ===================== استيراد أصناف من CSV (Foodics) =====================
+    // يتوقع أعمدة: Name, SKU, Barcode, Storage Unit, Quantity (زي تقرير مستويات المخزون)
+    const STORAGE_UNIT_MAP = {
+      'G': 'غرام',
+      'GRAM': 'غرام',
+      'KG': 'كيلوغرام',
+      'ML': 'مليلتر',
+      'L': 'لتر',
+      'PC': 'حبة',
+      'BATCH': 'دفعة'
+    };
+
+    function mapStorageUnit(u) {
+      const key = String(u || '').trim().toUpperCase();
+      if (!key) return '';
+      return STORAGE_UNIT_MAP[key] || String(u).trim();
+    }
+
+    function parseCSVLine(line) {
+      const result = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQuotes) {
+          if (ch === '"') {
+            if (line[i + 1] === '"') { cur += '"'; i++; }
+            else inQuotes = false;
+          } else {
+            cur += ch;
+          }
+        } else {
+          if (ch === '"') inQuotes = true;
+          else if (ch === ',') { result.push(cur); cur = ''; }
+          else cur += ch;
+        }
+      }
+      result.push(cur);
+      return result;
+    }
+
+    function parseCSVText(text) {
+      const clean = text.replace(/^\uFEFF/, '');
+      const lines = clean.split(/\r\n|\n|\r/).filter(l => l.trim() !== '');
+      if (lines.length < 2) return [];
+      const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+      const rows = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCSVLine(lines[i]);
+        const row = {};
+        headers.forEach((h, idx) => { row[h] = (cols[idx] || '').trim(); });
+        rows.push(row);
+      }
+      return rows;
+    }
+
+    // يضيف فقط الأصناف الغير موجودة (مطابقة بالاسم أو الـ SKU)، ويتجاهل الموجود
+    function mergeImportedItems(list) {
+      let added = 0, skipped = 0;
+      list.forEach(entry => {
+        const name = (entry.name || '').trim();
+        if (!name) { skipped++; return; }
+        const sku = (entry.sku || '').trim();
+        const nameLower = name.toLowerCase();
+        const skuLower = sku.toLowerCase();
+
+        const exists = items.some(i =>
+          i.name.toLowerCase() === nameLower ||
+          (skuLower && (i.sku || '').toLowerCase() === skuLower)
+        );
+        if (exists) { skipped++; return; }
+
+        const unit = mapStorageUnit(entry.unit || '');
+        items.push({
+          id: uid(),
+          name,
+          sku,
+          unitIn: unit,
+          unitOut: unit,
+          isExportable: true,
+          showOnHome: true,
+          createdAt: Date.now()
+        });
+        added++;
+      });
+      return { added, skipped };
+    }
+
+    function afterItemsImport(added, skipped, label) {
+      saveItems();
+      renderHome();
+      renderManage();
+      renderSummary();
+      renderVisibility();
+      showToast(`${label}: ${added} جديد، ${skipped} موجود مسبقاً`);
+    }
+
+    function importCSVFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const rows = parseCSVText(e.target.result);
+          const list = rows.map(r => ({
+            name: r['name'] || '',
+            sku: r['sku'] || '',
+            unit: r['storage unit'] || ''
+          }));
+          const { added, skipped } = mergeImportedItems(list);
+          afterItemsImport(added, skipped, 'استيراد CSV');
+        } catch (err) {
+          showToast('ملف CSV غير صالح');
+        } finally {
+          event.target.value = '';
+        }
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+
+    // استيراد بضغطة واحدة من قائمة الأصناف الافتراضية (تقرير مستويات المخزون)
+    function importDefaultSeed() {
+      const { added, skipped } = mergeImportedItems(DEFAULT_SEED_ITEMS);
+      afterItemsImport(added, skipped, 'القائمة الافتراضية');
+    }
+
+    // ===================== إظهار / إخفاء الأصناف بصفحة المنقولات =====================
+    function renderVisibility() {
+      const list = document.getElementById('visibilityList');
+      if (!list) return;
+      const qInput = document.getElementById('visSearchInput');
+      const q = (qInput ? qInput.value : '').trim().toLowerCase();
+
+      let filtered = items;
+      if (q) {
+        filtered = items.filter(i =>
+          i.name.toLowerCase().includes(q) ||
+          (i.sku || '').toLowerCase().includes(q)
+        );
+      }
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="empty"><p>${items.length === 0 ? 'ما في أصناف بعد' : 'ما في نتائج للبحث'}</p></div>`;
+        return;
+      }
+
+      const sorted = [...filtered].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+      list.innerHTML = sorted.map(item => {
+        const visible = item.showOnHome !== false;
+        return `
+          <div class="manage-item">
+            <div class="info">
+              <div class="item-name">${escapeHtml(item.name)}</div>
+              <div class="item-meta">SKU: ${escapeHtml(item.sku || '—')}</div>
+            </div>
+            <label class="vis-toggle">
+              <input type="checkbox" ${visible ? 'checked' : ''} onchange="toggleVisibility('${item.id}', this.checked)" />
+            </label>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleVisibility(id, visible) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      item.showOnHome = visible;
+      saveItems();
+      renderHome();
+    }
+
+    // ===================== Navigation =====================
+    function switchPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      document.querySelector(`.nav-btn[data-page="${page}"]`).classList.add('active');
+
+      document.getElementById('searchWrap').style.display = page === 'home' ? 'block' : 'none';
+
+      if (page === 'summary') renderSummary();
+      if (page === 'manage') renderManage();
+      if (page === 'visibility') renderVisibility();
+    }
+
+    // ===================== Utils =====================
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function formatNum(n) {
+      if (n == null || isNaN(n)) return '0';
+      return Number(n).toLocaleString('en-US', { maximumFractionDigits: 3 });
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // Search
+    document.getElementById('searchInput').addEventListener('input', () => {
+      renderHome();
+    });
+
+    // Close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('show');
+      });
+    });
+
+    // Init
+    loadData();
+    initDates();
+    initUnitDropdowns();
+    renderHome();
+    renderManage();
+  </script>
+</body>
+</html>
