@@ -22,7 +22,6 @@ const inventoryData = [
             { name: "رز خام", sku: "sk-0032", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "عدس حب خام", sku: "sk-0046", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "حمص خام", sku: "sk-0047", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "سكر", sku: "sk-0039", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "سمن", sku: "sk-0069", unit: "G", packageSize: 1.7, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "ملح", sku: "sk-0038", unit: "G", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "سماق", sku: "sk-0070", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
@@ -31,13 +30,13 @@ const inventoryData = [
             { name: "اكياس الطلبات - صغير", sku: "sk-0147", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة مهلبية", sku: "sk-0177", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "حمص مطبوخ", sku: "P-0110", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "سكر", sku: "sk-0039", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "حليب بودرة", sku: "sk-0057", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "كريمة طبخ", sku: "sk-0058", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "خلطة حليب ام علي", sku: "SP-0157", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "عدس كشري حب مطبوخ", sku: "SP-0177", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "صلصة بولونيز علب", sku: "sp-0182", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
-                                                                                ];
+            { name: "صلصة بولونيز علب", sku: "sp-0182", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "خلطة مهلبية", sku: "SP-200", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
+        ];
 
 const sectionStarts = { 0: "🏭 شيت الجرد ١ — الإنتاج", 11: "📦 شيت الجرد ٢ — المواد والمشروبات" };
 
@@ -58,7 +57,8 @@ const countSheets = [
                 { n: 'صلصة بولونيز علب', s: 'sp-0182' },
                 { n: 'شوربة عدس - نقطة مبيعات مرج الحمام', s: 'sp-0175' },
                 { n: 'شعرية مطبوخة - نقطة بيع مرج الحمام', s: 'sp-0160' },
-                { n: 'علبة مهلبية منتجة', s: 'p-0163' }
+                { n: 'علبة مهلبية منتجة', s: 'p-0163' },
+                { n: 'خلطة مهلبية', s: 'SP-200' }
             ]},
             { id: 'sheet2', title: 'شيت الجرد ٢ — المواد والمشروبات', icon: '📦', items: [
                 { n: 'طبق كشري', s: 'sk-0042' },
@@ -71,7 +71,6 @@ const countSheets = [
                 { n: 'رز خام', s: 'sk-0032' },
                 { n: 'عدس حب خام', s: 'sk-0046' },
                 { n: 'حمص خام', s: 'sk-0047' },
-                { n: 'سكر', s: 'sk-0039' },
                 { n: 'سمن', s: 'sk-0069' },
                 { n: 'ملح', s: 'sk-0038' },
                 { n: 'سماق', s: 'sk-0070' },
@@ -80,7 +79,6 @@ const countSheets = [
                 { n: 'اكياس الطلبات - صغير', s: 'sk-0147' },
                 { n: 'علبة مهلبية', s: 'sk-0177' },
                 { n: 'حمص مطبوخ', s: 'P-0110' },
-                { n: 'سكر', s: 'sk-0039' },
                 { n: 'حليب بودرة', s: 'sk-0057' },
                 { n: 'كريمة طبخ', s: 'sk-0058' },
                 { n: 'خلطة حليب ام علي', s: 'SP-0157' },
