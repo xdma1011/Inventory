@@ -76,7 +76,7 @@ const inventoryData = [
                         { name: "مياه معدنية - ماتركس", sku: "sk-0079", unit: "PC", packageSize: 12.0, secondOp: "*", secondVal: 1, isFixed: false, category: "water", note: "صندوق = 12 حبة", pkgBarcode: "", unitBarcode: "" },
             { name: "ماتركس كولا", sku: "sk-0080", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
                                                                                     { name: "خبز", sku: "sk-0101", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "صلصة البولونيز", sku: "sp-0181", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
+            { name: "علب بولونيز", sku: "P-0181", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
         ];
 
 const sectionStarts = { 0: "🧾 شيت الجرد — الترتيب الرسمي", 72: "🥤 الماتركس والمياه", 74: "📁 خارج الشيت" };
@@ -168,7 +168,7 @@ const countSheets = [
                 { n: 'بصل مقلي', s: 'P-0112' },
                 { n: 'صلصة البندورة للكشري', s: 'P-0115' },
                 { n: 'شعرية مطبوخة', s: 'P-0105' },
-                { n: 'صلصة البولونيز', s: 'sp-0181' },
+                { n: 'علب بولونيز', s: 'P-0181' },
                 { n: 'صحون الباشميل المنتجة', s: 'P-0123' },
                 { n: 'صحون ام علي المنتجة', s: 'P-0174' },
                 { n: 'علبة شطة منتجة', s: 'P-0124' },
