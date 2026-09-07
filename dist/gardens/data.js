@@ -3,14 +3,14 @@
 
 const inventoryData = [
             { name: "صحن كشري - طبق", sku: "sk-0042", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 50 صحن", pkgBarcode: "", unitBarcode: "" },
-            { name: "صحون الباشميل المنتجة باتش", sku: "p-0123", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "صحون الباشميل المنتجة باتش", sku: "p-0123", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "صحون ام علي المنتجة", sku: "p-0174", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة مهلبية منتجة", sku: "p-0163", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة شوربة", sku: "sk-0128", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 50 علبة", pkgBarcode: "", unitBarcode: "" },
             { name: "علبة شطة منتجة", sku: "p-0124", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة دقة منتجة", sku: "p-0125", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة صوص الكشري كمالة", sku: "sk-0099", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 50 علبة", pkgBarcode: "", unitBarcode: "" },
-            { name: "علبة خبز مقلي منتجة", sku: "p-0127", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "علبة خبز مقلي منتجة", sku: "p-0127", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "شوك", sku: "sk-0041", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, note: "كل ربطة = 25 حبة — الناتج عدد القطع الكلي", pkgBarcode: "", unitBarcode: "" },
             { name: "معالق - ملاعق", sku: "sk-0040", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, note: "كل ربطة = 25 حبة — الناتج عدد القطع الكلي", pkgBarcode: "", unitBarcode: "" },
             { name: "معكرونة كشري خام كوع", sku: "sk-0033", unit: "G", packageSize: 9.6, secondOp: "*", secondVal: 1, isFixed: false, note: "كيس = 9.6 كيلو", pkgBarcode: "", unitBarcode: "" },
@@ -76,7 +76,7 @@ const inventoryData = [
                         { name: "مياه معدنية - ماتركس", sku: "sk-0079", unit: "PC", packageSize: 12.0, secondOp: "*", secondVal: 1, isFixed: false, category: "water", note: "صندوق = 12 حبة", pkgBarcode: "", unitBarcode: "" },
             { name: "ماتركس كولا", sku: "sk-0080", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", note: "صندوق = 24 حبة — أول 3 خلايا للصناديق", pkgBarcode: "", unitBarcode: "" },
                                                                                     { name: "خبز", sku: "sk-0101", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "صلصة البولونيز", sku: "sp-0181", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
+            { name: "صلصة البولونيز", sku: "sp-0181", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
         ];
 
 const sectionStarts = { 0: "🧾 شيت الجرد — الترتيب الرسمي", 72: "🥤 الماتركس والمياه", 74: "📁 خارج الشيت" };
@@ -85,8 +85,6 @@ const batchDefaults = {
             'P-0112||بصل مقلي منتج': 0.7326,
             'p-0115||صلصة البندورة مطبوخة': 0.06452,
             'p-0105||شعرية مطبوخة': 2.32558,
-            'p-0123||صحون الباشميل المنتجة باتش': 125,
-            'p-0127||علبة خبز مقلي منتجة': 142.85714,
             'P-0111||حليب ام علي المطبوخ': 0.40816,
             'p-0119||خلطة ام علي': 0.90909,
             'p-0128||خلطة مكسرات': 1.22699,
