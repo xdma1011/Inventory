@@ -868,6 +868,9 @@
       <button class="btn btn-primary" style="margin-top:10px;" onclick="importDefaultSeed()">
         ⚡ استيراد قائمة مستويات المخزون (115 صنف)
       </button>
+      <button class="btn btn-success" style="margin-top:10px;" onclick="importFromGardens()">
+        🌿 استيراد أصناف الجاردنز
+      </button>
     </div>
 
     <div class="summary-card">
@@ -944,7 +947,7 @@
       </div>
       <div class="form-group">
         <label>الكمية (<span id="qtyUnit"></span>) — تقبل عمليات حسابية</label>
-        <input type="text" id="qtyValue" placeholder="مثلاً: 12+3 أو (10-2)/4" inputmode="text" autocomplete="off" dir="ltr" style="text-align:left;" oninput="updateQtyPreview()" />
+        <input type="text" id="qtyValue" placeholder="مثلاً: 12+3 أو (10-2)/4" inputmode="decimal" enterkeyhint="done" autocomplete="off" dir="ltr" style="text-align:left;" oninput="updateQtyPreview()" />
         <div class="qty-preview" id="qtyPreview"></div>
         <div class="qty-quick">
           <button type="button" onclick="setQty(1)">1</button>
@@ -1011,6 +1014,7 @@
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 
+  <script src="gardens/data.js"></script>
   <script>
     // ===================== Data Layer =====================
     const STORAGE_KEYS = {
@@ -1595,7 +1599,8 @@
       document.getElementById('qtyPreview').textContent = '';
       document.getElementById('qtyPreview').className = 'qty-preview';
       document.getElementById('qtyModal').classList.add('show');
-      setTimeout(() => document.getElementById('qtyValue').focus(), 200);
+      const qtyInput = document.getElementById('qtyValue');
+      setTimeout(() => qtyInput.focus({ preventScroll: true }), 250);
     }
 
     function setQty(n) {
@@ -2103,6 +2108,21 @@
       afterItemsImport(added, skipped, 'القائمة الافتراضية');
     }
 
+    // استيراد مباشر من بيانات فرع الجاردنز (gardens/data.js) — نفس الأصناف بالاسم والـ SKU
+    function importFromGardens() {
+      if (typeof inventoryData === 'undefined' || !Array.isArray(inventoryData)) {
+        showToast('تعذّر تحميل بيانات الجاردنز');
+        return;
+      }
+      const list = inventoryData.map(it => ({
+        name: it.name,
+        sku: it.sku,
+        unit: mapStorageUnit(it.unit)
+      }));
+      const { added, skipped } = mergeImportedItems(list);
+      afterItemsImport(added, skipped, 'أصناف الجاردنز');
+    }
+
     // ===================== إظهار / إخفاء الأصناف بصفحة المنقولات =====================
     function renderVisibility() {
       const list = document.getElementById('visibilityList');
@@ -2200,8 +2220,19 @@
     loadData();
     initDates();
     initUnitDropdowns();
+    if (items.length === 0) {
+      importFromGardens();
+    }
     renderHome();
     renderManage();
+
+    // Enter على كيبورد الأندرويد يحفظ الكمية مباشرة (زي زر "حفظ")
+    document.getElementById('qtyValue').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveQuantity();
+      }
+    });
   </script>
 </body>
 </html>
