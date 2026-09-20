@@ -3,6 +3,17 @@
 // لا تعدل هنا إلا إذا كان التغيير يخص المنطق أو واجهة المستخدم
 /* jshint esversion:6 */
 
+// ─── اسم الفرع الديناميكي بعنوان الصفحة والهيدر (يميّز كل فرع عن غيره) ───
+(function applyBranchBranding() {
+    const name = window.BRANCH_NAME || '';
+    if (!name) return;
+    document.title = 'نظام الجرد - ' + name;
+    const titleEl = document.getElementById('brandTitle');
+    if (titleEl) titleEl.textContent = '📦 نظام الجرد التفاعلي — ' + name;
+    const badgeEl = document.getElementById('brandBadge');
+    if (badgeEl) badgeEl.textContent = '🏪 ' + name;
+})();
+
 /* DEFINED IN data.js */
 
         // ─── أقسام شيتات الجرد (عناوين فواصل داخل الجدول) ───
