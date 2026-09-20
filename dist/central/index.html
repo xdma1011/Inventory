@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    // بيانات الفرع — تُحمَّل قبل أي شيء
+    window.BRANCH_ID   = 'central';
+    window.BRANCH_NAME = 'المستودع المركزي';
+    window.LS_KEY      = 'inventoryData_central_v1';
+  </script>
+  <script src="data.js"></script>
+  <script>
+    // جلب الهيكل المشترك وحقنه بعد تحميل البيانات
+    fetch('../shared/template.html')
+      .then(r => r.text())
+      .then(html => { document.open(); document.write(html); document.close(); });
+  </script>
+</head>
+<body><p style="font-family:sans-serif;padding:20px">جاري التحميل...</p></body>
+</html>

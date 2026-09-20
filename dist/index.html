@@ -44,7 +44,7 @@
 
     .cards {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 22px;
     }
 
@@ -86,6 +86,7 @@
 
     .card-gardens { --accent: #2e7d32; }
     .card-marj    { --accent: #1565c0; }
+    .card-central { --accent: #8e24aa; }
     .card-transfer{ --accent: #00838f; }
 
     @media (max-width: 760px) {
@@ -113,6 +114,12 @@
             <div class="icon">🏙️</div>
             <h2>فرع مرج الحمام</h2>
             <p>جرد ومتابعة مخزون فرع مرج الحمام</p>
+        </a>
+
+        <a class="card card-central" href="central/index.html">
+            <div class="icon">🏬</div>
+            <h2>المركزي</h2>
+            <p>جرد المستودع المركزي</p>
         </a>
 
         <a class="card card-transfer" href="branch-transfer.html">
