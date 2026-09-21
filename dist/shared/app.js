@@ -984,11 +984,15 @@
             catch (e) { return iso; }
         }
 
+        // يبقى محتفظ فيه آخر عرض للجدول (بعد الفلترة) — يستخدمه زر التصدير عشان يطلع نفس الأرقام المعروضة بالظبط
+        let lastHistoryRender = null;
+
         function renderHistoryTab() {
             const wrap = document.getElementById('historyTableWrap');
             const empty = document.getElementById('historyEmpty');
             if (!wrap) return;
             const history = loadInventoryHistory();
+            lastHistoryRender = null;
             if (history.length === 0) {
                 wrap.innerHTML = '';
                 if (empty) empty.style.display = 'block';
@@ -999,14 +1003,15 @@
             const historySearchEl = document.getElementById('historySearchInput');
             const q = (historySearchEl ? historySearchEl.value : '').trim().toLowerCase();
 
-            // نحسب ناتج كل صنف بكل نسخة أرشيف
+            // نحسب ناتج كل صنف بكل نسخة أرشيف + فرق الشهر الكامل (الأحدث - الأقدم)
             const rows = inventoryData.map(item => {
                 const totals = history.map(snap => {
                     const key = item.sku + '||' + item.name;
-                    const t = computeSnapshotTotal(item, snap.data[key], snap.batchFactors);
-                    return t;
+                    return computeSnapshotTotal(item, snap.data[key], snap.batchFactors);
                 });
-                return { item, totals };
+                const first = totals[0], last = totals[totals.length - 1];
+                const monthDiff = (history.length >= 2 && first !== null && last !== null) ? (first - last) : null;
+                return { item, totals, monthDiff };
             }).filter(r => {
                 if (q && !(r.item.name.toLowerCase().includes(q) || (r.item.sku || '').toLowerCase().includes(q))) return false;
                 return r.totals.some(t => t !== null && Math.abs(t) > 0.0001);
@@ -1014,20 +1019,57 @@
 
             const fmt = n => n === null ? '—' : n.toLocaleString('en-US', { maximumFractionDigits: 2 });
 
-            let html = '<table class="history-table"><thead><tr><th>اسم المادة</th><th>وحدة</th>';
+            // صف الإجمالي — مجموع كل عمود تاريخ + مجموع فرق الشهر، لكل الصفوف المعروضة حالياً (بعد الفلترة)
+            const colSums = history.map((_, ci) => rows.reduce((s, r) => s + (r.totals[ci] || 0), 0));
+            const monthDiffSum = rows.reduce((s, r) => s + (r.monthDiff || 0), 0);
+            const anyMonthDiff = history.length >= 2;
+
+            let html = '<table class="history-table"><thead><tr><th>اسم المادة</th>';
             history.forEach(snap => { html += `<th>${formatHistoryDate(snap.archivedAt)}</th>`; });
-            html += '</tr></thead><tbody>';
+            html += '<th>فرق الشهر</th><th>وحدة</th></tr></thead><tbody>';
             if (rows.length === 0) {
-                html += `<tr><td colspan="${2 + history.length}" style="text-align:center;color:#999;padding:20px">ما في نتائج</td></tr>`;
+                html += `<tr><td colspan="${3 + history.length}" style="text-align:center;color:#999;padding:20px">ما في نتائج</td></tr>`;
             } else {
                 rows.forEach(r => {
-                    html += `<tr><td class="hist-name">${r.item.name}</td><td>${r.item.unit}</td>`;
+                    html += `<tr><td class="hist-name">${r.item.name}</td>`;
                     r.totals.forEach(t => { html += `<td class="hist-val">${fmt(t)}</td>`; });
+                    const mdClass = r.monthDiff === null ? '' : (r.monthDiff > 0 ? 'prev-diff-pos' : r.monthDiff < 0 ? 'prev-diff-neg' : 'prev-diff-zero');
+                    html += `<td class="hist-val hist-month-diff ${mdClass}">${anyMonthDiff ? fmt(r.monthDiff) : '—'}</td>`;
+                    html += `<td class="hist-unit">${r.item.unit}</td>`;
                     html += '</tr>';
                 });
+                html += '<tr class="hist-total-row"><td class="hist-name">الإجمالي</td>';
+                colSums.forEach(s => { html += `<td class="hist-val">${fmt(s)}</td>`; });
+                html += `<td class="hist-val hist-month-diff">${anyMonthDiff ? fmt(monthDiffSum) : '—'}</td>`;
+                html += '<td></td></tr>';
             }
             html += '</tbody></table>';
             wrap.innerHTML = html;
+
+            lastHistoryRender = { history, rows, colSums, monthDiffSum, anyMonthDiff };
+        }
+
+        function exportHistoryCSV() {
+            if (!lastHistoryRender || lastHistoryRender.rows.length === 0) {
+                showToast('ما في بيانات جرودات للتصدير', 'warning');
+                return;
+            }
+            const { history, rows, colSums, monthDiffSum, anyMonthDiff } = lastHistoryRender;
+            const fmt = n => n === null || n === undefined ? '' : Number(n.toFixed(2));
+            const headers = ['اسم المادة', ...history.map(s => formatHistoryDate(s.archivedAt)), 'فرق الشهر', 'وحدة'];
+            const lines = [headers.map(csvEscape).join(',')];
+            rows.forEach(r => {
+                const cols = [r.item.name, ...r.totals.map(fmt), anyMonthDiff ? fmt(r.monthDiff) : '', r.item.unit];
+                lines.push(cols.map(csvEscape).join(','));
+            });
+            const totalCols = ['الإجمالي', ...colSums.map(fmt), anyMonthDiff ? fmt(monthDiffSum) : '', ''];
+            lines.push(totalCols.map(csvEscape).join(','));
+            downloadFile('﻿' + lines.join('\n'), `الفرق_الشهري_${(window.BRANCH_ID || 'branch')}_${todayDateStr()}.csv`, 'text/csv;charset=utf-8;');
+            showToast('تم تصدير الفرق الشهري ✓', 'success');
+        }
+        function todayDateStr() {
+            const d = new Date();
+            return d.toISOString().slice(0, 10);
         }
 
         // ─── EXPORT ───
