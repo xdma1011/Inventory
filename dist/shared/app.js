@@ -1199,9 +1199,21 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
+        // كل 20 حفظة تلقائية (يعني كل 20 إدخال تقريباً) بتصير مزامنة صامتة بالخلفية مع السحابة،
+        // وبعدها العداد يرجع صفر ويبلش يعد من جديد. صامتة بالكامل — ما بتوقف ولا تقاطع أي شغل إطلاقاً
+        // (نفس مسار المزامنة التلقائية الآمن: بترفع بس، ما بتمسح ولا تستبدل شي محلي أبداً)
+        let syncCheckpointCount = 0;
+        const SYNC_EVERY_N_SAVES = 20;
         function triggerAutoSave() {
             clearTimeout(autoSaveTimer);
-            autoSaveTimer = setTimeout(() => saveData(true), 2000);
+            autoSaveTimer = setTimeout(() => {
+                saveData(true);
+                syncCheckpointCount++;
+                if (syncCheckpointCount >= SYNC_EVERY_N_SAVES) {
+                    syncCheckpointCount = 0;
+                    if (typeof syncWithCloud === 'function') syncWithCloud(true);
+                }
+            }, 2000);
         }
         function lockInput(input) {
             // القفل فقط إذا فيها قيمة (غير فارغة وغير صفر) — ثم الإغلاق
