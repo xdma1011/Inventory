@@ -711,16 +711,7 @@
         }
 
         // ═══════════ مزامنة تجريبية مع Supabase (بكبسة زر — العمل offline يبقى كما هو) ═══════════
-        // ملاحظة: هاد المفتاح "publishable" مصمم يكون عام بالكود، وصلاحياته محصورة بجدول واحد فقط عبر RLS
-        const SUPABASE_URL = 'https://ygeyqhjrjvstczrbbzrx.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_f33Cf2VzJM_aXNIppG_APQ_0csM9L12';
-        const SUPABASE_TABLE = 'inventory_sync';
-        let supabaseClient = null;
-        try {
-            if (window.supabase && window.supabase.createClient) {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            }
-        } catch (e) { console.error('Supabase init failed', e); }
+        // عميل Supabase (supabaseClient) وثابت SUPABASE_TABLE معرّفين بملف shared/supabase-client.js المشترك بين كل الصفحات
 
         // يدمج أرشيف الجرودات المحلي مع أرشيف السحابة — بدون كتابة فوق أي طرف، فقط اتحاد الاثنين
         // ويحتفظ بأحدث 4 نسخ بالمجموع (حسب تاريخ الأرشفة)

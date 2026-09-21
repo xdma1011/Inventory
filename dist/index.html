@@ -130,5 +130,12 @@
     </div>
 </div>
 
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="shared/supabase-client.js"></script>
+<script>
+    // طلب خفيف لمجرد إبقاء مشروع Supabase نشط — ما إله علاقة بأي بيانات جرد
+    if (typeof pingSupabase === 'function') pingSupabase('home');
+</script>
 </body>
 </html>
