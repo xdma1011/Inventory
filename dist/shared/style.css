@@ -2540,6 +2540,19 @@ body.dark .uncounted-row {
 }
 
 /* ═══════════ تبويب الجرودات السابقة ═══════════ */
+.history-tab-wrap {
+    max-width: 1900px;
+    margin: 12px auto;
+    background: #f8f9fa;
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    padding: 14px;
+}
+
+body.dark .history-tab-wrap {
+    background: #161b26;
+}
+
 .history-table {
     width: 100%;
     border-collapse: collapse;
