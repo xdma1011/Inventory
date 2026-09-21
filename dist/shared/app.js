@@ -959,14 +959,14 @@
 
             const fmt = n => n === null ? '—' : n.toLocaleString('en-US', { maximumFractionDigits: 2 });
 
-            let html = '<table class="history-table"><thead><tr><th>اسم المادة</th><th>SKU</th><th>وحدة</th>';
+            let html = '<table class="history-table"><thead><tr><th>اسم المادة</th><th>وحدة</th>';
             history.forEach(snap => { html += `<th>${formatHistoryDate(snap.archivedAt)}</th>`; });
             html += '</tr></thead><tbody>';
             if (rows.length === 0) {
-                html += `<tr><td colspan="${3 + history.length}" style="text-align:center;color:#999;padding:20px">ما في نتائج</td></tr>`;
+                html += `<tr><td colspan="${2 + history.length}" style="text-align:center;color:#999;padding:20px">ما في نتائج</td></tr>`;
             } else {
                 rows.forEach(r => {
-                    html += `<tr><td class="hist-name">${r.item.name}</td><td class="hist-sku">${r.item.sku}</td><td>${r.item.unit}</td>`;
+                    html += `<tr><td class="hist-name">${r.item.name}</td><td>${r.item.unit}</td>`;
                     r.totals.forEach(t => { html += `<td class="hist-val">${fmt(t)}</td>`; });
                     html += '</tr>';
                 });
