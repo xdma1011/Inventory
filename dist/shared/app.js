@@ -726,7 +726,9 @@
         }
 
         // auto=true: يشتغل لحاله عند فتح/تحديث الصفحة — بدون أي نافذة تأكيد تقاطع المستخدم.
-        // بما إنه أول شي بيصير بعد فتح الصفحة (قبل ما يكتب المستخدم أي شي)، الأحدث بيفوز تلقائياً بلا سؤال.
+        // قاعدة أمان صارمة: الوضع التلقائي ممنوع يمسح/يستبدل أي بيانات محلية إطلاقاً — بس يرفع (Push) أو
+        // ينبّه بصمت. الاستبدال الفعلي لبيانات الجهاز بنسخة السحابة ما بيصير إلا لما المستخدم بنفسه يضغط
+        // زر Sync يدوياً، وبعد ما يوافق صراحة على نافذة التأكيد.
         async function syncWithCloud(auto) {
             const btn = document.getElementById('syncBtn');
             if (!supabaseClient) { if (!auto) showToast('تعذر تحميل مكتبة المزامنة', 'error'); return; }
@@ -752,32 +754,40 @@
                 const mergedHistory = mergeHistories(loadInventoryHistory(), cloudRow ? cloudRow.history : []);
                 saveInventoryHistory(mergedHistory);
 
-                // 2) الجرد الحالي المفتوح — الأحدث بالتاريخ يفوز
+                // 2) الجرد الحالي المفتوح — الأحدث بالتاريخ يفوز، بس الاستبدال الفعلي محلياً
+                //    ما بيصير أبداً إلا بموافقة صريحة من المستخدم (نافذة تأكيد بالوضع اليدوي فقط)
                 const cloudTime = cloudRow && cloudRow.updated_at ? new Date(cloudRow.updated_at).getTime() : 0;
+                const cloudIsNewer = !!(cloudRow && cloudTime > localTime);
                 let finalPayload = localPayload;
                 let pulled = false;
+                let skipPush = false; // true = ما منلمس بيانات الجرد الحالي عالسحابة إطلاقاً (بس الأرشيف بينضم)
 
-                if (cloudRow && cloudTime > localTime) {
-                    let pullDown = true;
-                    if (!auto) {
+                if (cloudIsNewer) {
+                    if (auto) {
+                        // وضع تلقائي (رفرش/فتح صفحة): ممنوع نلمس المحلي ولا السحابة — بس ننبّه بهدوء
+                        skipPush = true;
+                        showToast('⚠️ في نسخة أحدث بالسحابة لهالفرع — اضغط Sync يدوياً من الأدوات لو بدك تحمّلها', 'warning');
+                    } else {
                         const cloudWhen = new Date(cloudRow.updated_at).toLocaleString('ar-EG');
-                        pullDown = confirm(`في نسخة أحدث محفوظة بالسحابة (${cloudWhen}).\nموافق = نحمّلها بدل الجرد الحالي على هالجهاز.\nإلغاء = نرفع نسخة هالجهاز فوقها بالسحابة.`);
-                    }
-                    if (pullDown) {
-                        localStorage.setItem(window.LS_KEY, JSON.stringify(cloudRow.payload));
-                        loadSavedData();
-                        finalPayload = cloudRow.payload;
-                        pulled = true;
+                        const pullDown = confirm(`في نسخة أحدث محفوظة بالسحابة (${cloudWhen}).\nموافق = نحمّلها بدل الجرد الحالي على هالجهاز.\nإلغاء = نرفع نسخة هالجهاز فوقها بالسحابة.`);
+                        if (pullDown) {
+                            localStorage.setItem(window.LS_KEY, JSON.stringify(cloudRow.payload));
+                            loadSavedData();
+                            finalPayload = cloudRow.payload;
+                            pulled = true;
+                        }
                     }
                 }
 
+                // الأرشيف (history) دايماً بينضم/بيترفع — هاد اتحاد آمن ما بيمسح شي من أي طرف.
+                // بيانات الجرد الحالي (payload) بس بتترفع لو ما كان في تجاوز اتسكيب (skipPush).
                 const { error: upErr } = await supabaseClient
                     .from(SUPABASE_TABLE)
                     .upsert({
                         branch_id: window.BRANCH_ID || 'gardens',
-                        payload: finalPayload,
+                        payload: skipPush ? (cloudRow ? cloudRow.payload : finalPayload) : finalPayload,
                         history: mergedHistory,
-                        updated_at: pulled ? cloudRow.updated_at : new Date().toISOString()
+                        updated_at: skipPush ? (cloudRow ? cloudRow.updated_at : new Date().toISOString()) : (pulled ? cloudRow.updated_at : new Date().toISOString())
                     });
                 if (upErr) throw upErr;
 
