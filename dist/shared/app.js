@@ -452,10 +452,16 @@
             try { document.execCommand('copy'); showToast('تم النسخ', 'success'); } catch (e) { }
             document.body.removeChild(ta);
         }
-        function confirmClearAll() { document.getElementById('passwordModal').classList.add('show'); document.getElementById('passwordInput').value = ''; document.getElementById('passwordInput').focus(); }
+        let pendingPasswordAction = 'clear';
+        function confirmClearAll() { pendingPasswordAction = 'clear'; document.getElementById('passwordModal').classList.add('show'); document.getElementById('passwordInput').value = ''; document.getElementById('passwordInput').focus(); }
+        function confirmNewInventory() { pendingPasswordAction = 'newInventory'; document.getElementById('passwordModal').classList.add('show'); document.getElementById('passwordInput').value = ''; document.getElementById('passwordInput').focus(); }
         function closePasswordModal() { document.getElementById('passwordModal').classList.remove('show'); }
         function verifyPassword() {
-            if (document.getElementById('passwordInput').value === CLEAR_PASSWORD) { closePasswordModal(); clearAllData(); }
+            if (document.getElementById('passwordInput').value === CLEAR_PASSWORD) {
+                closePasswordModal();
+                if (pendingPasswordAction === 'newInventory') startNewInventory();
+                else clearAllData();
+            }
             else { showToast('كلمة المرور غير صحيحة!', 'error'); document.getElementById('passwordInput').value = ''; document.getElementById('passwordInput').focus(); }
         }
 
@@ -772,7 +778,7 @@
         }
         function openLsModal() { document.getElementById('lsModal').classList.add('show'); document.getElementById('lsPasteInput').value = ''; }
         function closeLsModal() { document.getElementById('lsModal').classList.remove('show'); }
-        function clearAllData() {
+        function resetInventoryState() {
             inventoryData.forEach((_, i) => {
                 document.getElementById(`package-${i}`).value = inventoryData[i].packageSize;
                 document.getElementById(`multiplier-${i}`).value = inventoryData[i].packageSize;
@@ -790,10 +796,149 @@
                 if (bf) bf.value = batchFactors[factorKey(i)] !== undefined ? batchFactors[factorKey(i)] : '';
                 updateBatchDisplay(i);
             });
-            void 0;
             localStorage.removeItem(window.LS_KEY);
             document.getElementById('lastSave').textContent = 'لم يتم الحفظ';
+        }
+        function clearAllData() {
+            resetInventoryState();
             showToast('تم مسح جميع البيانات', 'success');
+        }
+
+        // ═══════════ أرشيف الجرودات السابقة (حتى 4 جرودات لكل فرع) ═══════════
+        const HISTORY_LS_KEY = 'invHistory_' + (window.BRANCH_ID || 'gardens') + '_v1';
+        const HISTORY_MAX = 4;
+
+        function loadInventoryHistory() {
+            try { return JSON.parse(localStorage.getItem(HISTORY_LS_KEY)) || []; }
+            catch (e) { return []; }
+        }
+        function saveInventoryHistory(list) {
+            try { localStorage.setItem(HISTORY_LS_KEY, JSON.stringify(list)); } catch (e) { console.error(e); }
+        }
+
+        // يبني نفس شكل بيانات saveData() من الشاشة الحالية، بدون الكتابة على window.LS_KEY
+        function buildCurrentSnapshotData() {
+            const data = {};
+            let hasAnyValue = false;
+            inventoryData.forEach((item, i) => {
+                const key = item.sku + '||' + item.name;
+                const entry = {
+                    packageSize: document.getElementById(`package-${i}`).value,
+                    multiplier: document.getElementById(`multiplier-${i}`).value,
+                    secondOp: document.getElementById(`secondOp-${i}`).value,
+                    secondVal: document.getElementById(`secondVal-${i}`).value,
+                    input1: document.getElementById(`input1-${i}`).value,
+                    input2: document.getElementById(`input2-${i}`).value,
+                    input3: document.getElementById(`input3-${i}`).value,
+                    input4: document.getElementById(`input4-${i}`).value,
+                    input5: document.getElementById(`input5-${i}`).value,
+                    input6: document.getElementById(`input6-${i}`).value,
+                    input7: document.getElementById(`input7-${i}`).value,
+                    input8: document.getElementById(`input8-${i}`).value,
+                    minVal: minValues[i]
+                };
+                if (['input1', 'input2', 'input3', 'input4', 'input5', 'input6', 'input7', 'input8'].some(n => entry[n] !== '')) hasAnyValue = true;
+                data[key] = entry;
+            });
+            return { data, hasAnyValue };
+        }
+
+        // يحفظ نسخة عن الجرد الحالي بالأرشيف (حتى 4 نسخ، الأحدث أولاً) قبل ما تُمسح الشاشة
+        function archiveCurrentInventory() {
+            const { data, hasAnyValue } = buildCurrentSnapshotData();
+            if (!hasAnyValue) return false; // ما في داعي نؤرشف جرد فاضي
+            const history = loadInventoryHistory();
+            history.unshift({
+                archivedAt: new Date().toISOString(),
+                data,
+                batchFactors: Object.assign({}, batchFactors)
+            });
+            saveInventoryHistory(history.slice(0, HISTORY_MAX));
+            return true;
+        }
+
+        // يحسب الناتج النهائي لصنف من نسخة أرشيف (بدون لمس الجدول الحالي) — نفس معادلة calculateRow تماماً
+        function computeSnapshotTotal(item, entry, snapBatchFactors) {
+            if (!entry) return null;
+            const packageSize = parseFloat(entry.packageSize) || 1;
+            const input1 = evaluateExpression(entry.input1);
+            const input2 = evaluateExpression(entry.input2);
+            const input3 = evaluateExpression(entry.input3);
+            const input4 = evaluateExpression(entry.input4);
+            const input5 = evaluateExpression(entry.input5);
+            const input6 = evaluateExpression(entry.input6);
+            const input7 = evaluateExpression(entry.input7);
+            const input8 = evaluateExpression(entry.input8);
+            const secondOp = entry.secondOp || '*';
+            const secondVal = parseFloat(entry.secondVal) || 1;
+            const key = item.sku + '||' + item.name;
+            const bfRaw = snapBatchFactors ? parseFloat(snapBatchFactors[key]) : NaN;
+            const bf = (isFinite(bfRaw) && bfRaw > 0) ? bfRaw : 0;
+            const firstSection = (input1 + input2 + input3 + input4) * packageSize;
+            let secondSection = input5 + input6 + input7 + input8;
+            if (!bf) secondSection = secondOp === '*' ? secondSection * secondVal : (secondVal !== 0 ? secondSection / secondVal : 0);
+            let total = firstSection + secondSection;
+            if (item.unit === 'G' || item.unit === 'ML') total = total * 1000;
+            if (bf) total = total / 1000 * bf;
+            return total;
+        }
+
+        function startNewInventory() {
+            const archived = archiveCurrentInventory();
+            resetInventoryState();
+            renderHistoryTab();
+            showToast(archived ? 'تم حفظ الجرد السابق بالأرشيف، وبدأ جرد جديد ✓' : 'بدأ جرد جديد', 'success');
+        }
+
+        function formatHistoryDate(iso) {
+            try { return new Date(iso).toLocaleString('ar-EG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+            catch (e) { return iso; }
+        }
+
+        function renderHistoryTab() {
+            const wrap = document.getElementById('historyTableWrap');
+            const empty = document.getElementById('historyEmpty');
+            if (!wrap) return;
+            const history = loadInventoryHistory();
+            if (history.length === 0) {
+                wrap.innerHTML = '';
+                if (empty) empty.style.display = 'block';
+                return;
+            }
+            if (empty) empty.style.display = 'none';
+
+            const historySearchEl = document.getElementById('historySearchInput');
+            const q = (historySearchEl ? historySearchEl.value : '').trim().toLowerCase();
+
+            // نحسب ناتج كل صنف بكل نسخة أرشيف
+            const rows = inventoryData.map(item => {
+                const totals = history.map(snap => {
+                    const key = item.sku + '||' + item.name;
+                    const t = computeSnapshotTotal(item, snap.data[key], snap.batchFactors);
+                    return t;
+                });
+                return { item, totals };
+            }).filter(r => {
+                if (q && !(r.item.name.toLowerCase().includes(q) || (r.item.sku || '').toLowerCase().includes(q))) return false;
+                return r.totals.some(t => t !== null && Math.abs(t) > 0.0001);
+            });
+
+            const fmt = n => n === null ? '—' : n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+
+            let html = '<table class="history-table"><thead><tr><th>اسم المادة</th><th>SKU</th><th>وحدة</th>';
+            history.forEach(snap => { html += `<th>${formatHistoryDate(snap.archivedAt)}</th>`; });
+            html += '</tr></thead><tbody>';
+            if (rows.length === 0) {
+                html += `<tr><td colspan="${3 + history.length}" style="text-align:center;color:#999;padding:20px">ما في نتائج</td></tr>`;
+            } else {
+                rows.forEach(r => {
+                    html += `<tr><td class="hist-name">${r.item.name}</td><td class="hist-sku">${r.item.sku}</td><td>${r.item.unit}</td>`;
+                    r.totals.forEach(t => { html += `<td class="hist-val">${fmt(t)}</td>`; });
+                    html += '</tr>';
+                });
+            }
+            html += '</tbody></table>';
+            wrap.innerHTML = html;
         }
 
         // ─── EXPORT ───
@@ -2533,19 +2678,22 @@
         const inv = document.querySelector('.container');
         const shop = document.getElementById('shopTab');
         const cards = document.getElementById('cardsTab');
+        const history = document.getElementById('historyTab');
         if (inv) inv.style.display = which === 'inv' ? '' : 'none';
         if (shop) shop.style.display = which === 'shop' ? '' : 'none';
         if (cards) cards.style.display = which === 'cards' ? '' : 'none';
+        if (history) history.style.display = which === 'history' ? '' : 'none';
         const mi = document.getElementById('mtab-inv'), ms = document.getElementById('mtab-shop');
         if (mi) mi.classList.toggle('active', which === 'inv');
         if (ms) ms.classList.toggle('active', which === 'shop');
-        ['bn-cards', 'bn-inv', 'bn-shop'].forEach(id => {
+        ['bn-cards', 'bn-inv', 'bn-shop', 'bn-history'].forEach(id => {
             const b = document.getElementById(id);
-            if (b) b.classList.toggle('active', id === 'bn-' + (which === 'inv' ? 'inv' : which === 'shop' ? 'shop' : 'cards'));
+            if (b) b.classList.toggle('active', id === 'bn-' + which);
         });
         try { localStorage.setItem((window.BRANCH_ID==='marj'?'activeTab_marj_v1':'activeTab_v1'), which); } catch (e) {}
         if (which === 'shop' && window.refreshShopTab) window.refreshShopTab();
         if (which === 'cards') { const ci = document.getElementById('cardSearchInput'); if (ci) setTimeout(() => { if (document.getElementById('itemCard').style.display === 'none') ci.focus(); }, 60); }
+        if (which === 'history') renderHistoryTab();
     }
     function navSearch() {
         const cardsVisible = document.getElementById('cardsTab') && document.getElementById('cardsTab').style.display !== 'none';

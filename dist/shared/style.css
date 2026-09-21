@@ -2533,3 +2533,64 @@ body.dark .uncounted-row {
     border-color: #2c3446;
     color: #cfd8dc;
 }
+
+/* ═══════════ تبويب الجرودات السابقة ═══════════ */
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 480px;
+    font-size: 13px;
+}
+
+.history-table th {
+    background: #1a237e;
+    color: #fff;
+    padding: 10px 8px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 12px;
+    border: 1px solid #0d47a1;
+    white-space: nowrap;
+}
+
+.history-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.history-table .hist-name {
+    text-align: right;
+    font-weight: 700;
+    color: #212121;
+}
+
+.history-table .hist-sku {
+    color: #78909c;
+    font-size: 11.5px;
+    direction: ltr;
+}
+
+.history-table .hist-val {
+    font-weight: 800;
+    color: #1a237e;
+    font-variant-numeric: tabular-nums;
+}
+
+.history-table tr:hover td {
+    background: #f3f4ff;
+}
+
+body.dark .history-table td {
+    border-color: #2c3446;
+    color: #cfd8dc;
+}
+
+body.dark .history-table .hist-name {
+    color: #eceff1;
+}
+
+body.dark .history-table tr:hover td {
+    background: #1a1f2b;
+}

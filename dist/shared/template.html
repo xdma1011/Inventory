@@ -55,6 +55,7 @@
                 <button class="btn btn-transfer2" onclick="exportLsFile()">💾 تصدير ملف</button>
                 <button class="btn btn-transfer2" onclick="importLsFile()">📂 استيراد ملف</button>
                 <input type="file" id="lsFileInput" accept=".txt,.json,text/plain,application/json,application/octet-stream" style="display:none" onchange="handleLsFile(this)">
+                <button class="btn btn-success" onclick="confirmNewInventory()">🆕 جرد جديد</button>
                 <button class="btn btn-danger" onclick="confirmClearAll()">🗑️ مسح</button>
                 <button class="btn btn-numpad" id="numpadToggle" onclick="toggleNumpad()">🔢 لوحة الأرقام</button>
                 <button class="btn btn-info" onclick="openScanner('search')">📷 مسح للبحث</button>
@@ -409,6 +410,17 @@
         <div class="grid-view" id="gridView" style="display:none"></div>
     </div>
 
+    <!-- ═══════════ تبويب الجرودات السابقة ═══════════ -->
+    <div id="historyTab" style="display:none;padding:14px">
+        <div class="search-box" style="margin-bottom:12px">
+            <input type="text" id="historySearchInput" placeholder="🔍 بحث عن مادة أو SKU..." oninput="renderHistoryTab()">
+        </div>
+        <div id="historyEmpty" style="display:none;text-align:center;color:#888;padding:40px 10px">
+            ما في جرودات محفوظة بعد — اضغط «🆕 جرد جديد» من لوحة الأدوات بعد ما تخلّص أول جرد، وبينحفظ تلقائياً بالأرشيف.
+        </div>
+        <div id="historyTableWrap" style="overflow-x:auto"></div>
+    </div>
+
     <!-- ═══════════ الشريط السفلي ═══════════ -->
     <nav class="bottom-nav" id="bottomNav">
         <button onclick="navSearch()" id="bn-search"><span>🔍</span>بحث</button>
@@ -416,6 +428,7 @@
         <button onclick="switchMainTab('cards')" id="bn-cards"><span>🗂</span>بطاقات</button>
         <button onclick="switchMainTab('inv')" id="bn-inv"><span>📋</span>الجرد</button>
         <button onclick="switchMainTab('shop')" id="bn-shop"><span>🛒</span>المشتريات</button>
+        <button onclick="switchMainTab('history')" id="bn-history"><span>📊</span>الجرودات</button>
         <button onclick="toggleMoreMenu()" id="bn-more"><span>⚙️</span>المزيد</button>
     </nav>
 
