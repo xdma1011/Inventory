@@ -2594,3 +2594,34 @@ body.dark .history-table .hist-name {
 body.dark .history-table tr:hover td {
     background: #1a1f2b;
 }
+
+/* ═══════════ الفرق عن آخر جرد مؤرشف (معلومة فقط — بدون أي تأثير على الحساب) ═══════════ */
+.result-cell .prev-diff {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 600;
+    color: #90a4ae;
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
+.result-cell .prev-diff.prev-diff-pos { color: #2e7d32; }
+.result-cell .prev-diff.prev-diff-neg { color: #c62828; }
+.result-cell .prev-diff.prev-diff-zero { color: #78909c; }
+
+.icard-prev-diff {
+    font-size: 12px;
+    font-weight: 600;
+    color: #90a4ae;
+    margin-top: 4px;
+    text-align: center;
+}
+
+.icard-prev-diff.prev-diff-pos { color: #2e7d32; }
+.icard-prev-diff.prev-diff-neg { color: #c62828; }
+.icard-prev-diff.prev-diff-zero { color: #78909c; }
+
+body.dark .result-cell .prev-diff,
+body.dark .icard-prev-diff {
+    color: #78909c;
+}

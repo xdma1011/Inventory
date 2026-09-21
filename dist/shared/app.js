@@ -60,6 +60,7 @@
 
         // ─── CREATE TABLE ───
         function createTable() {
+            loadPreviousSnapshot();
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             const sectionKeys = Object.keys(sectionStarts).map(Number).sort((a, b) => a - b);
@@ -101,7 +102,7 @@
                     ? `<button class="note-btn" onclick="showNote(${index})" title="ملاحظة">📌</button>`
                     : '';
                 row.innerHTML = `
-<td data-col="result"><div class="result-cell" data-index="${index}" tabindex="0" title="انقر للنسخ — ↑↓ للتنقل"><span id="result-${index}">0</span><span class="batch-tag" id="btag-${index}" style="display:none">باتش</span></div></td>
+<td data-col="result"><div class="result-cell" data-index="${index}" tabindex="0" title="انقر للنسخ — ↑↓ للتنقل"><span id="result-${index}">0</span><span class="batch-tag" id="btag-${index}" style="display:none">باتش</span><span class="prev-diff" id="prevDiff-${index}"></span></div></td>
 <td class="batch-cell" data-col="batch"><input type="text" inputmode="decimal" autocomplete="off" readonly id="batchf-${index}" value="${batchFactors[item.sku + '||' + item.name] !== undefined ? batchFactors[item.sku + '||' + item.name] : ''}" oninput="onFactorInput(this, ${index})" ondblclick="unlockFactor(this)" onblur="lockFactor(this)" onkeydown="if(event.key==='Enter') this.blur()" placeholder="—" title="كم باتش يساوي 1000 ${item.unit} — دبل كليك للتعديل"><div class="batch-result" id="batchres-${index}">—</div></td>
 <td data-col="diff"><div class="diff-cell diff-zero" id="diff-${index}"><span id="diffValue-${index}">-</span></div></td>
 <td class="min-cell" data-col="min"><input type="number" inputmode="decimal" id="min-${index}" value="0" min="0" oninput="onMinChange(${index})" placeholder="0" title="الحد الأدنى"></td>
@@ -169,6 +170,7 @@
             syncCoeffState(index);
             checkMinimum(index);
             updateDiff(index);
+            updatePrevDiffDisplay(index, total);
             updateGrandTotal();
             updateSummaryTotals();
             triggerAutoSave();
@@ -807,6 +809,12 @@
         // ═══════════ أرشيف الجرودات السابقة (حتى 4 جرودات لكل فرع) ═══════════
         const HISTORY_LS_KEY = 'invHistory_' + (window.BRANCH_ID || 'gardens') + '_v1';
         const HISTORY_MAX = 4;
+        // آخر جرد مؤرشف — يُستخدم فقط لعرض "الفرق عن الجرد السابق" كمعلومة، بدون أي تأثير على حساب الناتج الحالي
+        let previousSnapshot = null;
+        function loadPreviousSnapshot() {
+            const h = loadInventoryHistory();
+            previousSnapshot = h.length ? h[0] : null;
+        }
 
         function loadInventoryHistory() {
             try { return JSON.parse(localStorage.getItem(HISTORY_LS_KEY)) || []; }
@@ -883,9 +891,35 @@
             return total;
         }
 
+        // يعرض فقط "الفرق عن آخر جرد مؤرشف" كمعلومة بصفوف الجدول — لا يدخل بأي حساب للناتج الحالي
+        function updatePrevDiffDisplay(index, currentTotal) {
+            const el = document.getElementById(`prevDiff-${index}`);
+            if (!el) return;
+            if (!previousSnapshot) { el.textContent = ''; el.className = 'prev-diff'; return; }
+            const item = inventoryData[index];
+            const key = item.sku + '||' + item.name;
+            const prevTotal = computeSnapshotTotal(item, previousSnapshot.data[key], previousSnapshot.batchFactors);
+            if (prevTotal === null) { el.textContent = ''; el.className = 'prev-diff'; return; }
+            const diff = currentTotal - prevTotal;
+            const fmt = n => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+            const sign = diff > 0 ? '+' : '';
+            el.textContent = `${sign}${fmt(diff)}`;
+            el.title = `الفرق عن آخر جرد محفوظ (${formatHistoryDate(previousSnapshot.archivedAt)}) — كان وقتها ${fmt(prevTotal)}`;
+            el.className = 'prev-diff ' + (diff > 0 ? 'prev-diff-pos' : diff < 0 ? 'prev-diff-neg' : 'prev-diff-zero');
+        }
+
+        function getPrevSnapshotTotalForCard(index) {
+            if (!previousSnapshot) return null;
+            const item = inventoryData[index];
+            const key = item.sku + '||' + item.name;
+            return computeSnapshotTotal(item, previousSnapshot.data[key], previousSnapshot.batchFactors);
+        }
+
         function startNewInventory() {
             const archived = archiveCurrentInventory();
             resetInventoryState();
+            loadPreviousSnapshot();
+            inventoryData.forEach((_, i) => calculateRow(i));
             renderHistoryTab();
             showToast(archived ? 'تم حفظ الجرد السابق بالأرشيف، وبدأ جرد جديد ✓' : 'بدأ جرد جديد', 'success');
         }
@@ -2456,6 +2490,21 @@
                 d.classList.remove('diff-pos', 'diff-neg');
                 d.textContent = v === null ? 'الفرق: —' : 'الفرق: ' + raw;
                 if (v !== null) d.classList.add(v > 0 ? 'diff-pos' : v < 0 ? 'diff-neg' : '');
+            }
+            const pd = document.getElementById('icardPrevDiff');
+            if (pd) {
+                const prevTotal = getPrevSnapshotTotalForCard(idx);
+                if (prevTotal === null) {
+                    pd.textContent = '';
+                    pd.className = 'icard-prev-diff';
+                } else {
+                    const curTotal = parseFloat(String(totalTxt).replace(/,/g, '')) || 0;
+                    const pdiff = curTotal - prevTotal;
+                    const fmt = n => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+                    const sign = pdiff > 0 ? '+' : '';
+                    pd.textContent = `الجرد السابق: ${fmt(prevTotal)} (${sign}${fmt(pdiff)})`;
+                    pd.className = 'icard-prev-diff ' + (pdiff > 0 ? 'prev-diff-pos' : pdiff < 0 ? 'prev-diff-neg' : 'prev-diff-zero');
+                }
             }
             // بطاقة الشبكة المقابلة (لو معروضة)
             const gr = document.getElementById('gridResult-' + idx);
