@@ -710,6 +710,61 @@
             } catch (e) { console.error(e); }
         }
 
+        // ═══════════ مزامنة تجريبية مع Supabase (بكبسة زر — العمل offline يبقى كما هو) ═══════════
+        // ملاحظة: هاد المفتاح "publishable" مصمم يكون عام بالكود، وصلاحياته محصورة بجدول واحد فقط عبر RLS
+        const SUPABASE_URL = 'https://ygeyqhjrjvstczrbbzrx.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_f33Cf2VzJM_aXNIppG_APQ_0csM9L12';
+        const SUPABASE_TABLE = 'inventory_sync';
+        let supabaseClient = null;
+        try {
+            if (window.supabase && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            }
+        } catch (e) { console.error('Supabase init failed', e); }
+
+        async function syncWithCloud() {
+            const btn = document.getElementById('syncBtn');
+            if (!supabaseClient) { showToast('تعذر تحميل مكتبة المزامنة', 'error'); return; }
+            if (btn) { btn.disabled = true; btn.textContent = '🔄 جاري...'; }
+            try {
+                saveData(true); // تأكيد إن آخر تعديل محفوظ محلياً قبل ما نقارن
+                const localRaw = localStorage.getItem(window.LS_KEY);
+                const localPayload = localRaw ? JSON.parse(localRaw) : { data: {}, systemData: {}, timestamp: new Date().toISOString() };
+                const localTime = localPayload.timestamp ? new Date(localPayload.timestamp).getTime() : 0;
+
+                const { data: cloudRow, error: selErr } = await supabaseClient
+                    .from(SUPABASE_TABLE)
+                    .select('payload, updated_at')
+                    .eq('branch_id', window.BRANCH_ID || 'gardens')
+                    .maybeSingle();
+                if (selErr) throw selErr;
+
+                const cloudTime = cloudRow && cloudRow.updated_at ? new Date(cloudRow.updated_at).getTime() : 0;
+
+                if (cloudRow && cloudTime > localTime) {
+                    const cloudWhen = new Date(cloudRow.updated_at).toLocaleString('ar-EG');
+                    const pullDown = confirm(`في نسخة أحدث محفوظة بالسحابة (${cloudWhen}).\nموافق = نحمّلها بدل الجرد الحالي على هالجهاز.\nإلغاء = نرفع نسخة هالجهاز فوقها بالسحابة.`);
+                    if (pullDown) {
+                        localStorage.setItem(window.LS_KEY, JSON.stringify(cloudRow.payload));
+                        loadSavedData();
+                        showToast('تم تحميل النسخة من السحابة ✓', 'success');
+                        return;
+                    }
+                }
+
+                const { error: upErr } = await supabaseClient
+                    .from(SUPABASE_TABLE)
+                    .upsert({ branch_id: window.BRANCH_ID || 'gardens', payload: localPayload, updated_at: new Date().toISOString() });
+                if (upErr) throw upErr;
+                showToast('تمت المزامنة مع السحابة ✓', 'success');
+            } catch (e) {
+                console.error('Sync failed', e);
+                showToast('تعذر الاتصال بالسحابة — البيانات محفوظة محلياً بس', 'warning');
+            } finally {
+                if (btn) { btn.disabled = false; btn.textContent = '🔄 Sync'; }
+            }
+        }
+
         // ─── COPY / PASTE localStorage ───
         function copyLocalStorage() {
             const raw = localStorage.getItem(window.LS_KEY)

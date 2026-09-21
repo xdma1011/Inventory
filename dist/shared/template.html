@@ -7,6 +7,7 @@
     <title>نظام الجرد - الجاردنز</title>
     <link rel="stylesheet" href="../shared/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;600;700;800&family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- بيانات الفرع -->
 </head>
 
@@ -60,6 +61,7 @@
                 <button class="btn btn-info" onclick="openScanner('search')">📷 مسح للبحث</button>
                 <button class="btn btn-success" onclick="openScanner('add')">➕ مسح وإضافة</button>
                 <button class="btn btn-info" onclick="openBarcodeManager()">🔗 إدارة الباركودات</button>
+                <button class="btn btn-primary" id="syncBtn" onclick="syncWithCloud()">🔄 Sync</button>
                 <button class="btn btn-newinv" onclick="confirmNewInventory()">🆕 جرد جديد</button>
             </div>
             <div class="csv-bar" id="csvBar"><!-- يُملأ ديناميكياً من countSheets --></div>
