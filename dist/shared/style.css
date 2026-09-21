@@ -2627,6 +2627,36 @@ body.dark .history-table .hist-total-row td {
     background: #1a1f2b;
 }
 
+.history-period-bar {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    background: #eceff1;
+    border: 1px solid #cfd8dc;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #37474f;
+}
+
+.history-period-bar select {
+    margin-inline-start: 6px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1.5px solid #90a4ae;
+    font-family: inherit;
+    font-size: 12.5px;
+}
+
+body.dark .history-period-bar {
+    background: #1a1f2b;
+    border-color: #2c3446;
+    color: #cfd8dc;
+}
+
 body.dark .history-table td {
     border-color: #2c3446;
     color: #cfd8dc;

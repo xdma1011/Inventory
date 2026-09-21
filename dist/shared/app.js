@@ -714,7 +714,7 @@
         // عميل Supabase (supabaseClient) وثابت SUPABASE_TABLE معرّفين بملف shared/supabase-client.js المشترك بين كل الصفحات
 
         // يدمج أرشيف الجرودات المحلي مع أرشيف السحابة — بدون كتابة فوق أي طرف، فقط اتحاد الاثنين
-        // ويحتفظ بأحدث 4 نسخ بالمجموع (حسب تاريخ الأرشفة)
+        // ويحتفظ بكل الجرودات ضمن مدة الاحتفاظ (90 يوم) فقط
         function mergeHistories(localHist, cloudHist) {
             const seen = new Set();
             const merged = [...(localHist || []), ...(cloudHist || [])].filter(h => {
@@ -722,8 +722,7 @@
                 seen.add(h.archivedAt);
                 return true;
             });
-            merged.sort((a, b) => new Date(b.archivedAt) - new Date(a.archivedAt));
-            return merged.slice(0, HISTORY_MAX);
+            return pruneHistory(merged);
         }
 
         // auto=true: يشتغل لحاله عند فتح/تحديث الصفحة — بدون أي نافذة تأكيد تقاطع المستخدم.
@@ -887,9 +886,9 @@
             showToast('تم مسح جميع البيانات', 'success');
         }
 
-        // ═══════════ أرشيف الجرودات السابقة (حتى 4 جرودات لكل فرع) ═══════════
+        // ═══════════ أرشيف الجرودات السابقة (الاحتفاظ بالوقت لا بالعدد — آخر 90 يوم ≈ 3 شهور، لكل فرع) ═══════════
         const HISTORY_LS_KEY = 'invHistory_' + (window.BRANCH_ID || 'gardens') + '_v1';
-        const HISTORY_MAX = 4;
+        const HISTORY_RETENTION_DAYS = 90;
         // آخر جرد مؤرشف — يُستخدم فقط لعرض "الفرق عن الجرد السابق" كمعلومة، بدون أي تأثير على حساب الناتج الحالي
         let previousSnapshot = null;
         function loadPreviousSnapshot() {
@@ -897,12 +896,20 @@
             previousSnapshot = h.length ? h[0] : null;
         }
 
+        // يشيل أي جرد أقدم من مدة الاحتفاظ، ويرتب الباقي الأحدث أولاً
+        function pruneHistory(list) {
+            const cutoff = Date.now() - HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+            return (list || [])
+                .filter(h => h && h.archivedAt && new Date(h.archivedAt).getTime() >= cutoff)
+                .sort((a, b) => new Date(b.archivedAt) - new Date(a.archivedAt));
+        }
+
         function loadInventoryHistory() {
-            try { return JSON.parse(localStorage.getItem(HISTORY_LS_KEY)) || []; }
+            try { return pruneHistory(JSON.parse(localStorage.getItem(HISTORY_LS_KEY)) || []); }
             catch (e) { return []; }
         }
         function saveInventoryHistory(list) {
-            try { localStorage.setItem(HISTORY_LS_KEY, JSON.stringify(list)); } catch (e) { console.error(e); }
+            try { localStorage.setItem(HISTORY_LS_KEY, JSON.stringify(pruneHistory(list))); } catch (e) { console.error(e); }
         }
 
         // يبني نفس شكل بيانات saveData() من الشاشة الحالية، بدون الكتابة على window.LS_KEY
@@ -932,7 +939,7 @@
             return { data, hasAnyValue };
         }
 
-        // يحفظ نسخة عن الجرد الحالي بالأرشيف (حتى 4 نسخ، الأحدث أولاً) قبل ما تُمسح الشاشة
+        // يحفظ نسخة عن الجرد الحالي بالأرشيف (كل الجرودات ضمن آخر 90 يوم، الأحدث أولاً) قبل ما تُمسح الشاشة
         function archiveCurrentInventory() {
             const { data, hasAnyValue } = buildCurrentSnapshotData();
             if (!hasAnyValue) return false; // ما في داعي نؤرشف جرد فاضي
@@ -942,7 +949,7 @@
                 data,
                 batchFactors: Object.assign({}, batchFactors)
             });
-            saveInventoryHistory(history.slice(0, HISTORY_MAX));
+            saveInventoryHistory(history);
             return true;
         }
 
@@ -1013,31 +1020,57 @@
         // يبقى محتفظ فيه آخر عرض للجدول (بعد الفلترة) — يستخدمه زر التصدير عشان يطلع نفس الأرقام المعروضة بالظبط
         let lastHistoryRender = null;
 
+        // يملأ قائمتي "من" و"إلى" بتواريخ الجرودات المحفوظة فعلياً — ويحافظ على اختيار المستخدم لو لسا صالح
+        function populateHistoryPeriodSelects(historyChronological) {
+            const fromEl = document.getElementById('historyFromSelect');
+            const toEl = document.getElementById('historyToSelect');
+            if (!fromEl || !toEl) return { fromAt: null, toAt: null };
+
+            const prevFrom = fromEl.value, prevTo = toEl.value;
+            const opts = historyChronological.map(s => `<option value="${s.archivedAt}">${formatHistoryDate(s.archivedAt)}</option>`).join('');
+            fromEl.innerHTML = opts;
+            toEl.innerHTML = opts;
+
+            const validAts = historyChronological.map(s => s.archivedAt);
+            fromEl.value = validAts.includes(prevFrom) ? prevFrom : validAts[0];
+            toEl.value = validAts.includes(prevTo) ? prevTo : validAts[validAts.length - 1];
+
+            return { fromAt: fromEl.value, toAt: toEl.value };
+        }
+
         function renderHistoryTab() {
             const wrap = document.getElementById('historyTableWrap');
             const empty = document.getElementById('historyEmpty');
+            const periodBar = document.getElementById('historyPeriodBar');
             if (!wrap) return;
-            const history = loadInventoryHistory();
+            const history = loadInventoryHistory(); // الأحدث أولاً
             lastHistoryRender = null;
             if (history.length === 0) {
                 wrap.innerHTML = '';
                 if (empty) empty.style.display = 'block';
+                if (periodBar) periodBar.style.display = 'none';
                 return;
             }
             if (empty) empty.style.display = 'none';
+            if (periodBar) periodBar.style.display = history.length >= 2 ? 'flex' : 'none';
+
+            const historyChronological = [...history].reverse(); // الأقدم أولاً — أوضح لقوائم "من/إلى"
+            const { fromAt, toAt } = populateHistoryPeriodSelects(historyChronological);
+            const fromIdx = fromAt ? history.findIndex(s => s.archivedAt === fromAt) : -1;
+            const toIdx = toAt ? history.findIndex(s => s.archivedAt === toAt) : -1;
+            const hasPeriod = history.length >= 2 && fromIdx !== -1 && toIdx !== -1;
 
             const historySearchEl = document.getElementById('historySearchInput');
             const q = (historySearchEl ? historySearchEl.value : '').trim().toLowerCase();
 
-            // نحسب ناتج كل صنف بكل نسخة أرشيف + فرق الشهر الكامل (الأحدث - الأقدم)
+            // نحسب ناتج كل صنف بكل نسخة أرشيف + الفرق بين الفترتين المختارتين (إلى - من)
             const rows = inventoryData.map(item => {
                 const totals = history.map(snap => {
                     const key = item.sku + '||' + item.name;
                     return computeSnapshotTotal(item, snap.data[key], snap.batchFactors);
                 });
-                const first = totals[0], last = totals[totals.length - 1];
-                const monthDiff = (history.length >= 2 && first !== null && last !== null) ? (first - last) : null;
-                return { item, totals, monthDiff };
+                const periodDiff = (hasPeriod && totals[toIdx] !== null && totals[fromIdx] !== null) ? (totals[toIdx] - totals[fromIdx]) : null;
+                return { item, totals, periodDiff };
             }).filter(r => {
                 if (q && !(r.item.name.toLowerCase().includes(q) || (r.item.sku || '').toLowerCase().includes(q))) return false;
                 return r.totals.some(t => t !== null && Math.abs(t) > 0.0001);
@@ -1045,34 +1078,33 @@
 
             const fmt = n => n === null ? '—' : n.toLocaleString('en-US', { maximumFractionDigits: 2 });
 
-            // صف الإجمالي — مجموع كل عمود تاريخ + مجموع فرق الشهر، لكل الصفوف المعروضة حالياً (بعد الفلترة)
+            // صف الإجمالي — مجموع كل عمود تاريخ + مجموع فرق الفترة، لكل الصفوف المعروضة حالياً (بعد الفلترة)
             const colSums = history.map((_, ci) => rows.reduce((s, r) => s + (r.totals[ci] || 0), 0));
-            const monthDiffSum = rows.reduce((s, r) => s + (r.monthDiff || 0), 0);
-            const anyMonthDiff = history.length >= 2;
+            const periodDiffSum = rows.reduce((s, r) => s + (r.periodDiff || 0), 0);
 
             let html = '<table class="history-table"><thead><tr><th>اسم المادة</th>';
             history.forEach(snap => { html += `<th>${formatHistoryDate(snap.archivedAt)}</th>`; });
-            html += '<th>فرق الشهر</th><th>وحدة</th></tr></thead><tbody>';
+            html += '<th>فرق الفترة</th><th>وحدة</th></tr></thead><tbody>';
             if (rows.length === 0) {
                 html += `<tr><td colspan="${3 + history.length}" style="text-align:center;color:#999;padding:20px">ما في نتائج</td></tr>`;
             } else {
                 rows.forEach(r => {
                     html += `<tr><td class="hist-name">${r.item.name}</td>`;
                     r.totals.forEach(t => { html += `<td class="hist-val">${fmt(t)}</td>`; });
-                    const mdClass = r.monthDiff === null ? '' : (r.monthDiff > 0 ? 'prev-diff-pos' : r.monthDiff < 0 ? 'prev-diff-neg' : 'prev-diff-zero');
-                    html += `<td class="hist-val hist-month-diff ${mdClass}">${anyMonthDiff ? fmt(r.monthDiff) : '—'}</td>`;
+                    const pdClass = r.periodDiff === null ? '' : (r.periodDiff > 0 ? 'prev-diff-pos' : r.periodDiff < 0 ? 'prev-diff-neg' : 'prev-diff-zero');
+                    html += `<td class="hist-val hist-month-diff ${pdClass}">${hasPeriod ? fmt(r.periodDiff) : '—'}</td>`;
                     html += `<td class="hist-unit">${r.item.unit}</td>`;
                     html += '</tr>';
                 });
                 html += '<tr class="hist-total-row"><td class="hist-name">الإجمالي</td>';
                 colSums.forEach(s => { html += `<td class="hist-val">${fmt(s)}</td>`; });
-                html += `<td class="hist-val hist-month-diff">${anyMonthDiff ? fmt(monthDiffSum) : '—'}</td>`;
+                html += `<td class="hist-val hist-month-diff">${hasPeriod ? fmt(periodDiffSum) : '—'}</td>`;
                 html += '<td></td></tr>';
             }
             html += '</tbody></table>';
             wrap.innerHTML = html;
 
-            lastHistoryRender = { history, rows, colSums, monthDiffSum, anyMonthDiff };
+            lastHistoryRender = { history, rows, colSums, periodDiffSum, hasPeriod, fromAt, toAt };
         }
 
         function exportHistoryCSV() {
@@ -1080,18 +1112,18 @@
                 showToast('ما في بيانات جرودات للتصدير', 'warning');
                 return;
             }
-            const { history, rows, colSums, monthDiffSum, anyMonthDiff } = lastHistoryRender;
+            const { history, rows, colSums, periodDiffSum, hasPeriod } = lastHistoryRender;
             const fmt = n => n === null || n === undefined ? '' : Number(n.toFixed(2));
-            const headers = ['اسم المادة', ...history.map(s => formatHistoryDate(s.archivedAt)), 'فرق الشهر', 'وحدة'];
+            const headers = ['اسم المادة', ...history.map(s => formatHistoryDate(s.archivedAt)), 'فرق الفترة', 'وحدة'];
             const lines = [headers.map(csvEscape).join(',')];
             rows.forEach(r => {
-                const cols = [r.item.name, ...r.totals.map(fmt), anyMonthDiff ? fmt(r.monthDiff) : '', r.item.unit];
+                const cols = [r.item.name, ...r.totals.map(fmt), hasPeriod ? fmt(r.periodDiff) : '', r.item.unit];
                 lines.push(cols.map(csvEscape).join(','));
             });
-            const totalCols = ['الإجمالي', ...colSums.map(fmt), anyMonthDiff ? fmt(monthDiffSum) : '', ''];
+            const totalCols = ['الإجمالي', ...colSums.map(fmt), hasPeriod ? fmt(periodDiffSum) : '', ''];
             lines.push(totalCols.map(csvEscape).join(','));
-            downloadFile('﻿' + lines.join('\n'), `الفرق_الشهري_${(window.BRANCH_ID || 'branch')}_${todayDateStr()}.csv`, 'text/csv;charset=utf-8;');
-            showToast('تم تصدير الفرق الشهري ✓', 'success');
+            downloadFile('﻿' + lines.join('\n'), `فرق_الفترة_${(window.BRANCH_ID || 'branch')}_${todayDateStr()}.csv`, 'text/csv;charset=utf-8;');
+            showToast('تم تصدير فرق الفترة ✓', 'success');
         }
         function todayDateStr() {
             const d = new Date();

@@ -419,9 +419,13 @@
         <div class="search-box" style="margin-bottom:12px">
             <input type="text" id="historySearchInput" placeholder="🔍 بحث عن مادة أو SKU..." oninput="renderHistoryTab()">
         </div>
-        <button class="btn btn-success" style="margin-bottom:12px" onclick="exportHistoryCSV()">📥 تصدير الفرق الشهري</button>
+        <div id="historyPeriodBar" class="history-period-bar" style="display:none">
+            <label>من <select id="historyFromSelect" onchange="renderHistoryTab()"></select></label>
+            <label>إلى <select id="historyToSelect" onchange="renderHistoryTab()"></select></label>
+        </div>
+        <button class="btn btn-success" style="margin-bottom:12px" onclick="exportHistoryCSV()">📥 تصدير فرق الفترة</button>
         <div id="historyEmpty" style="display:none;text-align:center;color:#888;padding:40px 10px">
-            ما في جرودات محفوظة بعد — اضغط «🆕 جرد جديد» من لوحة الأدوات بعد ما تخلّص أول جرد، وبينحفظ تلقائياً بالأرشيف.
+            ما في جرودات محفوظة بعد — اضغط «🆕 جرد جديد» من لوحة الأدوات بعد ما تخلّص أول جرد، وبينحفظ تلقائياً بالأرشيف (آخر 90 يوم).
         </div>
         <div id="historyTableWrap" style="overflow-x:auto"></div>
     </div>
