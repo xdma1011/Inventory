@@ -735,10 +735,12 @@
             return merged.slice(0, HISTORY_MAX);
         }
 
-        async function syncWithCloud() {
+        // auto=true: يشتغل لحاله عند فتح/تحديث الصفحة — بدون أي نافذة تأكيد تقاطع المستخدم.
+        // بما إنه أول شي بيصير بعد فتح الصفحة (قبل ما يكتب المستخدم أي شي)، الأحدث بيفوز تلقائياً بلا سؤال.
+        async function syncWithCloud(auto) {
             const btn = document.getElementById('syncBtn');
-            if (!supabaseClient) { showToast('تعذر تحميل مكتبة المزامنة', 'error'); return; }
-            if (btn) { btn.disabled = true; btn.textContent = '🔄 جاري...'; }
+            if (!supabaseClient) { if (!auto) showToast('تعذر تحميل مكتبة المزامنة', 'error'); return; }
+            if (btn && !auto) { btn.disabled = true; btn.textContent = '🔄 جاري...'; }
             try {
                 saveData(true); // تأكيد إن آخر تعديل محفوظ محلياً قبل ما نقارن
                 const localRaw = localStorage.getItem(window.LS_KEY);
@@ -756,17 +758,22 @@
                 const mergedHistory = mergeHistories(loadInventoryHistory(), cloudRow ? cloudRow.history : []);
                 saveInventoryHistory(mergedHistory);
 
-                // 2) الجرد الحالي المفتوح — الأحدث بالتاريخ يفوز، وبيسأل لو في تعارض حقيقي
+                // 2) الجرد الحالي المفتوح — الأحدث بالتاريخ يفوز
                 const cloudTime = cloudRow && cloudRow.updated_at ? new Date(cloudRow.updated_at).getTime() : 0;
                 let finalPayload = localPayload;
+                let pulled = false;
 
                 if (cloudRow && cloudTime > localTime) {
-                    const cloudWhen = new Date(cloudRow.updated_at).toLocaleString('ar-EG');
-                    const pullDown = confirm(`في نسخة أحدث محفوظة بالسحابة (${cloudWhen}).\nموافق = نحمّلها بدل الجرد الحالي على هالجهاز.\nإلغاء = نرفع نسخة هالجهاز فوقها بالسحابة.`);
+                    let pullDown = true;
+                    if (!auto) {
+                        const cloudWhen = new Date(cloudRow.updated_at).toLocaleString('ar-EG');
+                        pullDown = confirm(`في نسخة أحدث محفوظة بالسحابة (${cloudWhen}).\nموافق = نحمّلها بدل الجرد الحالي على هالجهاز.\nإلغاء = نرفع نسخة هالجهاز فوقها بالسحابة.`);
+                    }
                     if (pullDown) {
                         localStorage.setItem(window.LS_KEY, JSON.stringify(cloudRow.payload));
                         loadSavedData();
                         finalPayload = cloudRow.payload;
+                        pulled = true;
                     }
                 }
 
@@ -776,19 +783,20 @@
                         branch_id: window.BRANCH_ID || 'gardens',
                         payload: finalPayload,
                         history: mergedHistory,
-                        updated_at: finalPayload === localPayload ? new Date().toISOString() : (cloudRow ? cloudRow.updated_at : new Date().toISOString())
+                        updated_at: pulled ? cloudRow.updated_at : new Date().toISOString()
                     });
                 if (upErr) throw upErr;
 
                 loadPreviousSnapshot();
                 inventoryData.forEach((_, i) => calculateRow(i));
                 renderHistoryTab();
-                showToast('تمت المزامنة (الجرد الحالي + الأرشيف) ✓', 'success');
+                if (!auto) showToast('تمت المزامنة (الجرد الحالي + الأرشيف) ✓', 'success');
+                else if (pulled) showToast('في تحديث أحدث — تم تحميله من السحابة ✓', 'success');
             } catch (e) {
                 console.error('Sync failed', e);
-                showToast('تعذر الاتصال بالسحابة — البيانات محفوظة محلياً بس', 'warning');
+                if (!auto) showToast('تعذر الاتصال بالسحابة — البيانات محفوظة محلياً بس', 'warning');
             } finally {
-                if (btn) { btn.disabled = false; btn.textContent = '🔄 Sync'; }
+                if (btn && !auto) { btn.disabled = false; btn.textContent = '🔄 Sync'; }
             }
         }
 
@@ -2843,6 +2851,8 @@
         document.addEventListener('DOMContentLoaded', setupOpBar);
 
         document.addEventListener('DOMContentLoaded', createTable);
+        // مزامنة تلقائية صامتة مع كل فتح/تحديث للصفحة — بتحدّث البيانات لو في أحدث، وبتحافظ على نشاط قاعدة بيانات Supabase (تتوقف تلقائياً بعد 7 أيام بدون أي حركة)
+        document.addEventListener('DOMContentLoaded', () => { setTimeout(() => syncWithCloud(true), 800); });
 
 // ═══ تبويب المشتريات ═══
 
