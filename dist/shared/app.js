@@ -455,13 +455,22 @@
             document.body.removeChild(ta);
         }
         let pendingPasswordAction = 'clear';
+        let pendingDeleteHistoryAt = null;
         function confirmClearAll() { pendingPasswordAction = 'clear'; document.getElementById('passwordModal').classList.add('show'); document.getElementById('passwordInput').value = ''; document.getElementById('passwordInput').focus(); }
         function confirmNewInventory() { pendingPasswordAction = 'newInventory'; document.getElementById('passwordModal').classList.add('show'); document.getElementById('passwordInput').value = ''; document.getElementById('passwordInput').focus(); }
+        function confirmDeleteHistoryEntry(archivedAt) {
+            pendingPasswordAction = 'deleteHistory';
+            pendingDeleteHistoryAt = archivedAt;
+            document.getElementById('passwordModal').classList.add('show');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').focus();
+        }
         function closePasswordModal() { document.getElementById('passwordModal').classList.remove('show'); }
         function verifyPassword() {
             if (document.getElementById('passwordInput').value === CLEAR_PASSWORD) {
                 closePasswordModal();
                 if (pendingPasswordAction === 'newInventory') startNewInventory();
+                else if (pendingPasswordAction === 'deleteHistory') deleteHistoryEntry(pendingDeleteHistoryAt);
                 else clearAllData();
             }
             else { showToast('كلمة المرور غير صحيحة!', 'error'); document.getElementById('passwordInput').value = ''; document.getElementById('passwordInput').focus(); }
@@ -967,6 +976,27 @@
             return true;
         }
 
+        // يحذف جرد محفوظ واحد من الأرشيف (بعد تأكيد كلمة المرور) — محلياً، وبيحاول ينشرها عالسحابة
+        // مباشرة (مو عبر الدمج/الاتحاد المعتاد) عشان الحذف يوصل فعلياً وما يرجع يتدمج من جهاز تاني
+        async function deleteHistoryEntry(archivedAt) {
+            if (!archivedAt) return;
+            const history = loadInventoryHistory().filter(h => h.archivedAt !== archivedAt);
+            saveInventoryHistory(history);
+            loadPreviousSnapshot();
+            inventoryData.forEach((_, i) => calculateRow(i));
+            renderHistoryTab();
+            showToast('تم حذف الجرد المحفوظ', 'success');
+
+            if (supabaseClient) {
+                try {
+                    await supabaseClient
+                        .from(SUPABASE_TABLE)
+                        .update({ history })
+                        .eq('branch_id', window.BRANCH_ID || 'gardens');
+                } catch (e) { console.error('Cloud history delete sync failed', e); }
+            }
+        }
+
         // يحسب الناتج النهائي لصنف من نسخة أرشيف (بدون لمس الجدول الحالي) — نفس معادلة calculateRow تماماً
         function computeSnapshotTotal(item, entry, snapBatchFactors) {
             if (!entry) return null;
@@ -1097,7 +1127,9 @@
             const periodDiffSum = rows.reduce((s, r) => s + (r.periodDiff || 0), 0);
 
             let html = '<table class="history-table"><thead><tr><th>اسم المادة</th>';
-            history.forEach(snap => { html += `<th>${formatHistoryDate(snap.archivedAt)}</th>`; });
+            history.forEach(snap => {
+                html += `<th>${formatHistoryDate(snap.archivedAt)}<button type="button" class="hist-del-btn" title="حذف هالجرد" onclick="confirmDeleteHistoryEntry('${snap.archivedAt}')">🗑️</button></th>`;
+            });
             html += '<th>فرق الفترة</th><th>وحدة</th></tr></thead><tbody>';
             if (rows.length === 0) {
                 html += `<tr><td colspan="${3 + history.length}" style="text-align:center;color:#999;padding:20px">ما في نتائج</td></tr>`;
