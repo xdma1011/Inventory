@@ -722,6 +722,19 @@
             }
         } catch (e) { console.error('Supabase init failed', e); }
 
+        // يدمج أرشيف الجرودات المحلي مع أرشيف السحابة — بدون كتابة فوق أي طرف، فقط اتحاد الاثنين
+        // ويحتفظ بأحدث 4 نسخ بالمجموع (حسب تاريخ الأرشفة)
+        function mergeHistories(localHist, cloudHist) {
+            const seen = new Set();
+            const merged = [...(localHist || []), ...(cloudHist || [])].filter(h => {
+                if (!h || !h.archivedAt || seen.has(h.archivedAt)) return false;
+                seen.add(h.archivedAt);
+                return true;
+            });
+            merged.sort((a, b) => new Date(b.archivedAt) - new Date(a.archivedAt));
+            return merged.slice(0, HISTORY_MAX);
+        }
+
         async function syncWithCloud() {
             const btn = document.getElementById('syncBtn');
             if (!supabaseClient) { showToast('تعذر تحميل مكتبة المزامنة', 'error'); return; }
@@ -734,12 +747,18 @@
 
                 const { data: cloudRow, error: selErr } = await supabaseClient
                     .from(SUPABASE_TABLE)
-                    .select('payload, updated_at')
+                    .select('payload, history, updated_at')
                     .eq('branch_id', window.BRANCH_ID || 'gardens')
                     .maybeSingle();
                 if (selErr) throw selErr;
 
+                // 1) الجرودات السابقة (الأرشيف) — دايماً دمج بالاتجاهين، ما في كتابة فوق
+                const mergedHistory = mergeHistories(loadInventoryHistory(), cloudRow ? cloudRow.history : []);
+                saveInventoryHistory(mergedHistory);
+
+                // 2) الجرد الحالي المفتوح — الأحدث بالتاريخ يفوز، وبيسأل لو في تعارض حقيقي
                 const cloudTime = cloudRow && cloudRow.updated_at ? new Date(cloudRow.updated_at).getTime() : 0;
+                let finalPayload = localPayload;
 
                 if (cloudRow && cloudTime > localTime) {
                     const cloudWhen = new Date(cloudRow.updated_at).toLocaleString('ar-EG');
@@ -747,16 +766,24 @@
                     if (pullDown) {
                         localStorage.setItem(window.LS_KEY, JSON.stringify(cloudRow.payload));
                         loadSavedData();
-                        showToast('تم تحميل النسخة من السحابة ✓', 'success');
-                        return;
+                        finalPayload = cloudRow.payload;
                     }
                 }
 
                 const { error: upErr } = await supabaseClient
                     .from(SUPABASE_TABLE)
-                    .upsert({ branch_id: window.BRANCH_ID || 'gardens', payload: localPayload, updated_at: new Date().toISOString() });
+                    .upsert({
+                        branch_id: window.BRANCH_ID || 'gardens',
+                        payload: finalPayload,
+                        history: mergedHistory,
+                        updated_at: finalPayload === localPayload ? new Date().toISOString() : (cloudRow ? cloudRow.updated_at : new Date().toISOString())
+                    });
                 if (upErr) throw upErr;
-                showToast('تمت المزامنة مع السحابة ✓', 'success');
+
+                loadPreviousSnapshot();
+                inventoryData.forEach((_, i) => calculateRow(i));
+                renderHistoryTab();
+                showToast('تمت المزامنة (الجرد الحالي + الأرشيف) ✓', 'success');
             } catch (e) {
                 console.error('Sync failed', e);
                 showToast('تعذر الاتصال بالسحابة — البيانات محفوظة محلياً بس', 'warning');
