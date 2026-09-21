@@ -133,6 +133,11 @@
             color: #fff;
         }
 
+        .btn-newinv {
+            background: #fbc02d;
+            color: #212121;
+        }
+
         .btn-info {
             background: #6a1b9a;
             color: #fff;

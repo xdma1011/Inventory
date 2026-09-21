@@ -55,12 +55,12 @@
                 <button class="btn btn-transfer2" onclick="exportLsFile()">💾 تصدير ملف</button>
                 <button class="btn btn-transfer2" onclick="importLsFile()">📂 استيراد ملف</button>
                 <input type="file" id="lsFileInput" accept=".txt,.json,text/plain,application/json,application/octet-stream" style="display:none" onchange="handleLsFile(this)">
-                <button class="btn btn-success" onclick="confirmNewInventory()">🆕 جرد جديد</button>
                 <button class="btn btn-danger" onclick="confirmClearAll()">🗑️ مسح</button>
                 <button class="btn btn-numpad" id="numpadToggle" onclick="toggleNumpad()">🔢 لوحة الأرقام</button>
                 <button class="btn btn-info" onclick="openScanner('search')">📷 مسح للبحث</button>
                 <button class="btn btn-success" onclick="openScanner('add')">➕ مسح وإضافة</button>
                 <button class="btn btn-info" onclick="openBarcodeManager()">🔗 إدارة الباركودات</button>
+                <button class="btn btn-newinv" onclick="confirmNewInventory()">🆕 جرد جديد</button>
             </div>
             <div class="csv-bar" id="csvBar"><!-- يُملأ ديناميكياً من countSheets --></div>
         </div>
