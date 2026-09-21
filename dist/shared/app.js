@@ -732,9 +732,13 @@
             if (!supabaseClient) { if (!auto) showToast('تعذر تحميل مكتبة المزامنة', 'error'); return; }
             if (btn && !auto) { btn.disabled = true; btn.textContent = '🔄 جاري...'; }
             try {
-                saveData(true); // تأكيد إن آخر تعديل محفوظ محلياً قبل ما نقارن
+                // نحدّث آخر حفظ بس لو أصلاً في بيانات محفوظة على هالجهاز من قبل — جهاز جديد بدون أي حفظ سابق
+                // ما لازم يتختم بوقت "الآن"، وإلا رح يبين وكأنه أحدث من السحابة ويمسح البيانات الحقيقية فوقها!
+                const hadLocalSave = !!localStorage.getItem(window.LS_KEY);
+                if (hadLocalSave) saveData(true);
+
                 const localRaw = localStorage.getItem(window.LS_KEY);
-                const localPayload = localRaw ? JSON.parse(localRaw) : { data: {}, systemData: {}, timestamp: new Date().toISOString() };
+                const localPayload = localRaw ? JSON.parse(localRaw) : { data: {}, systemData: {}, timestamp: null };
                 const localTime = localPayload.timestamp ? new Date(localPayload.timestamp).getTime() : 0;
 
                 const { data: cloudRow, error: selErr } = await supabaseClient
