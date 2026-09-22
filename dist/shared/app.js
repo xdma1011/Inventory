@@ -162,7 +162,7 @@ function lockEditAgain() {
                     : '';
                 row.innerHTML = `
 <td data-col="result"><div class="result-cell" data-index="${index}" tabindex="0" title="انقر للنسخ — ↑↓ للتنقل"><span id="result-${index}">0</span><span class="batch-tag" id="btag-${index}" style="display:none">باتش</span><span class="prev-diff" id="prevDiff-${index}"></span></div></td>
-<td class="batch-cell" data-col="batch"><input type="text" inputmode="decimal" autocomplete="off" readonly id="batchf-${index}" value="${batchFactors[item.sku + '||' + item.name] !== undefined ? batchFactors[item.sku + '||' + item.name] : ''}" oninput="onFactorInput(this, ${index})" ondblclick="unlockFactor(this)" onblur="lockFactor(this)" onkeydown="if(event.key==='Enter') this.blur()" placeholder="—" title="كم باتش يساوي 1000 ${item.unit} — دبل كليك للتعديل"><div class="batch-result" id="batchres-${index}">—</div></td>
+<td class="batch-cell" data-col="batch"><input type="text" inputmode="decimal" autocomplete="off" readonly id="batchf-${index}" value="${lookupByItem(batchFactors, item) !== undefined ? lookupByItem(batchFactors, item) : ''}" oninput="onFactorInput(this, ${index})" ondblclick="unlockFactor(this)" onblur="lockFactor(this)" onkeydown="if(event.key==='Enter') this.blur()" placeholder="—" title="كم باتش يساوي 1000 ${item.unit} — دبل كليك للتعديل"><div class="batch-result" id="batchres-${index}">—</div></td>
 <td data-col="diff"><div class="diff-cell diff-zero" id="diff-${index}"><span id="diffValue-${index}">-</span></div></td>
 <td class="min-cell" data-col="min"><input type="number" inputmode="decimal" id="min-${index}" value="0" min="0" oninput="onMinChange(${index})" placeholder="0" title="الحد الأدنى"></td>
 <td data-col="name"><div class="item-name">${item.name}${noteBtn}</div></td>
@@ -485,6 +485,21 @@ function lockEditAgain() {
                 .replace(/[أإآا]/g, 'ا')
                 .replace(/[يى]/g, 'ي');
         }
+        // ─── مفتاح التخزين لكل صنف (SKU + الاسم) + خطة بديلة بالاسم القديم ───
+        // لو صنف تغيّر اسمه بـ data.js (تقصير الاسم مثلاً)، أي بيانات محفوظة قبل التغيير
+        // (محلياً أو بالسحابة) بتضل تنقرأ صح عن طريق legacyNames (خريطة SKU → الاسم القديم)
+        function keyForItem(item) { return item.sku + '||' + item.name; }
+        function legacyKeyForItem(item) {
+            const ln = (typeof legacyNames !== 'undefined' && legacyNames) ? legacyNames[item.sku] : null;
+            return ln ? item.sku + '||' + ln : null;
+        }
+        function lookupByItem(dataObj, item) {
+            if (!dataObj) return undefined;
+            const v = dataObj[keyForItem(item)];
+            if (v !== undefined) return v;
+            const lk = legacyKeyForItem(item);
+            return lk ? dataObj[lk] : undefined;
+        }
         // مطابقة البحث لصنف: بالاسم، أو الـ SKU، أو حقل "filter" الاختياري بـ data.js
         // (كلمات بحث إضافية بدون ما تغيّر الاسم المعروض — مثلاً "بشاميل" لصنف اسمه "باشميل")
         // البحث بتسلسل كلمات حر: كل كلمة تكتبها لازم تكون موجودة بمكان ما (الاسم أو الفلتر)،
@@ -756,8 +771,7 @@ function lockEditAgain() {
                 inventoryData.forEach((item, i) => {
                     let entry;
                     if (isV8) {
-                        const key = item.sku + '||' + item.name;
-                        entry = parsed.data[key];
+                        entry = lookupByItem(parsed.data, item);
                     } else {
                         // legacy: map by position
                         entry = Array.isArray(parsed.data) ? parsed.data[i] : null;
@@ -1132,8 +1146,7 @@ function lockEditAgain() {
             const input8 = evaluateExpression(entry.input8);
             const secondOp = entry.secondOp || '*';
             const secondVal = parseFloat(entry.secondVal) || 1;
-            const key = item.sku + '||' + item.name;
-            const bfRaw = snapBatchFactors ? parseFloat(snapBatchFactors[key]) : NaN;
+            const bfRaw = snapBatchFactors ? parseFloat(lookupByItem(snapBatchFactors, item)) : NaN;
             const bf = (isFinite(bfRaw) && bfRaw > 0) ? bfRaw : 0;
             const firstSection = (input1 + input2 + input3 + input4) * packageSize;
             let secondSection = input5 + input6 + input7 + input8;
@@ -1150,8 +1163,7 @@ function lockEditAgain() {
             if (!el) return;
             if (!previousSnapshot) { el.textContent = ''; el.className = 'prev-diff'; return; }
             const item = inventoryData[index];
-            const key = item.sku + '||' + item.name;
-            const prevTotal = computeSnapshotTotal(item, previousSnapshot.data[key], previousSnapshot.batchFactors);
+            const prevTotal = computeSnapshotTotal(item, lookupByItem(previousSnapshot.data, item), previousSnapshot.batchFactors);
             if (prevTotal === null) { el.textContent = ''; el.className = 'prev-diff'; return; }
             const diff = currentTotal - prevTotal;
             const fmt = n => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
@@ -1164,8 +1176,7 @@ function lockEditAgain() {
         function getPrevSnapshotTotalForCard(index) {
             if (!previousSnapshot) return null;
             const item = inventoryData[index];
-            const key = item.sku + '||' + item.name;
-            return computeSnapshotTotal(item, previousSnapshot.data[key], previousSnapshot.batchFactors);
+            return computeSnapshotTotal(item, lookupByItem(previousSnapshot.data, item), previousSnapshot.batchFactors);
         }
 
         function startNewInventory() {
@@ -1238,10 +1249,7 @@ function lockEditAgain() {
 
             // نحسب ناتج كل صنف بكل نسخة أرشيف + الفرق بين الفترتين المختارتين (إلى - من)
             const rows = inventoryData.map(item => {
-                const totals = history.map(snap => {
-                    const key = item.sku + '||' + item.name;
-                    return computeSnapshotTotal(item, snap.data[key], snap.batchFactors);
-                });
+                const totals = history.map(snap => computeSnapshotTotal(item, lookupByItem(snap.data, item), snap.batchFactors));
                 const periodDiff = (hasPeriod && totals[toIdx] !== null && totals[fromIdx] !== null) ? (totals[toIdx] - totals[fromIdx]) : null;
                 return { item, totals, periodDiff };
             }).filter(r => {
@@ -1410,7 +1418,7 @@ function lockEditAgain() {
         // ═══════════ معامل التحويل إلى باتش ═══════════
         function factorKey(index) { const it = inventoryData[index]; return it.sku + '||' + it.name; }
         function getBatchFactor(index) {
-            const v = parseFloat(batchFactors[factorKey(index)]);
+            const v = parseFloat(lookupByItem(batchFactors, inventoryData[index]));
             return (isFinite(v) && v > 0) ? v : 0;
         }
         function getRawResult(index) {
