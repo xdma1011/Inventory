@@ -820,6 +820,34 @@
             }
         }
 
+        // يجيب آخر نسخة موجودة بالسحابة (آخر مزامنة) ويستبدل فيها الجرد الحالي على هالجهاز بالكامل —
+        // بغض النظر عن التاريخ (Override صريح)، بعد تأكيد المستخدم لأنه إجراء غير قابل للتراجع
+        async function forcePullFromCloud() {
+            if (!supabaseClient) { showToast('تعذر تحميل مكتبة المزامنة', 'error'); return; }
+            const sure = confirm('هاد رح يستبدل الجرد الحالي على هالجهاز بآخر نسخة محفوظة بالسحابة (Override)، وأي تعديل هون غير محفوظ رح يضيع.\nمتأكد؟');
+            if (!sure) return;
+            try {
+                const { data: cloudRow, error } = await supabaseClient
+                    .from(SUPABASE_TABLE)
+                    .select('payload, history, updated_at')
+                    .eq('branch_id', window.BRANCH_ID || 'gardens')
+                    .maybeSingle();
+                if (error) throw error;
+                if (!cloudRow) { showToast('ما في نسخة محفوظة بالسحابة لهالفرع', 'warning'); return; }
+
+                localStorage.setItem(window.LS_KEY, JSON.stringify(cloudRow.payload));
+                loadSavedData();
+                if (cloudRow.history) saveInventoryHistory(cloudRow.history);
+                loadPreviousSnapshot();
+                inventoryData.forEach((_, i) => calculateRow(i));
+                renderHistoryTab();
+                showToast('تم استرجاع آخر نسخة من السحابة ✓', 'success');
+            } catch (e) {
+                console.error('Force pull failed', e);
+                showToast('تعذر جلب النسخة من السحابة', 'error');
+            }
+        }
+
         // ─── COPY / PASTE localStorage ───
         function copyLocalStorage() {
             const raw = localStorage.getItem(window.LS_KEY)
