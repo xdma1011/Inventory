@@ -772,8 +772,15 @@
                 let skipPush = false; // true = ما منلمس بيانات الجرد الحالي عالسحابة إطلاقاً (بس الأرشيف بينضم)
 
                 if (cloudIsNewer) {
-                    if (auto) {
-                        // وضع تلقائي (رفرش/فتح صفحة): ممنوع نلمس المحلي ولا السحابة — بس ننبّه بهدوء
+                    if (auto && !hadLocalSave) {
+                        // جهاز/متصفح جديد بدون أي بيانات محلية إطلاقاً (مثلاً incognito) — ما في شي
+                        // نخسره، فآمن نسحب نسخة السحابة تلقائياً وبصمت
+                        localStorage.setItem(window.LS_KEY, JSON.stringify(cloudRow.payload));
+                        loadSavedData();
+                        finalPayload = cloudRow.payload;
+                        pulled = true;
+                    } else if (auto) {
+                        // وضع تلقائي وفي بيانات محلية حقيقية أصلاً على هالجهاز: ممنوع نلمسها — بس ننبّه بهدوء
                         skipPush = true;
                         showToast('⚠️ في نسخة أحدث بالسحابة لهالفرع — اضغط Sync يدوياً من الأدوات لو بدك تحمّلها', 'warning');
                     } else {
@@ -1064,21 +1071,28 @@
         // يبقى محتفظ فيه آخر عرض للجدول (بعد الفلترة) — يستخدمه زر التصدير عشان يطلع نفس الأرقام المعروضة بالظبط
         let lastHistoryRender = null;
 
-        // يملأ قائمتي "من" و"إلى" بتواريخ الجرودات المحفوظة فعلياً — ويحافظ على اختيار المستخدم لو لسا صالح
+        // يملأ قائمتي "من" و"إلى" بتواريخ الجرودات المحفوظة فعلياً — ويحافظ على اختيار المستخدم بس لو
+        // نفس مجموعة الجرودات المتاحة ما تغيّرت؛ لو انضاف/انحذف جرد (يعني المجموعة تغيّرت)، يرجع
+        // للافتراضي (من الأقدم إلى الأحدث) — وإلا القائمة ممكن تعلق على جرد قديم صار "من" و"إلى" مع بعض
+        let lastHistoryValidAts = null;
         function populateHistoryPeriodSelects(historyChronological) {
             const fromEl = document.getElementById('historyFromSelect');
             const toEl = document.getElementById('historyToSelect');
             if (!fromEl || !toEl) return { fromAt: null, toAt: null };
 
-            const prevFrom = fromEl.value, prevTo = toEl.value;
+            const validAts = historyChronological.map(s => s.archivedAt);
+            const setChanged = JSON.stringify(validAts) !== JSON.stringify(lastHistoryValidAts);
+            const prevFrom = setChanged ? null : fromEl.value;
+            const prevTo = setChanged ? null : toEl.value;
+
             const opts = historyChronological.map(s => `<option value="${s.archivedAt}">${formatHistoryDate(s.archivedAt)}</option>`).join('');
             fromEl.innerHTML = opts;
             toEl.innerHTML = opts;
 
-            const validAts = historyChronological.map(s => s.archivedAt);
-            fromEl.value = validAts.includes(prevFrom) ? prevFrom : validAts[0];
-            toEl.value = validAts.includes(prevTo) ? prevTo : validAts[validAts.length - 1];
+            fromEl.value = (prevFrom && validAts.includes(prevFrom)) ? prevFrom : validAts[0];
+            toEl.value = (prevTo && validAts.includes(prevTo)) ? prevTo : validAts[validAts.length - 1];
 
+            lastHistoryValidAts = validAts;
             return { fromAt: fromEl.value, toAt: toEl.value };
         }
 
@@ -1126,25 +1140,26 @@
             const colSums = history.map((_, ci) => rows.reduce((s, r) => s + (r.totals[ci] || 0), 0));
             const periodDiffSum = rows.reduce((s, r) => s + (r.periodDiff || 0), 0);
 
-            let html = '<table class="history-table"><thead><tr><th>اسم المادة</th>';
+            // فرق الفترة يجي مباشرة بعد اسم المادة — عشان النتيجة النهائية تتقرأ أول شي بدون ما تدوّر عالآخر
+            let html = '<table class="history-table"><thead><tr><th>اسم المادة</th><th>فرق الفترة</th>';
             history.forEach(snap => {
                 html += `<th>${formatHistoryDate(snap.archivedAt)}<button type="button" class="hist-del-btn" title="حذف هالجرد" onclick="confirmDeleteHistoryEntry('${snap.archivedAt}')">🗑️</button></th>`;
             });
-            html += '<th>فرق الفترة</th><th>وحدة</th></tr></thead><tbody>';
+            html += '<th>وحدة</th></tr></thead><tbody>';
             if (rows.length === 0) {
                 html += `<tr><td colspan="${3 + history.length}" style="text-align:center;color:#999;padding:20px">ما في نتائج</td></tr>`;
             } else {
                 rows.forEach(r => {
-                    html += `<tr><td class="hist-name">${r.item.name}</td>`;
-                    r.totals.forEach(t => { html += `<td class="hist-val">${fmt(t)}</td>`; });
                     const pdClass = r.periodDiff === null ? '' : (r.periodDiff > 0 ? 'prev-diff-pos' : r.periodDiff < 0 ? 'prev-diff-neg' : 'prev-diff-zero');
+                    html += `<tr><td class="hist-name">${r.item.name}</td>`;
                     html += `<td class="hist-val hist-month-diff ${pdClass}">${hasPeriod ? fmt(r.periodDiff) : '—'}</td>`;
+                    r.totals.forEach(t => { html += `<td class="hist-val">${fmt(t)}</td>`; });
                     html += `<td class="hist-unit">${r.item.unit}</td>`;
                     html += '</tr>';
                 });
                 html += '<tr class="hist-total-row"><td class="hist-name">الإجمالي</td>';
-                colSums.forEach(s => { html += `<td class="hist-val">${fmt(s)}</td>`; });
                 html += `<td class="hist-val hist-month-diff">${hasPeriod ? fmt(periodDiffSum) : '—'}</td>`;
+                colSums.forEach(s => { html += `<td class="hist-val">${fmt(s)}</td>`; });
                 html += '<td></td></tr>';
             }
             html += '</tbody></table>';
@@ -1160,13 +1175,13 @@
             }
             const { history, rows, colSums, periodDiffSum, hasPeriod } = lastHistoryRender;
             const fmt = n => n === null || n === undefined ? '' : Number(n.toFixed(2));
-            const headers = ['اسم المادة', ...history.map(s => formatHistoryDate(s.archivedAt)), 'فرق الفترة', 'وحدة'];
+            const headers = ['اسم المادة', 'فرق الفترة', ...history.map(s => formatHistoryDate(s.archivedAt)), 'وحدة'];
             const lines = [headers.map(csvEscape).join(',')];
             rows.forEach(r => {
-                const cols = [r.item.name, ...r.totals.map(fmt), hasPeriod ? fmt(r.periodDiff) : '', r.item.unit];
+                const cols = [r.item.name, hasPeriod ? fmt(r.periodDiff) : '', ...r.totals.map(fmt), r.item.unit];
                 lines.push(cols.map(csvEscape).join(','));
             });
-            const totalCols = ['الإجمالي', ...colSums.map(fmt), hasPeriod ? fmt(periodDiffSum) : '', ''];
+            const totalCols = ['الإجمالي', hasPeriod ? fmt(periodDiffSum) : '', ...colSums.map(fmt), ''];
             lines.push(totalCols.map(csvEscape).join(','));
             downloadFile('﻿' + lines.join('\n'), `فرق_الفترة_${(window.BRANCH_ID || 'branch')}_${todayDateStr()}.csv`, 'text/csv;charset=utf-8;');
             showToast('تم تصدير فرق الفترة ✓', 'success');
