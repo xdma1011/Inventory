@@ -2757,7 +2757,14 @@ body.view-only .view-only-badge {
     border-radius: 20px;
     font-size: 12px;
     font-weight: 700;
+    font-family: inherit;
     margin-inline-start: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+body.view-only .view-only-badge:hover {
+    background: rgba(255, 193, 7, 0.32);
 }
 
 body.view-only #toolsToggle,

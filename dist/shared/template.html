@@ -31,7 +31,7 @@
                 <p>22-FEB-2026 | مع مقارنة بيانات النظام</p>
             </div>
             <div class="header-badge" id="brandBadge">🏪 Gardens</div>
-            <div class="view-only-badge">👁️ عرض فقط — بدون تعديل أو مزامنة</div>
+            <button type="button" class="view-only-badge" onclick="confirmUnlockEdit()">🔒 عرض فقط — اضغط لفتح التعديل</button>
         </div>
 
         <!-- CONTROLS -->
@@ -68,6 +68,7 @@
                 <button class="btn btn-success" onclick="openScanner('add')">➕ مسح وإضافة</button>
                 <button class="btn btn-info" onclick="openBarcodeManager()">🔗 إدارة الباركودات</button>
                 <button class="btn btn-primary" id="syncBtn" data-search="مزامنة سحابة تحديث sync" onclick="confirmSync()">🔄 Sync</button>
+                <button class="btn btn-dark" data-search="قفل lock" onclick="lockEditAgain()">🔒 قفل التعديل</button>
                 <button class="btn btn-newinv" onclick="confirmNewInventory()">🆕 جرد جديد</button>
             </div>
             <div class="csv-bar" id="csvBar"><!-- يُملأ ديناميكياً من countSheets --></div>

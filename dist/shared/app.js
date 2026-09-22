@@ -14,15 +14,22 @@
     if (badgeEl) badgeEl.textContent = '🏪 ' + name;
 })();
 
-// ─── وضع "عرض فقط" — رابط ?view=1 يشارك الصفحة للاطّلاع بدون أي إمكانية تعديل أو مزامنة ───
-const VIEW_ONLY = (function () {
+// ─── وضع "عرض فقط" — الصفحة مقفولة افتراضياً (بلا تعديل ولا مزامنة)، وتنفتح بكلمة السر وتنحفظ
+// الحالة محلياً بهالجهاز (localStorage) — فما تحتاج تدخل الباسوورد كل مرة على نفس الجهاز/المتصفح.
+// رابط ?view=1 بيفرض القفل حتى لو الجهاز مفتوح أصلاً (مفيد لمشاركة لينك مضمون إنه عرض بس).
+const EDIT_UNLOCK_KEY = 'editUnlocked_' + (window.BRANCH_ID || 'gardens') + '_v1';
+function isEditUnlocked() {
+    try { return localStorage.getItem(EDIT_UNLOCK_KEY) === '1'; } catch (e) { return false; }
+}
+const FORCE_VIEW_PARAM = (function () {
     try { return new URLSearchParams(window.location.search).get('view') === '1'; }
     catch (e) { return false; }
 })();
+const VIEW_ONLY = FORCE_VIEW_PARAM || !isEditUnlocked();
 (function applyViewOnlyMode() {
     if (!VIEW_ONLY) return;
     // أزرار/عناصر البحث والفلترة مسموحة — هي عرض بس ما بتعدّل ولا بترفع أي بيانات
-    const allowIds = new Set(['searchInput', 'historySearchInput', 'cardSearchInput', 'toolsSearchInput', 'historyFromSelect', 'historyToSelect', 'visSearchInput']);
+    const allowIds = new Set(['searchInput', 'historySearchInput', 'cardSearchInput', 'toolsSearchInput', 'historyFromSelect', 'historyToSelect', 'visSearchInput', 'passwordInput']);
     function lockNode(node) {
         if (!(node instanceof Element)) return;
         if (node.matches && node.matches('input, select, textarea') && !allowIds.has(node.id)) {
@@ -48,6 +55,23 @@ const VIEW_ONLY = (function () {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
     else start();
 })();
+
+// فتح/قفل التعديل بكلمة السر — يستخدم نفس نافذة كلمة السر المشتركة (verifyPassword)
+function confirmUnlockEdit() {
+    pendingPasswordAction = 'unlockEdit';
+    document.getElementById('passwordModal').classList.add('show');
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('passwordInput').focus();
+}
+function unlockEditAndReload() {
+    try { localStorage.setItem(EDIT_UNLOCK_KEY, '1'); } catch (e) {}
+    window.location.reload();
+}
+function lockEditAgain() {
+    if (FORCE_VIEW_PARAM) { showToast('الصفحة مقفولة أصلاً عبر رابط ?view=1', 'warning'); return; }
+    try { localStorage.removeItem(EDIT_UNLOCK_KEY); } catch (e) {}
+    window.location.reload();
+}
 
 /* DEFINED IN data.js */
 
@@ -522,6 +546,7 @@ const VIEW_ONLY = (function () {
                 else if (pendingPasswordAction === 'deleteHistory') deleteHistoryEntry(pendingDeleteHistoryAt);
                 else if (pendingPasswordAction === 'forcePull') forcePullFromCloud();
                 else if (pendingPasswordAction === 'sync') syncWithCloud(false);
+                else if (pendingPasswordAction === 'unlockEdit') unlockEditAndReload();
                 else clearAllData();
             }
             else { showToast('كلمة المرور غير صحيحة!', 'error'); document.getElementById('passwordInput').value = ''; document.getElementById('passwordInput').focus(); }
