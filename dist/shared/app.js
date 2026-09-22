@@ -410,9 +410,7 @@ function lockEditAgain() {
                 document.querySelectorAll('#tableBody tr').forEach((row) => {
                     if (row.classList.contains('section-row')) { row.classList.toggle('hidden', !!term || isSorted); return; }
                     const i = parseInt(row.dataset.index);
-                    const nm = normalizeSearch(inventoryData[i].name);
-                    const sk = inventoryData[i].sku.toLowerCase();
-                    if (nm.includes(term) || sk.includes(term)) { row.classList.remove('hidden'); if (term) row.classList.add('highlighted'); else row.classList.remove('highlighted'); }
+                    if (itemMatchesSearch(inventoryData[i], term)) { row.classList.remove('hidden'); if (term) row.classList.add('highlighted'); else row.classList.remove('highlighted'); }
                     else { row.classList.add('hidden'); row.classList.remove('highlighted'); }
                 });
             });
@@ -424,9 +422,7 @@ function lockEditAgain() {
                 document.querySelectorAll('#tableBody tr').forEach((row) => {
                     if (row.classList.contains('section-row')) { row.classList.toggle('hidden', !!term || isSorted); return; }
                     const i = parseInt(row.dataset.index);
-                    const nm = normalizeSearch(inventoryData[i].name);
-                    const sk = inventoryData[i].sku.toLowerCase();
-                    if (nm.includes(term) || sk.includes(term)) { row.classList.remove('hidden'); if (term && !firstVisible) firstVisible = row; }
+                    if (itemMatchesSearch(inventoryData[i], term)) { row.classList.remove('hidden'); if (term && !firstVisible) firstVisible = row; }
                     else row.classList.add('hidden');
                 });
                 if (term) {
@@ -488,6 +484,15 @@ function lockEditAgain() {
                 .replace(/[ةه]/g, 'ه')
                 .replace(/[أإآا]/g, 'ا')
                 .replace(/[يى]/g, 'ي');
+        }
+        // مطابقة البحث لصنف: بالاسم، أو الـ SKU، أو حقل "filter" الاختياري بـ data.js
+        // (كلمات بحث إضافية بدون ما تغيّر الاسم المعروض — مثلاً "بشاميل" لصنف اسمه "باشميل")
+        function itemMatchesSearch(item, normalizedTerm) {
+            if (!normalizedTerm) return true;
+            if (normalizeSearch(item.name).includes(normalizedTerm)) return true;
+            if ((item.sku || '').toLowerCase().includes(normalizedTerm)) return true;
+            if (item.filter && normalizeSearch(item.filter).includes(normalizedTerm)) return true;
+            return false;
         }
         function showToast(msg, type = 'success') {
             const t = document.getElementById('toast');
@@ -1226,7 +1231,7 @@ function lockEditAgain() {
             const hasPeriod = history.length >= 2 && fromIdx !== -1 && toIdx !== -1;
 
             const historySearchEl = document.getElementById('historySearchInput');
-            const q = (historySearchEl ? historySearchEl.value : '').trim().toLowerCase();
+            const q = normalizeSearch((historySearchEl ? historySearchEl.value : '').trim());
 
             // نحسب ناتج كل صنف بكل نسخة أرشيف + الفرق بين الفترتين المختارتين (إلى - من)
             const rows = inventoryData.map(item => {
@@ -1237,7 +1242,7 @@ function lockEditAgain() {
                 const periodDiff = (hasPeriod && totals[toIdx] !== null && totals[fromIdx] !== null) ? (totals[toIdx] - totals[fromIdx]) : null;
                 return { item, totals, periodDiff };
             }).filter(r => {
-                if (q && !(r.item.name.toLowerCase().includes(q) || (r.item.sku || '').toLowerCase().includes(q))) return false;
+                if (!itemMatchesSearch(r.item, q)) return false;
                 return r.totals.some(t => t !== null && Math.abs(t) > 0.0001);
             });
 
@@ -2477,7 +2482,7 @@ function lockEditAgain() {
             if (!q) { results.innerHTML = ''; return; }
             const matches = inventoryData
                 .map((it, i) => ({ it, i }))
-                .filter(({ it }) => normalizeSearch(it.name).includes(q) || it.sku.toLowerCase().includes(q))
+                .filter(({ it }) => itemMatchesSearch(it, q))
                 .slice(0, 6);
             results.innerHTML = matches.length
                 ? matches.map(({ it, i }) => `<div class="scan-result-row"><span>${it.name} (${it.sku})</span><span class="scan-result-btns"><button onclick="confirmAssign(${i},'pkg')">📦 طرد</button><button onclick="confirmAssign(${i},'unit')">🔢 حبة</button></span></div>`).join('')
@@ -2510,7 +2515,7 @@ function lockEditAgain() {
             if (!q) { results.innerHTML = ''; return; }
             const matches = inventoryData
                 .map((it, i) => ({ it, i }))
-                .filter(({ it }) => normalizeSearch(it.name).includes(q) || it.sku.toLowerCase().includes(q))
+                .filter(({ it }) => itemMatchesSearch(it, q))
                 .slice(0, 8);
             results.innerHTML = matches.length
                 ? matches.map(({ it, i }) => `<div class="bc-search-row" onclick="bcSelectItem(${i})"><span>${it.name}</span><span style="color:#90a4ae">${it.sku}</span></div>`).join('')
@@ -2684,7 +2689,7 @@ function lockEditAgain() {
             if (!q) { res.innerHTML = ''; return; }
             const matches = inventoryData
                 .map((it, i) => ({ it, i }))
-                .filter(({ it }) => normalizeSearch(it.name).includes(q) || it.sku.toLowerCase().includes(q))
+                .filter(({ it }) => itemMatchesSearch(it, q))
                 .slice(0, 8);
             res.innerHTML = matches.length
                 ? matches.map(({ it, i }) => `<div class="csr-row" onclick="openItemCard(${i})"><span>${it.name}</span><span class="csr-sku">${it.sku}</span></div>`).join('')
@@ -2741,7 +2746,7 @@ function lockEditAgain() {
             const frag = document.createDocumentFragment();
             const shown = [];
             inventoryData.forEach((item, i) => {
-                if (term && !normalizeSearch(item.name).includes(term) && !item.sku.toLowerCase().includes(term)) return;
+                if (term && !itemMatchesSearch(item, term)) return;
                 shown.push(i);
                 const card = document.createElement('div');
                 card.className = 'gcard';

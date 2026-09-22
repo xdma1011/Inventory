@@ -2,7 +2,7 @@
 /* jshint esversion:6 */
 
 const inventoryData = [
-            { name: "صحون الباشميل المنتجة", sku: "sp-0149", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "صحون الباشميل المنتجة", sku: "sp-0149", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, filter: "بشاميل", pkgBarcode: "", unitBarcode: "" },
             { name: "صحون ام علي المنتجة", sku: "sp-180", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة شطة منتجة", sku: "sp-0156", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة دقة منتجة", sku: "sp-0155", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
@@ -10,7 +10,7 @@ const inventoryData = [
             { name: "بصل مقلي", sku: "sp-0154", unit: "KG", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "صلصة البندورة للكشري", sku: "sp-0174", unit: "KG", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
                         { name: "شوربة عدس", sku: "sp-0175", unit: "Batch", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "شعرية مطبوخة", sku: "sp-0160", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 0.4, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "شعرية مطبوخة", sku: "sp-0160", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 0.4, isFixed: false, filter: "شعيرية", pkgBarcode: "", unitBarcode: "" },
             { name: "علبة مهلبية منتجة", sku: "p-0163", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "طبق كشري", sku: "sk-0042", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة صوص الكشري كمالة", sku: "sk-0099", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },

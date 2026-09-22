@@ -3,7 +3,7 @@
 
 const inventoryData = [
             { name: "صحن كشري - طبق", sku: "sk-0042", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 50 صحن", pkgBarcode: "", unitBarcode: "" },
-            { name: "صحون الباشميل المنتجة باتش", sku: "p-0123", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "صحون الباشميل المنتجة باتش", sku: "p-0123", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, filter: "بشاميل", pkgBarcode: "", unitBarcode: "" },
             { name: "صحون ام علي المنتجة", sku: "p-0174", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة مهلبية منتجة", sku: "p-0163", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة شوربة", sku: "sk-0128", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 50 علبة", pkgBarcode: "", unitBarcode: "" },
@@ -17,7 +17,7 @@ const inventoryData = [
             { name: "رز خام", sku: "sk-0032", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "حمص خام", sku: "sk-0047", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "عدس حب خام", sku: "sk-0046", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "شعرية مطبوخة", sku: "p-0105", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "شعرية مطبوخة", sku: "p-0105", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, filter: "شعيرية", pkgBarcode: "", unitBarcode: "" },
             { name: "ملح", sku: "sk-0038", unit: "G", packageSize: 13.5, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "رب بندورة خام من الدره -صلصة", sku: "sk-0036", unit: "G", packageSize: 4.4, secondOp: "*", secondVal: 1, isFixed: false, note: "علبة = 4.4 كيلو", pkgBarcode: "", unitBarcode: "" },
             { name: "صلصة البندورة مطبوخة", sku: "p-0115", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 1.1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
