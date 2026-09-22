@@ -2742,3 +2742,37 @@ body.dark .result-cell .prev-diff,
 body.dark .icard-prev-diff {
     color: #78909c;
 }
+
+/* ═══════════ وضع "عرض فقط" (?view=1) — مشاركة الصفحة للاطّلاع بدون أي تعديل أو مزامنة ═══════════ */
+.view-only-badge {
+    display: none;
+}
+
+body.view-only .view-only-badge {
+    display: inline-block;
+    background: rgba(255, 193, 7, 0.18);
+    border: 1px solid #ffc107;
+    color: #ffca28;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-inline-start: 10px;
+}
+
+body.view-only #toolsToggle,
+body.view-only .tools-panel,
+body.view-only .upload-section,
+body.view-only .paste-sys,
+body.view-only #bn-more,
+body.view-only .more-menu,
+body.view-only .hist-del-btn {
+    display: none !important;
+}
+
+body.view-only input:disabled,
+body.view-only select:disabled,
+body.view-only textarea:disabled {
+    cursor: default;
+    opacity: 1; /* نفس شكلها العادي — بس مقفولة عن التعديل */
+}

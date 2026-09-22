@@ -14,6 +14,41 @@
     if (badgeEl) badgeEl.textContent = '🏪 ' + name;
 })();
 
+// ─── وضع "عرض فقط" — رابط ?view=1 يشارك الصفحة للاطّلاع بدون أي إمكانية تعديل أو مزامنة ───
+const VIEW_ONLY = (function () {
+    try { return new URLSearchParams(window.location.search).get('view') === '1'; }
+    catch (e) { return false; }
+})();
+(function applyViewOnlyMode() {
+    if (!VIEW_ONLY) return;
+    // أزرار/عناصر البحث والفلترة مسموحة — هي عرض بس ما بتعدّل ولا بترفع أي بيانات
+    const allowIds = new Set(['searchInput', 'historySearchInput', 'cardSearchInput', 'toolsSearchInput', 'historyFromSelect', 'historyToSelect', 'visSearchInput']);
+    function lockNode(node) {
+        if (!(node instanceof Element)) return;
+        if (node.matches && node.matches('input, select, textarea') && !allowIds.has(node.id)) {
+            node.disabled = true;
+            if ('readOnly' in node) node.readOnly = true;
+        }
+        if (node.querySelectorAll) {
+            node.querySelectorAll('input, select, textarea').forEach(function (el) {
+                if (allowIds.has(el.id)) return;
+                el.disabled = true;
+                if ('readOnly' in el) el.readOnly = true;
+            });
+        }
+    }
+    function start() {
+        document.body.classList.add('view-only');
+        lockNode(document.body);
+        // أي عنصر إدخال ينضاف لاحقاً (بطاقات، شبكة، تبويب المشتريات...) ينقفل تلقائياً بلحظتها
+        new MutationObserver(function (mutations) {
+            mutations.forEach(function (m) { m.addedNodes.forEach(lockNode); });
+        }).observe(document.body, { childList: true, subtree: true });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+})();
+
 /* DEFINED IN data.js */
 
         // ─── أقسام شيتات الجرد (عناوين فواصل داخل الجدول) ───
@@ -746,6 +781,7 @@
         // ينبّه بصمت. الاستبدال الفعلي لبيانات الجهاز بنسخة السحابة ما بيصير إلا لما المستخدم بنفسه يضغط
         // زر Sync يدوياً، وبعد ما يوافق صراحة على نافذة التأكيد.
         async function syncWithCloud(auto) {
+            if (VIEW_ONLY) return; // وضع عرض فقط — ممنوع أي رفع أو سحب مزامنة إطلاقاً
             const btn = document.getElementById('syncBtn');
             if (!supabaseClient) { if (!auto) showToast('تعذر تحميل مكتبة المزامنة', 'error'); return; }
             if (btn && !auto) { btn.disabled = true; btn.textContent = '🔄 جاري...'; }
@@ -830,6 +866,7 @@
         // يجيب آخر نسخة موجودة بالسحابة (آخر مزامنة) ويستبدل فيها الجرد الحالي على هالجهاز بالكامل —
         // بغض النظر عن التاريخ (Override صريح)، بعد تأكيد المستخدم لأنه إجراء غير قابل للتراجع
         async function forcePullFromCloud() {
+            if (VIEW_ONLY) return;
             if (!supabaseClient) { showToast('تعذر تحميل مكتبة المزامنة', 'error'); return; }
             // التأكيد صار عبر كلمة السر (confirmForcePull) بدل نافذة confirm عادية
             try {
@@ -946,6 +983,7 @@
             document.getElementById('lastSave').textContent = 'لم يتم الحفظ';
         }
         function clearAllData() {
+            if (VIEW_ONLY) return;
             resetInventoryState();
             showToast('تم مسح جميع البيانات', 'success');
         }
@@ -1020,7 +1058,7 @@
         // يحذف جرد محفوظ واحد من الأرشيف (بعد تأكيد كلمة المرور) — محلياً، وبيحاول ينشرها عالسحابة
         // مباشرة (مو عبر الدمج/الاتحاد المعتاد) عشان الحذف يوصل فعلياً وما يرجع يتدمج من جهاز تاني
         async function deleteHistoryEntry(archivedAt) {
-            if (!archivedAt) return;
+            if (VIEW_ONLY || !archivedAt) return;
             const history = loadInventoryHistory().filter(h => h.archivedAt !== archivedAt);
             saveInventoryHistory(history);
             loadPreviousSnapshot();
@@ -1089,6 +1127,7 @@
         }
 
         function startNewInventory() {
+            if (VIEW_ONLY) return;
             const archived = archiveCurrentInventory();
             resetInventoryState();
             loadPreviousSnapshot();
