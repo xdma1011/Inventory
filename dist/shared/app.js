@@ -465,12 +465,19 @@
             document.getElementById('passwordInput').value = '';
             document.getElementById('passwordInput').focus();
         }
+        function confirmForcePull() {
+            pendingPasswordAction = 'forcePull';
+            document.getElementById('passwordModal').classList.add('show');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').focus();
+        }
         function closePasswordModal() { document.getElementById('passwordModal').classList.remove('show'); }
         function verifyPassword() {
             if (document.getElementById('passwordInput').value === CLEAR_PASSWORD) {
                 closePasswordModal();
                 if (pendingPasswordAction === 'newInventory') startNewInventory();
                 else if (pendingPasswordAction === 'deleteHistory') deleteHistoryEntry(pendingDeleteHistoryAt);
+                else if (pendingPasswordAction === 'forcePull') forcePullFromCloud();
                 else clearAllData();
             }
             else { showToast('كلمة المرور غير صحيحة!', 'error'); document.getElementById('passwordInput').value = ''; document.getElementById('passwordInput').focus(); }
@@ -824,8 +831,7 @@
         // بغض النظر عن التاريخ (Override صريح)، بعد تأكيد المستخدم لأنه إجراء غير قابل للتراجع
         async function forcePullFromCloud() {
             if (!supabaseClient) { showToast('تعذر تحميل مكتبة المزامنة', 'error'); return; }
-            const sure = confirm('هاد رح يستبدل الجرد الحالي على هالجهاز بآخر نسخة محفوظة بالسحابة (Override)، وأي تعديل هون غير محفوظ رح يضيع.\nمتأكد؟');
-            if (!sure) return;
+            // التأكيد صار عبر كلمة السر (confirmForcePull) بدل نافذة confirm عادية
             try {
                 const { data: cloudRow, error } = await supabaseClient
                     .from(SUPABASE_TABLE)
@@ -1726,9 +1732,25 @@
             const open = !toolsOpen();
             try { localStorage.setItem(TOOLS_LS_KEY, open ? '1' : '0'); } catch (e) {}
             applyToolsState();
+            if (!open) {
+                // تصفير البحث لما نطوي اللوحة — يفتحها المرة الجاية وكل الكبسات ظاهرة من جديد
+                const ts = document.getElementById('toolsSearchInput');
+                if (ts) { ts.value = ''; filterToolsButtons(); }
+            }
             if (open) setTimeout(() => document.getElementById('toolsPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
         }
         document.addEventListener('DOMContentLoaded', applyToolsState);
+
+        // بحث سريع بين كبسات لوحة الأدوات — بيدوّر بنص الكبسة (يلقط "مزامنة" أو "Sync" حسب المكتوب بالكبسة)
+        function filterToolsButtons() {
+            const input = document.getElementById('toolsSearchInput');
+            const q = (input ? input.value : '').trim().toLowerCase();
+            document.querySelectorAll('.tools-controls > .btn').forEach(btn => {
+                const extra = (btn.dataset.search || '').toLowerCase();
+                const match = !q || btn.textContent.toLowerCase().includes(q) || extra.includes(q);
+                btn.style.display = match ? '' : 'none';
+            });
+        }
 
         // ═══════════ شريحة الصنف النشط: تعرف أين أنت واقف بالضبط ═══════════
         function sectionOf(index) {

@@ -44,6 +44,9 @@
 
         <!-- TOOLS PANEL (قابلة للطي — الأزرار كلها هنا) -->
         <div class="tools-panel" id="toolsPanel">
+            <div class="tools-search-wrap">
+                <input type="text" id="toolsSearchInput" placeholder="🔍 بحث عن كبسة... (مثلاً: مزامنة)" oninput="filterToolsButtons()" autocomplete="off">
+            </div>
             <div class="controls tools-controls">
                 <button class="btn btn-sort" onclick="sortByVariance()">⬆⬇ ترتيب حسب الفرق</button>
                 <button class="btn btn-reset-sort" onclick="resetSort()">↩ إعادة الترتيب الأصلي</button>
@@ -53,6 +56,7 @@
                 <button class="btn btn-info" onclick="saveData()">💾 حفظ</button>
                 <button class="btn btn-transfer" onclick="copyLocalStorage()">📤 نسخ للنقل</button>
                 <button class="btn btn-transfer2" onclick="openLsModal()">📥 استيراد</button>
+                <button class="btn btn-warning" onclick="confirmForcePull()">⬇️ استرجاع آخر نسخة من السحابة</button>
                 <button class="btn btn-info" onclick="openColModal()">🧱 الأعمدة</button>
                 <button class="btn btn-transfer2" onclick="exportLsFile()">💾 تصدير ملف</button>
                 <button class="btn btn-transfer2" onclick="importLsFile()">📂 استيراد ملف</button>
@@ -62,8 +66,7 @@
                 <button class="btn btn-info" onclick="openScanner('search')">📷 مسح للبحث</button>
                 <button class="btn btn-success" onclick="openScanner('add')">➕ مسح وإضافة</button>
                 <button class="btn btn-info" onclick="openBarcodeManager()">🔗 إدارة الباركودات</button>
-                <button class="btn btn-primary" id="syncBtn" onclick="syncWithCloud()">🔄 Sync</button>
-                <button class="btn btn-warning" onclick="forcePullFromCloud()">⬇️ استرجاع آخر نسخة من السحابة</button>
+                <button class="btn btn-primary" id="syncBtn" data-search="مزامنة سحابة تحديث sync" onclick="syncWithCloud()">🔄 Sync</button>
                 <button class="btn btn-newinv" onclick="confirmNewInventory()">🆕 جرد جديد</button>
             </div>
             <div class="csv-bar" id="csvBar"><!-- يُملأ ديناميكياً من countSheets --></div>

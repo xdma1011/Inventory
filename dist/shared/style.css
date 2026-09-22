@@ -638,6 +638,7 @@
             font-weight: 600;
             font-size: 13px;
             font-family: inherit;
+            pointer-events: none; /* ما يبلع أي كبسة حتى وهو غير ظاهر — كان هيك سابقاً وكان يعطّل كبسة "الجرد" تحته */
         }
 
         .toast.show {
@@ -1179,6 +1180,29 @@
 
         .tools-panel .controls {
             border-bottom: 1px solid #e0e0e0;
+        }
+
+        .tools-search-wrap {
+            padding: 10px 16px;
+            background: #eceff1;
+            border-bottom: 1px solid #cfd8dc;
+        }
+
+        .tools-search-wrap input {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1.5px solid #b0bec5;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            background: #fff;
+            color: #263238;
+        }
+
+        .tools-search-wrap input:focus {
+            outline: none;
+            border-color: #1e88e5;
+            box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.15);
         }
 
         /* شريحة الصنف النشط */
