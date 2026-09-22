@@ -624,7 +624,7 @@
         /* ─── TOAST ─── */
         .toast {
             position: fixed;
-            bottom: 24px;
+            bottom: calc(24px + 60px + env(safe-area-inset-bottom, 0px)); /* فوق الشريط السفلي الثابت (52px + هامش) */
             left: 50%;
             transform: translateX(-50%) translateY(80px);
             background: #212121;
@@ -633,7 +633,7 @@
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             transition: all 0.3s;
-            z-index: 1000;
+            z-index: 3100; /* أعلى من الشريط السفلي (2900) ولوحة الأرقام (3000) عشان ما ينغطى */
             opacity: 0;
             font-weight: 600;
             font-size: 13px;
