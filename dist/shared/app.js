@@ -506,6 +506,14 @@ const VIEW_ONLY = (function () {
             document.getElementById('passwordInput').value = '';
             document.getElementById('passwordInput').focus();
         }
+        // الزر اليدوي بس محمي بكلمة سر (مشان ما تنكبس بالغلط) — المزامنة التلقائية بالخلفية
+        // (عند فتح الصفحة، وكل 20 حفظة) تضل صامتة وما بتطلب كلمة سر إطلاقاً
+        function confirmSync() {
+            pendingPasswordAction = 'sync';
+            document.getElementById('passwordModal').classList.add('show');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').focus();
+        }
         function closePasswordModal() { document.getElementById('passwordModal').classList.remove('show'); }
         function verifyPassword() {
             if (document.getElementById('passwordInput').value === CLEAR_PASSWORD) {
@@ -513,6 +521,7 @@ const VIEW_ONLY = (function () {
                 if (pendingPasswordAction === 'newInventory') startNewInventory();
                 else if (pendingPasswordAction === 'deleteHistory') deleteHistoryEntry(pendingDeleteHistoryAt);
                 else if (pendingPasswordAction === 'forcePull') forcePullFromCloud();
+                else if (pendingPasswordAction === 'sync') syncWithCloud(false);
                 else clearAllData();
             }
             else { showToast('كلمة المرور غير صحيحة!', 'error'); document.getElementById('passwordInput').value = ''; document.getElementById('passwordInput').focus(); }
