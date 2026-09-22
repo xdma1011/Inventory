@@ -487,12 +487,15 @@ function lockEditAgain() {
         }
         // مطابقة البحث لصنف: بالاسم، أو الـ SKU، أو حقل "filter" الاختياري بـ data.js
         // (كلمات بحث إضافية بدون ما تغيّر الاسم المعروض — مثلاً "بشاميل" لصنف اسمه "باشميل")
+        // البحث بتسلسل كلمات حر: كل كلمة تكتبها لازم تكون موجودة بمكان ما (الاسم أو الفلتر)،
+        // بغض النظر عن ترتيبها — "طب صح" أو "صح طب" الاثنين بيطلعوا "صحن كشري - طبق"
         function itemMatchesSearch(item, normalizedTerm) {
             if (!normalizedTerm) return true;
-            if (normalizeSearch(item.name).includes(normalizedTerm)) return true;
-            if ((item.sku || '').toLowerCase().includes(normalizedTerm)) return true;
-            if (item.filter && normalizeSearch(item.filter).includes(normalizedTerm)) return true;
-            return false;
+            const sku = (item.sku || '').toLowerCase();
+            if (sku.includes(normalizedTerm)) return true;
+            const haystack = normalizeSearch(item.name) + ' ' + normalizeSearch(item.filter || '');
+            const words = normalizedTerm.split(/\s+/).filter(Boolean);
+            return words.length > 0 && words.every(w => haystack.includes(w));
         }
         function showToast(msg, type = 'success') {
             const t = document.getElementById('toast');
