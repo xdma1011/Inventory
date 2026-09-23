@@ -489,16 +489,22 @@ function lockEditAgain() {
         // لو صنف تغيّر اسمه بـ data.js (تقصير الاسم مثلاً)، أي بيانات محفوظة قبل التغيير
         // (محلياً أو بالسحابة) بتضل تنقرأ صح عن طريق legacyNames (خريطة SKU → الاسم القديم)
         function keyForItem(item) { return item.sku + '||' + item.name; }
-        function legacyKeyForItem(item) {
+        // بيرجع كل مفاتيح الأسماء القديمة الممكنة لصنف — الاسم ممكن يتغيّر أكتر من مرة بمرور الوقت،
+        // فـ legacyNames[sku] ممكن يكون نص واحد (اسم قديم واحد) أو مصفوفة (أكتر من اسم قديم)
+        function legacyKeysForItem(item) {
             const ln = (typeof legacyNames !== 'undefined' && legacyNames) ? legacyNames[item.sku] : null;
-            return ln ? item.sku + '||' + ln : null;
+            if (!ln) return [];
+            const names = Array.isArray(ln) ? ln : [ln];
+            return names.map(n => item.sku + '||' + n);
         }
         function lookupByItem(dataObj, item) {
             if (!dataObj) return undefined;
             const v = dataObj[keyForItem(item)];
             if (v !== undefined) return v;
-            const lk = legacyKeyForItem(item);
-            return lk ? dataObj[lk] : undefined;
+            for (const lk of legacyKeysForItem(item)) {
+                if (dataObj[lk] !== undefined) return dataObj[lk];
+            }
+            return undefined;
         }
         // مطابقة البحث لصنف: بالاسم، أو الـ SKU، أو حقل "filter" الاختياري بـ data.js
         // (كلمات بحث إضافية بدون ما تغيّر الاسم المعروض — مثلاً "بشاميل" لصنف اسمه "باشميل")
