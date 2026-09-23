@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>صفحة المشتريات الموحدة</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+        background: #10131a;
+        color: #eceff1;
+        min-height: 100vh;
+        padding: 20px 16px 60px;
+    }
+
+    .wrap { max-width: 720px; margin: 0 auto; }
+
+    .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .top-bar a.home-link { color: #90a4ae; text-decoration: none; font-size: 13px; }
+    .top-bar h1 { font-size: 20px; font-weight: 900; }
+
+    .branch-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .branch-tab {
+        flex: 1;
+        min-width: 100px;
+        background: #1c2029;
+        color: #b0bec5;
+        border: 1px solid #2a2f3a;
+        border-radius: 12px;
+        padding: 12px 8px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .branch-tab.active { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+
+    .panel {
+        background: #171a21;
+        border: 1px solid #262a34;
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .upload-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .upload-btn {
+        background: #263238;
+        color: #fff;
+        border: 1px dashed #546e7a;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-family: inherit;
+        font-size: 13px;
+        cursor: pointer;
+    }
+    .file-note { font-size: 12.5px; color: #90a4ae; margin-top: 8px; }
+    .file-note.success { color: #66bb6a; }
+    .file-note.error { color: #ef5350; }
+
+    .search-input {
+        width: 100%;
+        background: #1c2029;
+        border: 1px solid #2a2f3a;
+        color: #eceff1;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-family: inherit;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+    .search-hint { font-size: 11.5px; color: #78909c; padding: 6px 2px 0; }
+
+    .branch-stats { font-size: 12.5px; color: #78909c; margin: 10px 2px 0; }
+
+    .items-list { display: flex; flex-direction: column; gap: 10px; }
+    .item-row {
+        background: #171a21;
+        border: 1px solid #262a34;
+        border-radius: 14px;
+        padding: 14px;
+    }
+    .item-row.urgent { border-color: #d84315; background: #1f1512; }
+
+    .row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .iname { font-size: 15px; font-weight: 700; }
+    .isku { display: block; font-size: 11px; color: #78909c; font-weight: 400; margin-top: 2px; }
+
+    .badge { font-size: 11px; padding: 4px 9px; border-radius: 999px; white-space: nowrap; font-weight: 700; }
+    .b-ok { background: rgba(102,187,106,0.15); color: #81c784; }
+    .b-buy { background: rgba(239,83,80,0.18); color: #ef5350; }
+    .b-wait { background: rgba(255,183,77,0.15); color: #ffb74d; }
+    .b-none { background: rgba(120,144,156,0.15); color: #90a4ae; }
+
+    .row-mid { display: flex; gap: 18px; font-size: 13px; color: #b0bec5; margin-top: 10px; flex-wrap: wrap; }
+    .row-mid b { color: #eceff1; }
+
+    .need-line { margin-top: 8px; font-size: 13.5px; color: #ff8a65; font-weight: 700; }
+    .supplier-line { margin-top: 6px; font-size: 12.5px; color: #78909c; }
+
+    .empty { text-align: center; color: #78909c; padding: 30px 0; font-size: 14px; }
+
+    @media (max-width: 480px) {
+        .branch-tab { font-size: 12.5px; padding: 10px 6px; }
+    }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+    <div class="top-bar">
+        <h1>🛒 صفحة المشتريات الموحدة</h1>
+        <a class="home-link" href="../index.html">🏠 الرئيسية</a>
+    </div>
+
+    <div class="branch-tabs" id="branchTabs"></div>
+
+    <div class="panel">
+        <div class="upload-row">
+            <label class="upload-btn" for="stockFile">📤 ارفع تقرير مستويات المواد (CSV) — نفس ملف الجرد</label>
+            <input type="file" id="stockFile" accept=".csv,.txt,.json" style="display:none;">
+        </div>
+        <div class="file-note" id="fileNote"></div>
+    </div>
+
+    <div class="panel">
+        <input type="text" id="searchInput" class="search-input" placeholder="دوّر باسم الصنف، أو المورد، أو مكان الشراء...">
+        <div class="search-hint">مثال: اكتب "هيثم صالح" أو "مرج الحمام" ليطلعلك كل الأصناف المرتبطة فيه</div>
+        <div class="branch-stats" id="branchStats"></div>
+    </div>
+
+    <div class="items-list" id="itemsList"></div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
