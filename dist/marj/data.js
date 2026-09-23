@@ -2,23 +2,23 @@
 /* jshint esversion:6 */
 
 const inventoryData = [
-            { name: "صحون الباشميل المنتجة", sku: "sp-0149", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, filter: "بشاميل", pkgBarcode: "", unitBarcode: "" },
-            { name: "صحون ام علي المنتجة", sku: "sp-180", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "علبة شطة منتجة", sku: "sp-0156", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "علبة دقة منتجة", sku: "sp-0155", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "علبة خبز مقلي منتجة", sku: "sp-0162", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "الباشميل المنتجة", sku: "sp-0149", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, filter: "بشاميل", pkgBarcode: "", unitBarcode: "" },
+            { name: "ام علي المنتجة", sku: "sp-180", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "شطة منتجة", sku: "sp-0156", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "دقة منتجة", sku: "sp-0155", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "خبز مقلي منتجة", sku: "sp-0162", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "بصل مقلي", sku: "sp-0154", unit: "KG", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "صلصة البندورة للكشري", sku: "sp-0174", unit: "KG", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "صلصة البندورة مطبوخة", sku: "sp-0174", unit: "KG", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
                         { name: "شوربة عدس", sku: "sp-0175", unit: "Batch", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "شعرية مطبوخة", sku: "sp-0160", unit: "G", packageSize: 1.0, secondOp: "/", secondVal: 0.4, isFixed: false, filter: "شعيرية", pkgBarcode: "", unitBarcode: "" },
-            { name: "علبة مهلبية منتجة", sku: "p-0163", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "مهلبية منتجة", sku: "p-0163", unit: "PC", packageSize: 1, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "طبق كشري", sku: "sk-0042", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "علبة صوص الكشري كمالة", sku: "sk-0099", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "علبة كمالة", sku: "sk-0099", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة شوربة", sku: "sk-0128", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 50 علبة", pkgBarcode: "", unitBarcode: "" },
-            { name: "معالق - ملاعق", sku: "sk-0040", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, pkgBarcode: "", unitBarcode: "" },
+            { name: "ملاعق", sku: "sk-0040", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, pkgBarcode: "", unitBarcode: "" },
             { name: "شوك", sku: "sk-0041", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, pkgBarcode: "", unitBarcode: "" },
-            { name: "معكرونة كشري خام كوع", sku: "sk-0033", unit: "G", packageSize: 9.6, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "معكرونة سباغتي خام", sku: "sk-0034", unit: "G", packageSize: 10.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "معكرونة كوع", sku: "sk-0033", unit: "G", packageSize: 9.6, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "سباغتي خام", sku: "sk-0034", unit: "G", packageSize: 10.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "رز خام", sku: "sk-0032", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "عدس حب خام", sku: "sk-0046", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "حمص خام", sku: "sk-0047", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
@@ -27,18 +27,40 @@ const inventoryData = [
             { name: "سماق", sku: "sk-0070", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
                         { name: "مياه معدنية - ماتركس", sku: "sk-0079", unit: "PC", packageSize: 12.0, secondOp: "*", secondVal: 1, isFixed: false, category: "water", pkgBarcode: "", unitBarcode: "" },
             { name: "ماتركس كولا", sku: "sk-0080", unit: "PC", packageSize: 24.0, secondOp: "*", secondVal: 1, isFixed: false, category: "matrix", pkgBarcode: "", unitBarcode: "" },
-            { name: "اكياس الطلبات - صغير", sku: "sk-0147", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "علبة مهلبية", sku: "sk-0177", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "اكياس", sku: "sk-0147", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "علبة مهلبية فاضية", sku: "sk-0177", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "حمص مطبوخ", sku: "P-0110", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "حليب بودرة", sku: "sk-0057", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "كريمة طبخ", sku: "sk-0058", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "خلطة حليب ام علي", sku: "SP-0157", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "عدس كشري حب مطبوخ", sku: "SP-0177", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "صلصة بولونيز علب", sku: "sp-0182", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "كريمة", sku: "sk-0058", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "خلطة حليب", sku: "SP-0157", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "عدس مطبوخ", sku: "SP-0177", unit: "KG", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "بولونيز", sku: "sp-0182", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "خلطة مهلبية", sku: "SP-200", unit: "PC", packageSize: 1.0, secondOp: "/", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
         ];
 
 const sectionStarts = { 0: "🏭 شيت الجرد ١ — الإنتاج", 11: "📦 شيت الجرد ٢ — المواد والمشروبات" };
+
+// أسماء الأصناف القديمة (قبل تقصير الأسماء) — يستخدمها app.js تلقائياً كخطة بديلة لقراءة
+// أي بيانات محفوظة قديماً (محلياً أو بالسحابة) بمفاتيح الاسم الطويل، بدون ما تضيع
+const legacyNames = {
+            'sp-0149': "صحون الباشميل المنتجة",
+            'sp-180': "صحون ام علي المنتجة",
+            'sp-0156': "علبة شطة منتجة",
+            'sp-0155': "علبة دقة منتجة",
+            'sp-0162': "علبة خبز مقلي منتجة",
+            'sp-0174': "صلصة البندورة للكشري",
+            'p-0163': "علبة مهلبية منتجة",
+            'sk-0099': "علبة صوص الكشري كمالة",
+            'sk-0040': "معالق - ملاعق",
+            'sk-0033': "معكرونة كشري خام كوع",
+            'sk-0034': "معكرونة سباغتي خام",
+            'sk-0147': "اكياس الطلبات - صغير",
+            'sk-0177': "علبة مهلبية",
+            'sk-0058': "كريمة طبخ",
+            'SP-0157': "خلطة حليب ام علي",
+            'SP-0177': "عدس كشري حب مطبوخ",
+            'sp-0182': "صلصة بولونيز علب"
+        };
 
 const batchDefaults = {
     'P-0110||حمص مطبوخ': 2240,
