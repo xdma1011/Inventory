@@ -140,10 +140,18 @@ function render() {
         .map(it => {
             const q = qty[it.sku.toLowerCase()];
             const hasQty = q !== undefined;
-            const hasMin = it.min !== null && it.min !== undefined;
-            const below = hasQty && hasMin && q < it.min;
-            const need = below ? Math.ceil(it.min - q) : 0;
-            return { ...it, qty: q, hasQty, hasMin, below, need };
+            const isBatch = it.batchGrams != null;
+            const hasMin = isBatch ? true : (it.min !== null && it.min !== undefined);
+            let below = false, need = 0, batches = null;
+            if (isBatch) {
+                batches = hasQty ? Math.floor(Math.max(0, q) / it.batchGrams) : null;
+                below = hasQty && batches < it.batchThreshold;
+                need = below ? Math.max(0, (it.batchThreshold - batches) * it.batchGrams) : 0;
+            } else {
+                below = hasQty && hasMin && q < it.min;
+                need = below ? Math.ceil(it.min - q) : 0;
+            }
+            return { ...it, qty: q, hasQty, hasMin, isBatch, batches, below, need };
         })
         .sort((a, b) => {
             if (a.below !== b.below) return a.below ? -1 : 1;
@@ -163,9 +171,13 @@ function render() {
                     : r.below
                         ? `<span class="badge b-buy">تحت الحد — اشترِ</span>`
                         : `<span class="badge b-ok">متوفر ✓</span>`;
-            const qtyTxt = r.hasQty ? `${fmt(r.qty)} ${unitLabel(r.unit)}` : '—';
-            const minTxt = r.hasMin ? `${fmt(r.min)} ${unitLabel(r.unit)}` : '—';
-            const needLine = r.below ? `<div class="need-line">🛒 اشترِ ${fmt(r.need)} ${unitLabel(r.unit)}</div>` : '';
+            const qtyTxt = r.hasQty
+                ? (r.isBatch ? `${fmt(r.qty)} ${unitLabel(r.unit)} (~${fmt(r.batches)} خلطة)` : `${fmt(r.qty)} ${unitLabel(r.unit)}`)
+                : '—';
+            const minTxt = r.isBatch
+                ? `${fmt(r.batchThreshold)} خلطة (${fmt(r.batchThreshold * r.batchGrams)} ${unitLabel(r.unit)})`
+                : (r.hasMin ? `${fmt(r.min)} ${unitLabel(r.unit)}` : '—');
+            const needLine = r.below ? `<div class="need-line">🛒 اشترِ ${fmt(r.need)} ${unitLabel(r.unit)}${r.isBatch ? ' لترجع فوق 10 خلطات' : ''}</div>` : '';
             const supplierLine = (r.supplier || r.location)
                 ? `<div class="supplier-line">📍 ${[r.supplier, r.location].filter(Boolean).join(' — ')}</div>` : '';
             return `<div class="item-row ${r.below ? 'urgent' : ''}">
