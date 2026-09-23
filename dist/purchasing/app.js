@@ -146,10 +146,10 @@ function render() {
             if (isBatch) {
                 batches = hasQty ? Math.floor(Math.max(0, q) / it.batchGrams) : null;
                 below = hasQty && batches < it.batchThreshold;
-                need = below ? Math.max(0, (it.batchThreshold - batches) * it.batchGrams) : 0;
+                need = below ? Math.max(0, (it.batchTarget - batches) * it.batchGrams) : 0;
             } else {
                 below = hasQty && hasMin && q < it.min;
-                need = below ? Math.ceil(it.min - q) : 0;
+                need = 0; // بالتنبيه فقط — بلا اقتراح كمية شراء محددة (إلا للمكسرات دفعة أم علي)
             }
             return { ...it, qty: q, hasQty, hasMin, isBatch, batches, below, need };
         })
@@ -169,7 +169,7 @@ function render() {
                 : !r.hasQty
                     ? `<span class="badge b-wait">بانتظار رفع الملف</span>`
                     : r.below
-                        ? `<span class="badge b-buy">تحت الحد — اشترِ</span>`
+                        ? `<span class="badge b-buy">تحت الحد — انتبه</span>`
                         : `<span class="badge b-ok">متوفر ✓</span>`;
             const qtyTxt = r.hasQty
                 ? (r.isBatch ? `${fmt(r.qty)} ${unitLabel(r.unit)} (~${fmt(r.batches)} خلطة)` : `${fmt(r.qty)} ${unitLabel(r.unit)}`)
@@ -177,7 +177,8 @@ function render() {
             const minTxt = r.isBatch
                 ? `${fmt(r.batchThreshold)} خلطة (${fmt(r.batchThreshold * r.batchGrams)} ${unitLabel(r.unit)})`
                 : (r.hasMin ? `${fmt(r.min)} ${unitLabel(r.unit)}` : '—');
-            const needLine = r.below ? `<div class="need-line">🛒 اشترِ ${fmt(r.need)} ${unitLabel(r.unit)}${r.isBatch ? ' لترجع فوق 10 خلطات' : ''}</div>` : '';
+            const needLine = (r.below && r.isBatch)
+                ? `<div class="need-line">🛒 اشترِ ${fmt(r.need)} ${unitLabel(r.unit)} لترجع لـ ${fmt(r.batchTarget)} خلطة</div>` : '';
             const supplierLine = (r.supplier || r.location)
                 ? `<div class="supplier-line">📍 ${[r.supplier, r.location].filter(Boolean).join(' — ')}</div>` : '';
             return `<div class="item-row ${r.below ? 'urgent' : ''}">
