@@ -163,37 +163,29 @@ function render() {
     if (!rows.length) {
         list.innerHTML = `<div class="empty">ما في نتائج مطابقة</div>`;
     } else {
-        list.innerHTML = rows.map(r => {
-            const badge = !r.hasMin
-                ? `<span class="badge b-none">بلا حد أدنى محدد</span>`
-                : !r.hasQty
-                    ? `<span class="badge b-wait">بانتظار رفع الملف</span>`
-                    : r.below
-                        ? `<span class="badge b-buy">تحت الحد — انتبه</span>`
-                        : `<span class="badge b-ok">متوفر ✓</span>`;
-            const qtyTxt = r.hasQty
-                ? (r.isBatch ? `${fmt(r.qty)} ${unitLabel(r.unit)} (~${fmt(r.batches)} خلطة)` : `${fmt(r.qty)} ${unitLabel(r.unit)}`)
-                : '—';
-            const minTxt = r.isBatch
-                ? `${fmt(r.batchThreshold)} خلطة (${fmt(r.batchThreshold * r.batchGrams)} ${unitLabel(r.unit)})`
-                : (r.hasMin ? `${fmt(r.min)} ${unitLabel(r.unit)}` : '—');
-            const needLine = (r.below && r.isBatch)
-                ? `<div class="need-line">🛒 اشترِ ${fmt(r.need)} ${unitLabel(r.unit)} لترجع لـ ${fmt(r.batchTarget)} خلطة</div>` : '';
-            const supplierLine = (r.supplier || r.location)
-                ? `<div class="supplier-line">📍 ${[r.supplier, r.location].filter(Boolean).join(' — ')}</div>` : '';
-            return `<div class="item-row ${r.below ? 'urgent' : ''}">
-                <div class="row-top">
-                    <div class="iname">${r.name}<span class="isku">${r.sku}</span></div>
-                    ${badge}
-                </div>
-                <div class="row-mid">
-                    <span>المتوفر: <b>${qtyTxt}</b></span>
-                    <span>الحد الأدنى: <b>${minTxt}</b></span>
-                </div>
-                ${needLine}
-                ${supplierLine}
-            </div>`;
-        }).join('');
+        const sections = [];
+
+        // ─── تفصيل خلطة أم علي: قائمة واضحة بالجرام بالضبط عشان تطلب من الموظف ───
+        const nutRows = rows.filter(r => r.isBatch);
+        if (nutRows.length) {
+            sections.push(renderSection('🥜 تفصيل مكسرات أم علي — الكمية بالجرام بالضبط', nutRows, true));
+        }
+
+        // ─── تجميع حسب المورد ───
+        const bySupplier = new Map();
+        rows.forEach(r => {
+            if (!r.supplier) return;
+            if (!bySupplier.has(r.supplier)) bySupplier.set(r.supplier, []);
+            bySupplier.get(r.supplier).push(r);
+        });
+        bySupplier.forEach((items, supplier) => {
+            sections.push(renderSection(`📦 احتياج من ${supplier}`, items));
+        });
+
+        // ─── كل الأصناف مع بعض، بلا فرز حسب المورد، المحتاج شراء أول ───
+        sections.push(renderSection('🗂️ كل الأصناف', rows));
+
+        list.innerHTML = sections.join('');
     }
 
     const withMin = branch.items.filter(it => it.min !== null && it.min !== undefined).length;
@@ -201,6 +193,46 @@ function render() {
     document.getElementById('branchStats').textContent =
         `${branch.items.length} صنف مسجّل — ${withMin} منهم له حد أدنى` +
         (uploadedCount ? ` — آخر ملف محمّل: ${uploadedCount} صنف` : ' — لسا ما انرفع ملف');
+}
+
+function renderSection(title, items, nutsDetail) {
+    return `<div class="group-section">
+        <h3 class="group-title">${title}</h3>
+        <div class="items-list">${items.map(r => renderRow(r, nutsDetail)).join('')}</div>
+    </div>`;
+}
+
+function renderRow(r, nutsDetail) {
+    const badge = !r.hasMin
+        ? `<span class="badge b-none">بلا حد أدنى محدد</span>`
+        : !r.hasQty
+            ? `<span class="badge b-wait">بانتظار رفع الملف</span>`
+            : r.below
+                ? `<span class="badge b-buy">تحت الحد — انتبه</span>`
+                : `<span class="badge b-ok">متوفر ✓</span>`;
+    const qtyTxt = r.hasQty
+        ? (r.isBatch ? `${fmt(r.qty)} ${unitLabel(r.unit)} (~${fmt(r.batches)} خلطة)` : `${fmt(r.qty)} ${unitLabel(r.unit)}`)
+        : '—';
+    const minTxt = r.isBatch
+        ? `${fmt(r.batchThreshold)} خلطة (${fmt(r.batchThreshold * r.batchGrams)} ${unitLabel(r.unit)})`
+        : (r.hasMin ? `${fmt(r.min)} ${unitLabel(r.unit)}` : '—');
+    const needLine = (r.below && r.isBatch)
+        ? `<div class="need-line">🛒 اشترِ ${fmt(r.need)} ${unitLabel(r.unit)} لترجع لـ ${fmt(r.batchTarget)} خلطة</div>`
+        : (nutsDetail && r.isBatch ? `<div class="need-line ok-line">✓ يكفي هدف ${fmt(r.batchTarget)} خلطة، ما في داعي تطلب</div>` : '');
+    const supplierLine = (r.supplier || r.location)
+        ? `<div class="supplier-line">📍 ${[r.supplier, r.location].filter(Boolean).join(' — ')}</div>` : '';
+    return `<div class="item-row ${r.below ? 'urgent' : ''}">
+        <div class="row-top">
+            <div class="iname">${r.name}<span class="isku">${r.sku}</span></div>
+            ${badge}
+        </div>
+        <div class="row-mid">
+            <span>المتوفر: <b>${qtyTxt}</b></span>
+            <span>الحد الأدنى: <b>${minTxt}</b></span>
+        </div>
+        ${needLine}
+        ${supplierLine}
+    </div>`;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
