@@ -2,6 +2,22 @@
 // عدّل هنا فقط لإضافة/تعديل حد أدنى أو مورد لصنف. لو صنف مش موجود هون، ما بيظهر بالصفحة.
 /* jshint esversion:6 */
 
+// ─── رسائل الطلبيات الجاهزة للنسخ (واتساب) ───
+// target = عدد الكراتين اللي بدنا نوصلها، perCarton = عدد الحبات بالكرتونة الوحدة
+// الرقم {n} بالنص بيتعبى تلقائياً = target − الكراتين الموجودة (مقرّب)، والسطر اللي ما بده شي بينحذف
+const AHRAM_SPOONS = { perCarton: 80 * 25, label: 'معالق غسان', text: 'معالق أسود غسان VIP\n{n}\nاذا مش اسود لا تبعث' };
+const AHRAM_50ML = { perCarton: 2000, label: 'علب 50 مل (شطة ارنون)', text: 'علب 50 مل\nأسود\n{n}\n\nاذا مش اسود لا تبعث' };
+const AHRAM_250ML = { perCarton: 1000, label: 'علب 250 مل (كمالة)', text: '250 مل\nشفاف\n{n}' };
+
+function ahramOrder(branchLabel, lines) {
+    return {
+        title: '🏭 طلبية مصنع الأهرام',
+        header: `السلام عليكم\nيعطيك العافية\nطلبية ${branchLabel}\n\nالفاتورة باسم :\nمطعم السيد كشري`,
+        footer: 'ارسل لي الفاتورة مشان احاسبك كليك واحولك مباشرة',
+        lines
+    };
+}
+
 const PURCHASING_BRANCHES = {
     gardens: {
         label: 'الجاردنز',
@@ -27,19 +43,28 @@ const PURCHASING_BRANCHES = {
             { sku: 'sk-0128', name: 'علبة شوربة فاضي', unit: 'PC', min: 250, supplier: 'هيثم صالح', location: 'مرج الحمام' },
             { sku: 'sk-0177', name: 'علب مهلبية', unit: 'PC', min: 252, supplier: 'هيثم صالح', location: 'مرج الحمام' },
             { sku: 'sk-0147', name: 'اكياس صغير', unit: 'KG', min: 80, supplier: 'هيثم صالح', location: 'مرج الحمام' }
-        ]
+        ],
+        orders: [ahramOrder('الجاردنز', [
+            { sku: 'sk-0040', target: 7, ...AHRAM_SPOONS },
+            { sku: 'sk-0097', target: 8, ...AHRAM_50ML },
+            { sku: 'sk-0099', target: 4, ...AHRAM_250ML }
+        ])]
     },
     marj: {
         label: 'مرج الحمام',
         icon: '🏙️',
         lsKey: 'purchasing_qty_marj_v1',
         items: [
-            { sku: 'sk-0099', name: 'علبة كمالة', unit: 'PC', min: 1000, supplier: '', location: '' },
-            { sku: 'sk-0040', name: 'ملاعق', unit: 'PC', min: 4000, supplier: '', location: '' },
+            { sku: 'sk-0099', name: 'علبة كمالة', unit: 'PC', min: 1000, supplier: 'الأهرام', location: 'توصيل' },
+            { sku: 'sk-0040', name: 'ملاعق', unit: 'PC', min: 4000, supplier: 'الأهرام', location: 'توصيل' },
             { sku: 'sk-0041', name: 'شوك', unit: 'PC', min: 2000, supplier: '', location: '' },
             { sku: 'sk-0128', name: 'علبة شوربة', unit: 'PC', min: 250, supplier: '', location: '' },
             { sku: 'sk-0177', name: 'علبة مهلبية فاضية', unit: 'PC', min: 200, supplier: '', location: '' }
-        ]
+        ],
+        orders: [ahramOrder('مرج الحمام', [
+            { sku: 'sk-0040', target: 4, ...AHRAM_SPOONS },
+            { sku: 'sk-0099', target: 3, ...AHRAM_250ML }
+        ])]
     },
     central: {
         label: 'المركزي',

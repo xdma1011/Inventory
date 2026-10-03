@@ -239,11 +239,80 @@ function render() {
         list.innerHTML = sections.join('');
     }
 
+    renderOrders();
+
     const withMin = branch.items.filter(it => it.min !== null && it.min !== undefined).length;
     const uploadedCount = Object.keys(qty).length;
     document.getElementById('branchStats').textContent =
         `${branch.items.length} صنف مسجّل — ${withMin} منهم له حد أدنى` +
         (uploadedCount ? ` — آخر ملف محمّل: ${uploadedCount} صنف` : ' — لسا ما انرفع ملف');
+}
+
+// ─── طلبيات جاهزة للنسخ (مصنع الأهرام) ───
+const cartonsTxt = n => n === 1 ? 'كرتونة وحدة' : n === 2 ? 'كرتونتين' : `${n} كراتين`;
+
+function buildOrder(order, qty) {
+    const calc = [], blocks = [];
+    let missing = false;
+    order.lines.forEach(l => {
+        const q = qty[l.sku.toLowerCase()];
+        if (q === undefined) { missing = true; calc.push(`${l.label}: <b>ما في كمية بالملف</b>`); return; }
+        const have = Math.max(0, q) / l.perCarton;
+        const n = Math.max(0, Math.round(l.target - have));
+        calc.push(`${l.label}: عندك <b>${fmt(have)}</b> كرتونة — الهدف ${l.target} → اطلب <b>${n}</b>`);
+        if (n > 0) blocks.push(l.text.replace('{n}', cartonsTxt(n)));
+    });
+    const message = blocks.length
+        ? `${order.header}\n\n\n${blocks.join('\n----------\n\n')}\n\n${order.footer}`
+        : '';
+    return { calc, message, missing };
+}
+
+let currentOrderMessages = [];
+
+function renderOrders() {
+    const box = document.getElementById('ordersBox');
+    const branch = PURCHASING_BRANCHES[activeBranch];
+    const qty = qtyByBranch[activeBranch] || {};
+    currentOrderMessages = [];
+    if (!branch.orders || !branch.orders.length) { box.innerHTML = ''; return; }
+    if (!Object.keys(qty).length) {
+        box.innerHTML = branch.orders.map(o => `<div class="panel order-panel"><div class="order-head"><h3>${o.title}</h3></div>
+            <div class="order-calc">ارفع ملف المستويات أول عشان تنحسب الطلبية</div></div>`).join('');
+        return;
+    }
+    box.innerHTML = branch.orders.map((o, i) => {
+        const r = buildOrder(o, qty);
+        currentOrderMessages[i] = r.message;
+        const body = r.message
+            ? `<div class="order-preview">${escapeHtml(r.message)}</div>`
+            : `<div class="order-empty">✓ كل شي فوق الهدف — ما في داعي تطلب هلق</div>`;
+        return `<div class="panel order-panel">
+            <div class="order-head"><h3>${o.title}</h3>
+                <button class="copy-btn" onclick="copyOrder(${i}, this)" ${r.message ? '' : 'disabled'}>📋 نسخ الرسالة</button></div>
+            <div class="order-calc">${r.calc.join('<br>')}</div>
+            ${body}
+        </div>`;
+    }).join('');
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+function copyOrder(i, btn) {
+    const text = currentOrderMessages[i];
+    if (!text) return;
+    const done = () => { const t = btn.textContent; btn.textContent = '✅ انسخت'; setTimeout(() => { btn.textContent = t; }, 1500); };
+    const fallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) { alert('ما قدرت أنسخ — انسخها يدوي من المعاينة'); }
+        ta.remove();
+    };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback);
+    else fallback();
 }
 
 function renderSection(title, items, nutsDetail) {
