@@ -36,9 +36,46 @@ function splitLine(line, sep) {
     res.push(cur);
     return res.map(c => c.trim());
 }
+function decodeBuffer(buf) {
+    const bytes = new Uint8Array(buf);
+    if (bytes[0] === 0x50 && bytes[1] === 0x4B) throw new Error('ملف Excel حقيقي (xlsx) — صدّره من فوديكس CSV أو XLS');
+    if (bytes[0] === 0xFF && bytes[1] === 0xFE) return new TextDecoder('utf-16le').decode(buf);
+    if (bytes[0] === 0xFE && bytes[1] === 0xFF) return new TextDecoder('utf-16be').decode(buf);
+    const utf8 = new TextDecoder('utf-8').decode(buf);
+    if (!utf8.includes('�')) return utf8;
+    try { return new TextDecoder('windows-1256').decode(buf); } catch (e) { return utf8; }
+}
+
+const toNum = s => {
+    const q = parseFloat(String(s || '0').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/,/g, ''));
+    return isNaN(q) ? 0 : q;
+};
+
+// ملف XLS من فوديكس هو فعلياً جدول HTML — فيه كمان اسم الفرع بسطر "الفروع"
+function parseStockHtml(content) {
+    const doc = new DOMParser().parseFromString(content, 'text/html');
+    const result = {};
+    let branchName = '', si = -1, qi = -1;
+    doc.querySelectorAll('tr').forEach(tr => {
+        const cells = Array.from(tr.querySelectorAll('th,td')).map(c => c.textContent.trim());
+        if (!cells.length) return;
+        if (cells[0] === 'الفروع' && cells[1]) { branchName = cells[1]; return; }
+        const lower = cells.map(c => c.toLowerCase());
+        const hs = lower.findIndex(h => h === 'sku' || h.includes('رمز'));
+        const hq = lower.findIndex(h => h.includes('quantity') || h.includes('الكمية') || h.includes('كمية'));
+        if (hs >= 0 && hq >= 0) { si = hs; qi = hq; return; }
+        if (si < 0) return;
+        const sku = (cells[si] || '').toLowerCase();
+        if (sku) result[sku] = toNum(cells[qi]);
+    });
+    if (!Object.keys(result).length) throw new Error('ما قدرت أقرأ أي صنف من ملف XLS');
+    return { data: result, branchName };
+}
+
 function parseStockCsv(content) {
     content = String(content || '').replace(/^﻿/, '').trim();
     if (!content) throw new Error('الملف فارغ');
+    if (content[0] === '<') return parseStockHtml(content).data;
     const result = {};
     if (content[0] === '[' || content[0] === '{') {
         const arr = JSON.parse(content);
@@ -81,12 +118,26 @@ function uploadStockFile() {
     const reader = new FileReader();
     reader.onload = function (e) {
         try {
-            const content = new TextDecoder('utf-8').decode(e.target.result);
-            const parsed = parseStockCsv(content);
+            const content = decodeBuffer(e.target.result).replace(/^﻿/, '').trim();
+            let parsed, note = '';
+            if (content[0] === '<') {
+                const html = parseStockHtml(content);
+                parsed = html.data;
+                const matchId = Object.keys(PURCHASING_BRANCHES).find(id => {
+                    const label = PURCHASING_BRANCHES[id].label;
+                    return html.branchName && (html.branchName.includes(label) || label.includes(html.branchName));
+                });
+                if (matchId && matchId !== activeBranch) {
+                    switchBranch(matchId);
+                    note = ` — الملف لفرع ${PURCHASING_BRANCHES[matchId].label} فانتقلت لتابه`;
+                }
+            } else {
+                parsed = parseStockCsv(content);
+            }
             qtyByBranch[activeBranch] = Object.assign({}, qtyByBranch[activeBranch], parsed);
             saveQty(activeBranch);
-            showMsg(`✅ تم تحميل ${Object.keys(parsed).length} صنف من الملف`, 'success');
             render();
+            showMsg(`✅ تم تحميل ${Object.keys(parsed).length} صنف من الملف${note}`, 'success');
         } catch (err) {
             showMsg('خطأ: ' + err.message, 'error');
         }
@@ -218,7 +269,7 @@ function renderRow(r, nutsDetail) {
         : (r.hasMin ? `${fmt(r.min)} ${unitLabel(r.unit)}` : '—');
     const needLine = (r.below && r.isBatch)
         ? `<div class="need-line">🛒 اشترِ ${fmt(r.need)} ${unitLabel(r.unit)} لترجع لـ ${fmt(r.batchTarget)} خلطة</div>`
-        : (nutsDetail && r.isBatch ? `<div class="need-line ok-line">✓ يكفي هدف ${fmt(r.batchTarget)} خلطة، ما في داعي تطلب</div>` : '');
+        : (nutsDetail && r.isBatch ? `<div class="need-line ok-line">✓ فوق حد التنبيه (${fmt(r.batchThreshold)} خلطات) — ما في داعي تطلب هلق</div>` : '');
     const supplierLine = (r.supplier || r.location)
         ? `<div class="supplier-line">📍 ${[r.supplier, r.location].filter(Boolean).join(' — ')}</div>` : '';
     return `<div class="item-row ${r.below ? 'urgent' : ''}">
