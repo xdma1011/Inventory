@@ -88,6 +88,11 @@ function lockEditAgain() {
                 const raw = localStorage.getItem(BATCH_LS_KEY);
                 if (raw) Object.assign(f, JSON.parse(raw));
             } catch (e) { console.error(e); }
+            if (typeof batchFactorFixes !== 'undefined') {
+                Object.entries(batchFactorFixes).forEach(([k, bad]) => {
+                    if (f[k] !== undefined && bad.includes(parseFloat(f[k]))) f[k] = batchDefaults[k];
+                });
+            }
             return f;
         }
         let batchFactors = loadBatchFactorsFromLS();
