@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تحويل الصحون والتعبئة</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; background: #10131a; color: #eceff1; min-height: 100vh; padding: 20px 16px 60px; }
+    .wrap { max-width: 720px; margin: 0 auto; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 10px; }
+    .top-bar h1 { font-size: 20px; font-weight: 900; }
+    .top-bar a { color: #90a4ae; text-decoration: none; font-size: 13px; white-space: nowrap; }
+    .panel { background: #171a21; border: 1px solid #262a34; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+    .upload-btn { display: block; text-align: center; background: #263238; color: #fff; border: 1px dashed #546e7a; border-radius: 10px; padding: 12px 14px; font-size: 14px; cursor: pointer; }
+    .note { font-size: 12.5px; color: #90a4ae; margin-top: 8px; line-height: 1.7; }
+    .note.ok { color: #66bb6a; } .note.err { color: #ef5350; }
+    .rule { font-size: 12.5px; color: #90a4ae; line-height: 1.8; }
+    .rule b { color: #eceff1; }
+    .item { background: #171a21; border: 1px solid #262a34; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+    .item.go { border-color: #00838f; }
+    .item-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .iname { font-size: 15px; font-weight: 700; }
+    .isku { display: block; font-size: 11px; color: #78909c; font-weight: 400; }
+    .stepper { display: flex; align-items: center; gap: 8px; }
+    .stepper button { width: 36px; height: 36px; border-radius: 10px; border: 1px solid #37474f; background: #263238; color: #fff; font-size: 18px; cursor: pointer; }
+    .stepper .n { min-width: 70px; text-align: center; font-size: 15px; font-weight: 900; }
+    .lines { margin-top: 10px; font-size: 13px; color: #b0bec5; line-height: 1.9; }
+    .lines b { color: #eceff1; }
+    .neg { color: #ef5350 !important; } .pos { color: #81c784 !important; }
+    .with { font-size: 12.5px; color: #4dd0e1; margin-top: 4px; }
+    .dl-btn { width: 100%; background: #00838f; color: #fff; border: none; border-radius: 12px; padding: 14px; font-family: inherit; font-size: 15px; font-weight: 900; cursor: pointer; }
+    .dl-btn:disabled { background: #37474f; color: #90a4ae; cursor: default; }
+    .empty { text-align: center; color: #78909c; padding: 20px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="top-bar">
+        <h1>🚚 تحويل الصحون والتعبئة</h1>
+        <a href="../index.html">🏠 الرئيسية</a>
+    </div>
+
+    <div class="panel">
+        <label class="upload-btn" for="stockFile">📤 ارفع ملف مستويات المخزون للفرع (CSV أو XLS من فوديكس)</label>
+        <input type="file" id="stockFile" style="display:none"
+            accept=".csv,.txt,.json,.xls,.xlsx,text/csv,text/comma-separated-values,text/plain,text/html,application/json,application/vnd.ms-excel,application/octet-stream">
+        <div class="note" id="fileNote"></div>
+    </div>
+
+    <div class="panel rule" id="ruleBox"></div>
+
+    <div id="items"><div class="empty">ارفع الملف عشان ينحسب التحويل</div></div>
+
+    <button class="dl-btn" id="dlBtn" disabled onclick="downloadTransfer()">📥 تنزيل ملف التحويل لفوديكس</button>
+</div>
+
+<script>
+// ═══════════ الإعدادات — عدّل هون بس ═══════════
+// per = عدد الحبات بالوحدة (كرتونة/ربطة)، minLeft = أقل رصيد مقبول بعد التحويل
+// with = أصناف بتتحول دايماً بنفس عدد حبات الصنف الأساسي (أغطية)
+const TRANSFER_ITEMS = [
+    { sku: 'sk-0042', name: 'تعبئة كشري', unit: 'كرتونة', per: 300, minLeft: 150,
+      with: [{ sku: 'sk-0095', name: 'غطاء تعبئة كشري' }] },
+    { sku: 'sk-0091', name: 'تعبئة ام علي', unit: 'ربطة', per: 125, minLeft: 1 },
+    { sku: 'sk-0092', name: 'تعبئة باشميل', unit: 'ربطة', per: 125, minLeft: 1 }
+];
+
+let stock = {};        // sku → { qty, name }
+let units = {};        // sku → عدد الكراتين/الربطات (قابل للتعديل يدوياً)
+let branchName = '';
+
+const fmt = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+
+document.getElementById('ruleBox').innerHTML = '<b>القاعدة:</b> بنحوّل أقل عدد وحدات كاملة بحيث الرصيد بعد التحويل يصير:<br>' +
+    TRANSFER_ITEMS.map(it => `• ${it.name}: <b>${fmt(it.minLeft)}</b> حبة على الأقل (${it.unit} = ${fmt(it.per)} حبة)` +
+        (it.with ? ` — ومعها ${it.with.map(w => w.name).join('، ')} بنفس العدد` : '')).join('<br>') +
+    '<br>وبتقدر تزيد أو تنقص بالأزرار قبل التنزيل.';
+
+// ─── قراءة ملف فوديكس (CSV، أو XLS اللي هو فعلياً جدول HTML) ───
+function decodeBuffer(buf) {
+    const b = new Uint8Array(buf);
+    if (b[0] === 0x50 && b[1] === 0x4B) throw new Error('ملف Excel حقيقي (xlsx) — صدّره من فوديكس CSV أو XLS');
+    if (b[0] === 0xFF && b[1] === 0xFE) return new TextDecoder('utf-16le').decode(buf);
+    if (b[0] === 0xFE && b[1] === 0xFF) return new TextDecoder('utf-16be').decode(buf);
+    const u = new TextDecoder('utf-8').decode(buf);
+    if (!u.includes('�')) return u;
+    try { return new TextDecoder('windows-1256').decode(buf); } catch (e) { return u; }
+}
+const toNum = s => { const q = parseFloat(String(s || '0').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/,/g, '')); return isNaN(q) ? 0 : q; };
+function splitLine(line, sep) {
+    const res = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') { if (inQ && line[i + 1] === '"') { cur += '"'; i++; } else inQ = !inQ; continue; }
+        if (ch === sep && !inQ) { res.push(cur); cur = ''; continue; }
+        cur += ch;
+    }
+    res.push(cur);
+    return res.map(c => c.trim());
+}
+function rowsToStock(rows) {
+    const out = {}; let si = -1, qi = -1, ni = -1, branch = '';
+    rows.forEach(cells => {
+        if (!cells.length) return;
+        if (cells[0] === 'الفروع' && cells[1]) { branch = cells[1]; return; }
+        const low = cells.map(c => c.toLowerCase());
+        const hs = low.findIndex(h => h === 'sku' || h.includes('رمز'));
+        const hq = low.findIndex(h => h.includes('quantity') || h.includes('كمية'));
+        if (hs >= 0 && hq >= 0) { si = hs; qi = hq; ni = low.findIndex(h => h === 'name' || h.includes('الاسم')); return; }
+        if (si < 0) return;
+        const sku = (cells[si] || '').toLowerCase();
+        if (sku) out[sku] = { qty: toNum(cells[qi]), name: ni >= 0 ? cells[ni] : '' };
+    });
+    return { out, branch };
+}
+function parseFile(text) {
+    text = text.replace(/^﻿/, '').trim();
+    if (!text) throw new Error('الملف فارغ');
+    let rows;
+    if (text[0] === '<') {
+        const doc = new DOMParser().parseFromString(text, 'text/html');
+        rows = [...doc.querySelectorAll('tr')].map(tr => [...tr.querySelectorAll('th,td')].map(c => c.textContent.trim()));
+    } else {
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        const sep = [',', ';', '\t'].sort((a, b) => lines[0].split(b).length - lines[0].split(a).length)[0];
+        rows = lines.map(l => splitLine(l, sep));
+    }
+    const r = rowsToStock(rows);
+    if (!Object.keys(r.out).length) throw new Error('ما لقيت أعمدة SKU والكمية — تأكد إنه ملف مستويات المخزون من فوديكس');
+    return r;
+}
+
+document.getElementById('stockFile').addEventListener('change', e => {
+    const input = e.target, file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+        const note = document.getElementById('fileNote');
+        try {
+            const r = parseFile(decodeBuffer(ev.target.result));
+            stock = r.out; branchName = r.branch;
+            units = {};
+            TRANSFER_ITEMS.forEach(it => { units[it.sku] = suggestUnits(it); });
+            note.textContent = `✅ انقرا ${Object.keys(stock).length} صنف` + (branchName ? ` — فرع ${branchName}` : '');
+            note.className = 'note ok';
+            render();
+        } catch (err) { note.textContent = 'خطأ: ' + err.message; note.className = 'note err'; }
+        input.value = '';
+    };
+    reader.readAsArrayBuffer(file);
+});
+
+// أقل عدد وحدات كاملة يخلي الرصيد بعد التحويل ≥ minLeft
+function suggestUnits(it) {
+    const s = stock[it.sku.toLowerCase()];
+    if (!s) return 0;
+    return Math.max(0, Math.ceil((it.minLeft - s.qty) / it.per));
+}
+
+function step(sku, d) { units[sku] = Math.max(0, (units[sku] || 0) + d); render(); }
+
+function render() {
+    const box = document.getElementById('items');
+    let any = false;
+    box.innerHTML = TRANSFER_ITEMS.map(it => {
+        const s = stock[it.sku.toLowerCase()];
+        if (!s) return `<div class="item"><div class="iname">${it.name}<span class="isku">${it.sku}</span></div><div class="lines">ما إله رصيد بالملف</div></div>`;
+        const n = units[it.sku] || 0, pcs = n * it.per, after = s.qty + pcs;
+        if (n > 0) any = true;
+        const withLine = (it.with && n > 0) ? `<div class="with">+ ${it.with.map(w => `${w.name}: <b>${fmt(pcs)}</b> حبة`).join('، ')}</div>` : '';
+        return `<div class="item ${n > 0 ? 'go' : ''}">
+            <div class="item-top">
+                <div class="iname">${it.name}<span class="isku">${it.sku}</span></div>
+                <div class="stepper"><button onclick="step('${it.sku}', -1)">−</button><span class="n">${n} ${it.unit}</span><button onclick="step('${it.sku}', 1)">+</button></div>
+            </div>
+            <div class="lines">
+                الرصيد الحالي: <b class="${s.qty < 0 ? 'neg' : ''}">${fmt(s.qty)}</b> حبة<br>
+                يتحول: <b>${fmt(pcs)}</b> حبة &nbsp;→&nbsp; بعد التحويل: <b class="${after < 0 ? 'neg' : 'pos'}">${fmt(after)}</b> حبة
+            </div>
+            ${withLine}
+        </div>`;
+    }).join('');
+    document.getElementById('dlBtn').disabled = !any;
+}
+
+function downloadTransfer() {
+    const csvCell = v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
+    const lines = ['name,sku,storage_quantity,ingredients_quantity'];
+    TRANSFER_ITEMS.forEach(it => {
+        const s = stock[it.sku.toLowerCase()];
+        const pcs = (units[it.sku] || 0) * it.per;
+        if (!s || pcs <= 0) return;
+        lines.push([s.name || it.name, it.sku, pcs, ''].map(csvCell).join(','));
+        (it.with || []).forEach(w => {
+            const ws = stock[w.sku.toLowerCase()];
+            lines.push([(ws && ws.name) || w.name, w.sku, pcs, ''].map(csvCell).join(','));
+        });
+    });
+    const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `transfer_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
+</script>
+</body>
+</html>
