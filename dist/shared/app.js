@@ -1754,46 +1754,62 @@ function lockEditAgain() {
             top.sort(byAbs); rest.sort(byAbs);
             if (!top.length && !rest.length) { showToast('✅ ما في ولا فرق — كل الأصناف متطابقة', 'success'); return; }
 
-            const W = 720, rowH = 44, secH = 40, headH = 96, footH = 64, S = 2;
+            // الفرق أول عمود (يمين) بعرض قد أطول رقم، والاسم لاصق فيه مباشرة — عرض الصورة قد المحتوى
+            const rowH = 44, secH = 40, headH = 96, footH = 64, S = 2, PAD = 20, GAP = 22;
+            const F = 'Tahoma, Arial, sans-serif';
+            const branch = window.BRANCH_NAME || '';
             const sections = [['🍽️ الصحون والتعبئة والماتركس', top], ['📦 باقي المواد', rest]].filter(s => s[1].length);
-            const H = headH + sections.reduce((h, s) => h + secH + s[1].length * rowH, 0) + footH;
+            const diffText = r => (r.diff > 0 ? '+' : '−') + Math.abs(r.diff).toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' ' + r.unit;
+            const titleTxt = `فروقات الجرد — ${branch}`;
+            const subTxt = new Date().toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }) + '  ·  الفرق = الجرد − النظام';
+            const foot = [`${top.length + rest.length} صنف فيه فرق`, `${zero} صنف بدون فرق`];
+            if (noSys) foot.push(`${noSys} صنف ما إله رصيد بالنظام`);
+            const footTxt = foot.join('  ·  ');
+            const m = document.createElement('canvas').getContext('2d');
+            const wOf = (font, t) => { m.font = font; return m.measureText(t).width; };
+            const all = top.concat(rest);
+            const diffW = Math.ceil(Math.max(wOf(`bold 15px ${F}`, 'الفرق'), ...all.map(r => wOf(`bold 17px ${F}`, diffText(r)))));
+            const NAME_MAX = 360;
+            const nameW = Math.ceil(Math.min(NAME_MAX, Math.max(...all.map(r => wOf(`16px ${F}`, r.name)), ...sections.map(sc => wOf(`bold 15px ${F}`, sc[0])))));
+            const W = Math.ceil(Math.max(PAD * 2 + diffW + GAP + nameW, wOf(`bold 24px ${F}`, titleTxt) + PAD * 2, wOf(`13px ${F}`, subTxt) + PAD * 2, wOf(`13px ${F}`, footTxt) + PAD * 2));
+            const H = headH + sections.reduce((h, sc) => h + secH + sc[1].length * rowH, 0) + footH;
             const canvas = document.createElement('canvas');
             canvas.width = W * S; canvas.height = H * S;
             const ctx = canvas.getContext('2d');
             ctx.scale(S, S);
             ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
-            ctx.textBaseline = 'middle'; ctx.direction = 'rtl';
-            const F = 'Tahoma, Arial, sans-serif';
-            const branch = window.BRANCH_NAME || '';
-            ctx.fillStyle = '#1a237e'; ctx.font = `bold 24px ${F}`; ctx.textAlign = 'right';
-            ctx.fillText(`فروقات الجرد — ${branch}`, W - 24, 34);
+            ctx.textBaseline = 'middle'; ctx.direction = 'rtl'; ctx.textAlign = 'right';
+            ctx.fillStyle = '#1a237e'; ctx.font = `bold 24px ${F}`;
+            ctx.fillText(titleTxt, W - PAD, 34);
             ctx.fillStyle = '#607d8b'; ctx.font = `13px ${F}`;
-            ctx.fillText(new Date().toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }) + '  ·  الفرق = الجرد − النظام', W - 24, 64);
-            const nameRight = W - 24, nameMax = W - 24 - 230, diffX = 120;
+            ctx.fillText(subTxt, W - PAD, 64);
+            const diffRight = W - PAD;                    // بداية عمود الفرق (أقصى اليمين)
+            const sepX = W - PAD - diffW - GAP / 2;       // خط فاصل خفيف بين العمودين
+            const nameRight = W - PAD - diffW - GAP;      // الاسم مباشرة بعد الفرق
             let y = headH;
             sections.forEach(([title, rows]) => {
                 ctx.fillStyle = '#e8eaf6'; ctx.fillRect(0, y, W, secH);
                 ctx.fillStyle = '#1a237e'; ctx.font = `bold 15px ${F}`; ctx.textAlign = 'right';
-                ctx.fillText(title, nameRight, y + secH / 2);
-                ctx.textAlign = 'center'; ctx.fillText('الفرق', diffX, y + secH / 2);
+                ctx.fillText('الفرق', diffRight, y + secH / 2);
+                ctx.fillText(title, nameRight, y + secH / 2, nameW);
                 y += secH;
                 rows.forEach((r, k) => {
                     ctx.fillStyle = k % 2 ? '#f7f8fc' : '#ffffff'; ctx.fillRect(0, y, W, rowH);
-                    ctx.fillStyle = '#212121'; ctx.textAlign = 'right';
+                    ctx.textAlign = 'right';
+                    ctx.fillStyle = r.diff > 0 ? '#2e7d32' : '#c62828'; ctx.font = `bold 17px ${F}`;
+                    ctx.fillText(diffText(r), diffRight, y + rowH / 2);
+                    ctx.fillStyle = '#212121';
                     let fs = 16; ctx.font = `${fs}px ${F}`;
-                    while (fs > 11 && ctx.measureText(r.name).width > nameMax) { fs--; ctx.font = `${fs}px ${F}`; }
-                    ctx.fillText(r.name, nameRight, y + rowH / 2, nameMax);
-                    ctx.fillStyle = r.diff > 0 ? '#2e7d32' : '#c62828'; ctx.font = `bold 17px ${F}`; ctx.textAlign = 'center';
-                    const num = (r.diff > 0 ? '+' : '−') + Math.abs(r.diff).toLocaleString('en-US', { maximumFractionDigits: 2 });
-                    ctx.fillText(`${num} ${r.unit}`, diffX, y + rowH / 2, 220);
-                    ctx.strokeStyle = '#eceff1'; ctx.beginPath(); ctx.moveTo(0, y + rowH); ctx.lineTo(W, y + rowH); ctx.stroke();
+                    while (fs > 11 && ctx.measureText(r.name).width > nameW) { fs--; ctx.font = `${fs}px ${F}`; }
+                    ctx.fillText(r.name, nameRight, y + rowH / 2, nameW);
+                    ctx.strokeStyle = '#eceff1';
+                    ctx.beginPath(); ctx.moveTo(0, y + rowH); ctx.lineTo(W, y + rowH); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(sepX, y + 8); ctx.lineTo(sepX, y + rowH - 8); ctx.stroke();
                     y += rowH;
                 });
             });
             ctx.fillStyle = '#607d8b'; ctx.font = `13px ${F}`; ctx.textAlign = 'right';
-            const foot = [`${top.length + rest.length} صنف فيه فرق`, `${zero} صنف بدون فرق`];
-            if (noSys) foot.push(`${noSys} صنف ما إله رصيد بالنظام`);
-            ctx.fillText(foot.join('  ·  '), W - 24, y + footH / 2);
+            ctx.fillText(footTxt, W - PAD, y + footH / 2);
 
             const fname = `diff_${window.BRANCH_ID || 'branch'}_${new Date().toISOString().slice(0, 10)}.png`;
             canvas.toBlob(blob => {
