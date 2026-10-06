@@ -165,7 +165,7 @@ function itemMatchesSearch(item, normalizedTerm) {
     if (!normalizedTerm) return true;
     const sku = (item.sku || '').toLowerCase();
     if (sku.includes(normalizedTerm)) return true;
-    const haystack = normalizeSearch(item.name) + ' ' + normalizeSearch(item.supplier || '') + ' ' + normalizeSearch(item.location || '');
+    const haystack = [item.name, item.filter, item.supplier, item.location].map(normalizeSearch).join(' ');
     const words = normalizedTerm.split(/\s+/).filter(Boolean);
     return words.length > 0 && words.every(w => haystack.includes(w));
 }

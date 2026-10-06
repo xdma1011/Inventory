@@ -910,6 +910,28 @@
             z-index: 110;
         }
 
+        /* عمود الفرق: ثابت مباشرة بعد العمود المثبت */
+        th.col-pinned2,
+        td.col-pinned2 {
+            position: sticky;
+            right: var(--pin1-w, 0px);
+            z-index: 39;
+            box-shadow: -3px 0 8px rgba(0, 0, 0, 0.12);
+        }
+
+        td.col-pinned2 {
+            background: #ffffff;
+        }
+
+        th.col-pinned2 {
+            z-index: 109;
+        }
+
+        .btn-diffphoto {
+            background: linear-gradient(135deg, #00838f, #26a69a);
+            color: #fff;
+        }
+
         /* حجم الطرد: أنحف */
         td[data-col="pkg"] select {
             width: 54px;
@@ -2288,7 +2310,8 @@ body.dark .icard-row input.cell-locked {
     color: #607d8b;
 }
 
-body.dark td.col-pinned {
+body.dark td.col-pinned,
+body.dark td.col-pinned2 {
     background: #202638;
 }
 

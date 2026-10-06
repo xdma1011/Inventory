@@ -12,7 +12,7 @@ const inventoryData = [
             { name: "علبة كمالة", sku: "sk-0099", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 50 علبة", filter: "علب علبة كشري كمالة", pkgBarcode: "", unitBarcode: "" },
             { name: "خبز مقلي منتج", sku: "p-0127", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, filter: "علب علبة خبز مقلي", pkgBarcode: "", unitBarcode: "" },
             { name: "شوك", sku: "sk-0041", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, note: "كل ربطة = 25 حبة — الناتج عدد القطع الكلي", pkgBarcode: "", unitBarcode: "" },
-            { name: "معالق - ملاعق", sku: "sk-0040", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, note: "كل ربطة = 25 حبة — الناتج عدد القطع الكلي", pkgBarcode: "", unitBarcode: "" },
+            { name: "معالق - ملاعق", sku: "sk-0040", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, note: "كل ربطة = 25 حبة — الناتج عدد القطع الكلي", filter: "معالق ملاعق", pkgBarcode: "", unitBarcode: "" },
             { name: "معكرونة كوع", sku: "sk-0033", unit: "G", packageSize: 9.6, secondOp: "*", secondVal: 1, isFixed: false, note: "كيس = 9.6 كيلو", pkgBarcode: "", unitBarcode: "" },
             { name: "رز خام", sku: "sk-0032", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "حمص حب", sku: "sk-0047", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, filter: "حمص حب", pkgBarcode: "", unitBarcode: "" },
@@ -125,6 +125,9 @@ const batchDefaults = {
             'p-0129||رقائق مطبوخة': 2,
             'sk-0066||اكياس': 1
         };
+
+// صورة الفروقات: هالأصناف (بالحبة — صحون وتعبئة وماتركس ومياه) بتطلع أول شي، وبعدها باقي المواد
+const diffPhotoPriority = ['sk-0042', 'sk-0092', 'p-0123', 'sk-0091', 'p-0174', 'sk-0177', 'p-0163', 'sk-0099', 'sk-0128', 'p-0127', 'sk-0080', 'sk-0079'];
 
 const countSheets = [
             { id: 'koshari', title: '🍛 الكشري', icon: '🍛', items: [

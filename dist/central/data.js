@@ -12,6 +12,9 @@ const sectionStarts = { 0: "🧾 جرد المستودع المركزي" };
 
 const batchDefaults = {};
 
+// صورة الفروقات: هالأصناف (بالحبة — صحون وتعبئة وماتركس ومياه) بتطلع أول شي، وبعدها باقي المواد
+const diffPhotoPriority = ['sk-0042', 'sk-0092', 'sk-0091'];
+
 const countSheets = [
             { id: 'central', title: '🧾 جرد المستودع المركزي', icon: '🧾', items: [
                 { n: 'صحن كشري - طبق', s: 'sk-0042' },

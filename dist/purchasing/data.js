@@ -25,7 +25,7 @@ const PURCHASING_BRANCHES = {
         lsKey: 'purchasing_qty_gardens_v1',
         items: [
             { sku: 'sk-0037', name: 'جزر', unit: 'G', min: 5000, supplier: 'سوق مركزي', location: 'سوق مركزي' },
-            { sku: 'sk-0040', name: 'معالق - ملاعق', unit: 'PC', min: 8000, supplier: 'الأهرام', location: 'توصيل' },
+            { sku: 'sk-0040', name: 'معالق - ملاعق', unit: 'PC', min: 8000, supplier: 'الأهرام', location: 'توصيل', filter: 'معالق ملاعق' },
             { sku: 'sk-0041', name: 'شوك', unit: 'PC', min: 2000, supplier: 'البرج', location: 'الجاردنز' },
             { sku: 'sk-0062', name: 'بندق', unit: 'G', min: null, supplier: 'الشعب', location: '', batchGrams: 270, batchThreshold: 10, batchTarget: 30 },
             { sku: 'sk-0063', name: 'جوز هند', unit: 'G', min: null, supplier: 'الشعب', location: '', batchGrams: 225, batchThreshold: 10, batchTarget: 30 },
@@ -56,7 +56,7 @@ const PURCHASING_BRANCHES = {
         lsKey: 'purchasing_qty_marj_v1',
         items: [
             { sku: 'sk-0099', name: 'علبة كمالة', unit: 'PC', min: 1000, supplier: 'الأهرام', location: 'توصيل' },
-            { sku: 'sk-0040', name: 'ملاعق', unit: 'PC', min: 4000, supplier: 'الأهرام', location: 'توصيل' },
+            { sku: 'sk-0040', name: 'ملاعق', unit: 'PC', min: 4000, supplier: 'الأهرام', location: 'توصيل', filter: 'معالق ملاعق' },
             { sku: 'sk-0041', name: 'شوك', unit: 'PC', min: 2000, supplier: '', location: '' },
             { sku: 'sk-0128', name: 'علبة شوربة', unit: 'PC', min: 250, supplier: '', location: '' },
             { sku: 'sk-0177', name: 'علبة مهلبية فاضية', unit: 'PC', min: 200, supplier: '', location: '' }

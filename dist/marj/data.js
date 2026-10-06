@@ -15,7 +15,7 @@ const inventoryData = [
             { name: "طبق كشري", sku: "sk-0042", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة كمالة", sku: "sk-0099", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "علبة شوربة", sku: "sk-0128", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 50 علبة", pkgBarcode: "", unitBarcode: "" },
-            { name: "ملاعق", sku: "sk-0040", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, pkgBarcode: "", unitBarcode: "" },
+            { name: "ملاعق", sku: "sk-0040", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, filter: "معالق ملاعق", pkgBarcode: "", unitBarcode: "" },
             { name: "شوك", sku: "sk-0041", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, pkgBarcode: "", unitBarcode: "" },
             { name: "معكرونة كوع", sku: "sk-0033", unit: "G", packageSize: 9.6, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "سباغتي خام", sku: "sk-0034", unit: "G", packageSize: 10.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
@@ -72,6 +72,9 @@ const batchDefaults = {
 const batchFactorFixes = {
     'P-0110||حمص مطبوخ': [2240]
 };
+
+// صورة الفروقات: هالأصناف (بالحبة — صحون وتعبئة وماتركس ومياه) بتطلع أول شي، وبعدها باقي المواد
+const diffPhotoPriority = ['sk-0042', 'sp-0149', 'sp-180', 'sk-0177', 'p-0163', 'sk-0099', 'sk-0128', 'sp-0162', 'sk-0080', 'sk-0079'];
 
 const countSheets = [
             { id: 'sheet1', title: 'شيت الجرد ١ — الإنتاج', icon: '🏭', items: [

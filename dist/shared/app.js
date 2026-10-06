@@ -1733,6 +1733,87 @@ function lockEditAgain() {
                 showToast('\u2705 تم تنزيل صورة فرق الماتركس', 'success');
             }, 'image/png');
         }
+        // ═══════════ 🖼️ صورة الفروقات (الاسم + الفرق) للتدقيق — قراءة فقط، ما بتغيّر أي قيمة ═══════════
+        // الترتيب: أصناف diffPhotoPriority (+ الماتركس والمياه) أول شي، وبعدها الباقي — وكل مجموعة من الأكبر للأصغر بالقيمة المطلقة
+        function exportDiffPhoto() {
+            if (!Object.keys(systemData || {}).length) { showToast('ارفع بيانات النظام أول عشان تنحسب الفروقات', 'error'); return; }
+            const prio = (typeof diffPhotoPriority !== 'undefined' ? diffPhotoPriority : []).map(s => s.toLowerCase());
+            const UNIT_AR = { G: 'غرام', ML: 'مل', PC: 'حبة', KG: 'كيلو', 'باتش': 'باتش', Batch: 'باتش' };
+            const top = [], rest = [];
+            let zero = 0, noSys = 0;
+            inventoryData.forEach((it, i) => {
+                const sys = systemData[it.sku.toLowerCase()];
+                if (sys === undefined) { noSys++; return; }
+                const qty = parseFloat((document.getElementById(`result-${i}`) || { textContent: '0' }).textContent.replace(/,/g, '')) || 0;
+                const diff = qty - sys;
+                if (Math.abs(diff) < 0.005) { zero++; return; }
+                const row = { name: it.name, diff, unit: UNIT_AR[resultUnitOf(i)] || resultUnitOf(i) };
+                (prio.includes(it.sku.toLowerCase()) || it.category === 'matrix' || it.category === 'water' ? top : rest).push(row);
+            });
+            const byAbs = (a, b) => Math.abs(b.diff) - Math.abs(a.diff);
+            top.sort(byAbs); rest.sort(byAbs);
+            if (!top.length && !rest.length) { showToast('✅ ما في ولا فرق — كل الأصناف متطابقة', 'success'); return; }
+
+            const W = 720, rowH = 44, secH = 40, headH = 96, footH = 64, S = 2;
+            const sections = [['🍽️ الصحون والتعبئة والماتركس', top], ['📦 باقي المواد', rest]].filter(s => s[1].length);
+            const H = headH + sections.reduce((h, s) => h + secH + s[1].length * rowH, 0) + footH;
+            const canvas = document.createElement('canvas');
+            canvas.width = W * S; canvas.height = H * S;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(S, S);
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+            ctx.textBaseline = 'middle'; ctx.direction = 'rtl';
+            const F = 'Tahoma, Arial, sans-serif';
+            const branch = window.BRANCH_NAME || '';
+            ctx.fillStyle = '#1a237e'; ctx.font = `bold 24px ${F}`; ctx.textAlign = 'right';
+            ctx.fillText(`فروقات الجرد — ${branch}`, W - 24, 34);
+            ctx.fillStyle = '#607d8b'; ctx.font = `13px ${F}`;
+            ctx.fillText(new Date().toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }) + '  ·  الفرق = الجرد − النظام', W - 24, 64);
+            const nameRight = W - 24, nameMax = W - 24 - 230, diffX = 120;
+            let y = headH;
+            sections.forEach(([title, rows]) => {
+                ctx.fillStyle = '#e8eaf6'; ctx.fillRect(0, y, W, secH);
+                ctx.fillStyle = '#1a237e'; ctx.font = `bold 15px ${F}`; ctx.textAlign = 'right';
+                ctx.fillText(title, nameRight, y + secH / 2);
+                ctx.textAlign = 'center'; ctx.fillText('الفرق', diffX, y + secH / 2);
+                y += secH;
+                rows.forEach((r, k) => {
+                    ctx.fillStyle = k % 2 ? '#f7f8fc' : '#ffffff'; ctx.fillRect(0, y, W, rowH);
+                    ctx.fillStyle = '#212121'; ctx.textAlign = 'right';
+                    let fs = 16; ctx.font = `${fs}px ${F}`;
+                    while (fs > 11 && ctx.measureText(r.name).width > nameMax) { fs--; ctx.font = `${fs}px ${F}`; }
+                    ctx.fillText(r.name, nameRight, y + rowH / 2, nameMax);
+                    ctx.fillStyle = r.diff > 0 ? '#2e7d32' : '#c62828'; ctx.font = `bold 17px ${F}`; ctx.textAlign = 'center';
+                    const num = (r.diff > 0 ? '+' : '−') + Math.abs(r.diff).toLocaleString('en-US', { maximumFractionDigits: 2 });
+                    ctx.fillText(`${num} ${r.unit}`, diffX, y + rowH / 2, 220);
+                    ctx.strokeStyle = '#eceff1'; ctx.beginPath(); ctx.moveTo(0, y + rowH); ctx.lineTo(W, y + rowH); ctx.stroke();
+                    y += rowH;
+                });
+            });
+            ctx.fillStyle = '#607d8b'; ctx.font = `13px ${F}`; ctx.textAlign = 'right';
+            const foot = [`${top.length + rest.length} صنف فيه فرق`, `${zero} صنف بدون فرق`];
+            if (noSys) foot.push(`${noSys} صنف ما إله رصيد بالنظام`);
+            ctx.fillText(foot.join('  ·  '), W - 24, y + footH / 2);
+
+            const fname = `diff_${window.BRANCH_ID || 'branch'}_${new Date().toISOString().slice(0, 10)}.png`;
+            canvas.toBlob(blob => {
+                const download = () => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = fname;
+                    document.body.appendChild(a); a.click(); a.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 3000);
+                    showToast('✅ تم تنزيل صورة الفروقات', 'success');
+                };
+                // عالموبايل: نافذة المشاركة (واتساب مباشرة)، وعالكمبيوتر: تنزيل
+                const file = typeof File !== 'undefined' ? new File([blob], fname, { type: 'image/png' }) : null;
+                const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+                if (touch && file && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({ files: [file], title: `فروقات الجرد — ${branch}` })
+                        .catch(err => { if (!err || err.name !== 'AbortError') download(); });
+                } else download();
+            }, 'image/png');
+        }
         function renderCsvBar() {
             const bar = document.getElementById('csvBar');
             if (!bar || typeof countSheets === 'undefined') return;
@@ -2228,13 +2309,24 @@ function lockEditAgain() {
 
 
         // ═══════════ ترتيب وتثبيت الأعمدة (غير الإدخالية) ═══════════
-        const COL_LS_KEY = 'colLayout_v2';
-        const COL_DEFAULT = { order: ['name', 'result', 'batch', 'diff', 'min', 'pkg'], pinned: 'name', hidden: [] };
+        const COL_LS_KEY = 'colLayout_v3';
+        const COL_DEFAULT = { order: ['name', 'diff', 'result', 'batch', 'min', 'pkg'], pinned: 'name', hidden: [] };
         const COL_LABELS = { name: 'اسم المادة', result: 'الناتج', batch: 'باتش /1000', diff: 'الفرق', min: 'الحد الأدنى', pkg: 'حجم الطرد' };
+        function validColLayout(c) {
+            return c && Array.isArray(c.order) && c.order.length === 6 && COL_DEFAULT.order.every(k => c.order.includes(k));
+        }
         function loadColLayout() {
             try {
                 const c = JSON.parse(localStorage.getItem(COL_LS_KEY));
-                if (c && Array.isArray(c.order) && c.order.length === 6 && COL_DEFAULT.order.every(k => c.order.includes(k))) return c;
+                if (validColLayout(c)) return c;
+                // ترحيل مرة وحدة من v2: نحافظ على ترتيب المستخدم، بس الفرق بيصير مباشرة بعد العمود المثبت وظاهر
+                const old = JSON.parse(localStorage.getItem('colLayout_v2'));
+                if (validColLayout(old)) {
+                    if (old.pinned !== 'diff') old.order = [old.pinned, 'diff', ...old.order.filter(k => k !== old.pinned && k !== 'diff')];
+                    old.hidden = (old.hidden || []).filter(k => k !== 'diff');
+                    try { localStorage.setItem(COL_LS_KEY, JSON.stringify(old)); } catch (e) {}
+                    return old;
+                }
             } catch (e) {}
             return JSON.parse(JSON.stringify(COL_DEFAULT));
         }
@@ -2251,13 +2343,31 @@ function lockEditAgain() {
                 const cells = [...tr.children];
                 const anchor = cells.find(c => !c.dataset.col) || null;
                 order.forEach(k => { if (tagged[k]) tr.insertBefore(tagged[k], anchor); });
-                Object.values(tagged).forEach(c => { c.classList.remove('col-pinned'); c.classList.remove('col-hidden'); });
+                Object.values(tagged).forEach(c => { c.classList.remove('col-pinned', 'col-pinned2', 'col-hidden'); });
                 if (tagged[colLayout.pinned]) tagged[colLayout.pinned].classList.add('col-pinned');
+                if (pin2 && tagged[pin2]) tagged[pin2].classList.add('col-pinned2');
                 (colLayout.hidden || []).forEach(k => { if (tagged[k] && k !== colLayout.pinned) tagged[k].classList.add('col-hidden'); });
             };
+            // عمود الفرق بيضل ثابت كمان لما يكون مباشرة بعد العمود المثبت
+            const pin2 = (order[1] === 'diff' && !(colLayout.hidden || []).includes('diff')) ? 'diff' : null;
             const headRow = document.querySelector('#inventoryTable thead tr');
             if (headRow) applyRow(headRow);
             document.querySelectorAll('#tableBody tr[data-index]').forEach(applyRow);
+            updatePin2Offset();
+        }
+        // العمود الثابت التاني لازم يلزق على يسار الأول بالضبط — بنقيس عرض الأول ونحطه كإزاحة
+        function updatePin2Offset() {
+            const table = document.getElementById('inventoryTable');
+            const th = table && table.querySelector('thead th.col-pinned');
+            if (!th) return;
+            table.style.setProperty('--pin1-w', th.getBoundingClientRect().width + 'px');
+            if (!updatePin2Offset.observed && typeof ResizeObserver !== 'undefined') {
+                updatePin2Offset.observed = true;
+                new ResizeObserver(() => {
+                    const cur = table.querySelector('thead th.col-pinned');
+                    if (cur) table.style.setProperty('--pin1-w', cur.getBoundingClientRect().width + 'px');
+                }).observe(table);
+            }
         }
         // ═══════════ 📭 المواد اللي لسا ما اتعد إطلاقاً ═══════════
         // "لم تُعد" = الخانات الثمانية كلها فارغة تماماً (حتى صفر مقصود يُعتبر عدّ فعلي، فلا يظهر هون)
