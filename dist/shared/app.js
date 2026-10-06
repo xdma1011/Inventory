@@ -1740,24 +1740,33 @@ function lockEditAgain() {
             if (!Object.keys(systemData || {}).length) { showToast('ارفع بيانات النظام أول عشان تنحسب الفروقات', 'error'); return null; }
             const prio = (typeof diffPhotoPriority !== 'undefined' ? diffPhotoPriority : []).map(s => s.toLowerCase());
             const UNIT_AR = { G: 'غرام', ML: 'مل', PC: 'حبة', KG: 'كيلو', 'باتش': 'باتش', Batch: 'باتش' };
-            const top = [], rest = [];
+            const top = [], rest = [], bySku = {};
             let zero = 0, noSys = 0;
             inventoryData.forEach((it, i) => {
                 const sys = systemData[it.sku.toLowerCase()];
                 if (sys === undefined) { noSys++; return; }
                 const qty = parseFloat((document.getElementById(`result-${i}`) || { textContent: '0' }).textContent.replace(/,/g, '')) || 0;
                 const diff = qty - sys;
-                if (Math.abs(diff) < 0.005) { zero++; return; }
                 const row = { name: it.name, diff, unit: UNIT_AR[resultUnitOf(i)] || resultUnitOf(i) };
+                bySku[it.sku.toLowerCase()] = row;
+                if (Math.abs(diff) < 0.005) { zero++; return; }
                 (prio.includes(it.sku.toLowerCase()) || it.category === 'matrix' || it.category === 'water' ? top : rest).push(row);
             });
+            // أزواج بتعوّض بعض: الفرق الصافي = مجموع فروقاتهم (بيطلع بس لما كل أصناف الزوج إلها رصيد بالنظام)
+            const pairs = (typeof diffPairs !== 'undefined' ? diffPairs : []).map(pr => {
+                const parts = pr.skus.map(sk => bySku[sk.toLowerCase()]);
+                if (parts.some(x => !x)) return null;
+                return { title: pr.title, parts, net: { diff: parts.reduce((t, x) => t + x.diff, 0), unit: parts[0].unit } };
+            }).filter(Boolean);
             const byAbs = (a, b) => Math.abs(b.diff) - Math.abs(a.diff);
             top.sort(byAbs); rest.sort(byAbs);
             if (!top.length && !rest.length) { showToast('✅ ما في ولا فرق — كل الأصناف متطابقة', 'success'); return null; }
-            return { top, rest, zero, noSys };
+            return { top, rest, zero, noSys, pairs };
         }
         const DIFF_SECTIONS = ['🍽️ الصحون والتعبئة والماتركس', '📦 باقي المواد'];
-        const diffNum = r => (r.diff > 0 ? '+' : '−') + Math.abs(r.diff).toLocaleString('en-US', { maximumFractionDigits: 2 });
+        const PAIRS_TITLE = '⚖️ الفرق الصافي — أصناف بتعوّض بعض';
+        const diffNum = r => Math.abs(r.diff) < 0.005 ? '0' : (r.diff > 0 ? '+' : '−') + Math.abs(r.diff).toLocaleString('en-US', { maximumFractionDigits: 2 });
+        const pairDetail = pr => pr.parts.map(x => `${x.name} ${diffNum(x)}`).join('  ·  ');
 
         // ═══════════ 💬 إرسال الفروقات كرسالة نص لواتساب السوبر فايزر مباشرة ═══════════
         const SUPERVISOR_WHATSAPP = '962796497707';
@@ -1768,6 +1777,13 @@ function lockEditAgain() {
             const lines = [`*فروقات الجرد — ${window.BRANCH_NAME || ''}*`,
                 new Date().toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }),
                 'الفرق = الجرد − النظام'];
+            if (d.pairs.length) {
+                lines.push('', `*${PAIRS_TITLE}*`);
+                d.pairs.forEach(pr => {
+                    lines.push(`${RLM}*صافي ${diffNum(pr.net)} ${pr.net.unit}* | ${pr.title}`);
+                    lines.push(`${RLM}    (${pr.parts.map(x => `${x.name} ${diffNum(x)}`).join(' + ')})`);
+                });
+            }
             [[DIFF_SECTIONS[0], d.top], [DIFF_SECTIONS[1], d.rest]].forEach(([title, rows]) => {
                 if (!rows.length) return;
                 lines.push('', `*${title}*`);
@@ -1784,7 +1800,8 @@ function lockEditAgain() {
         function exportDiffPhoto(mode) {
             const d = collectDiffRows();
             if (!d) return;
-            const { top, rest, zero, noSys } = d;
+            const { top, rest, zero, noSys, pairs } = d;
+            const pairH = 60;
 
             // الفرق أول عمود (يمين) بعرض قد أطول رقم، والاسم لاصق فيه مباشرة — عرض الصورة قد المحتوى
             const rowH = 44, secH = 40, headH = 96, footH = 64, S = 2, PAD = 20, GAP = 22;
@@ -1800,11 +1817,13 @@ function lockEditAgain() {
             const m = document.createElement('canvas').getContext('2d');
             const wOf = (font, t) => { m.font = font; return m.measureText(t).width; };
             const all = top.concat(rest);
-            const diffW = Math.ceil(Math.max(wOf(`bold 15px ${F}`, 'الفرق'), ...all.map(r => wOf(`bold 17px ${F}`, diffText(r)))));
+            const pairNetTxt = pr => 'صافي ' + diffText(pr.net);
+            const diffW = Math.ceil(Math.max(wOf(`bold 15px ${F}`, 'الفرق'), ...all.map(r => wOf(`bold 17px ${F}`, diffText(r))), ...pairs.map(pr => wOf(`bold 17px ${F}`, pairNetTxt(pr)))));
             const NAME_MAX = 360;
-            const nameW = Math.ceil(Math.min(NAME_MAX, Math.max(...all.map(r => wOf(`16px ${F}`, r.name)), ...sections.map(sc => wOf(`bold 15px ${F}`, sc[0])))));
+            const nameW = Math.ceil(Math.min(NAME_MAX, Math.max(...all.map(r => wOf(`16px ${F}`, r.name)), ...sections.map(sc => wOf(`bold 15px ${F}`, sc[0])),
+                ...(pairs.length ? [wOf(`bold 15px ${F}`, PAIRS_TITLE)] : []), ...pairs.map(pr => wOf(`bold 16px ${F}`, pr.title)), ...pairs.map(pr => wOf(`13px ${F}`, pairDetail(pr))))));
             const W = Math.ceil(Math.max(PAD * 2 + diffW + GAP + nameW, wOf(`bold 24px ${F}`, titleTxt) + PAD * 2, wOf(`13px ${F}`, subTxt) + PAD * 2, wOf(`13px ${F}`, footTxt) + PAD * 2));
-            const H = headH + sections.reduce((h, sc) => h + secH + sc[1].length * rowH, 0) + footH;
+            const H = headH + (pairs.length ? secH + pairs.length * pairH : 0) + sections.reduce((h, sc) => h + secH + sc[1].length * rowH, 0) + footH;
             const canvas = document.createElement('canvas');
             canvas.width = W * S; canvas.height = H * S;
             const ctx = canvas.getContext('2d');
@@ -1819,6 +1838,28 @@ function lockEditAgain() {
             const sepX = W - PAD - diffW - GAP / 2;       // خط فاصل خفيف بين العمودين
             const nameRight = W - PAD - diffW - GAP;      // الاسم مباشرة بعد الفرق
             let y = headH;
+            if (pairs.length) {
+                ctx.fillStyle = '#fff3e0'; ctx.fillRect(0, y, W, secH);
+                ctx.fillStyle = '#e65100'; ctx.font = `bold 15px ${F}`; ctx.textAlign = 'right';
+                ctx.fillText('الفرق', diffRight, y + secH / 2);
+                ctx.fillText(PAIRS_TITLE, nameRight, y + secH / 2, nameW);
+                y += secH;
+                pairs.forEach(pr => {
+                    ctx.fillStyle = '#fffaf3'; ctx.fillRect(0, y, W, pairH);
+                    ctx.textAlign = 'right';
+                    const nd = pr.net.diff;
+                    ctx.fillStyle = Math.abs(nd) < 0.005 ? '#607d8b' : nd > 0 ? '#2e7d32' : '#c62828'; ctx.font = `bold 17px ${F}`;
+                    ctx.fillText(pairNetTxt(pr), diffRight, y + pairH / 2);
+                    ctx.fillStyle = '#212121'; ctx.font = `bold 16px ${F}`;
+                    ctx.fillText(pr.title, nameRight, y + 20, nameW);
+                    ctx.fillStyle = '#607d8b'; ctx.font = `13px ${F}`;
+                    ctx.fillText(pairDetail(pr), nameRight, y + 42, nameW);
+                    ctx.strokeStyle = '#ffe0b2';
+                    ctx.beginPath(); ctx.moveTo(0, y + pairH); ctx.lineTo(W, y + pairH); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(sepX, y + 8); ctx.lineTo(sepX, y + pairH - 8); ctx.stroke();
+                    y += pairH;
+                });
+            }
             sections.forEach(([title, rows]) => {
                 ctx.fillStyle = '#e8eaf6'; ctx.fillRect(0, y, W, secH);
                 ctx.fillStyle = '#1a237e'; ctx.font = `bold 15px ${F}`; ctx.textAlign = 'right';
