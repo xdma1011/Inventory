@@ -1821,13 +1821,7 @@ function lockEditAgain() {
                     setTimeout(() => URL.revokeObjectURL(url), 3000);
                     showToast('✅ تم تنزيل صورة الفروقات', 'success');
                 };
-                // عالموبايل: نافذة المشاركة (واتساب مباشرة)، وعالكمبيوتر: تنزيل
-                const file = typeof File !== 'undefined' ? new File([blob], fname, { type: 'image/png' }) : null;
-                const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-                if (touch && file && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    navigator.share({ files: [file], title: `فروقات الجرد — ${branch}` })
-                        .catch(err => { if (!err || err.name !== 'AbortError') download(); });
-                } else download();
+                download();
             }, 'image/png');
         }
         function renderCsvBar() {
