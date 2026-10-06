@@ -936,6 +936,12 @@
             display: flex;
             gap: 8px;
             flex: 0 0 auto;
+            flex-wrap: wrap;
+        }
+
+        .btn-diffwa {
+            background: linear-gradient(135deg, #1b8a3a, #25d366);
+            color: #fff;
         }
 
         .diffphoto-row .btn {
@@ -952,6 +958,10 @@
             .diffphoto-row .btn {
                 flex: 1 1 0;
                 min-width: 0;
+            }
+
+            .diffphoto-row .btn-diffwa {
+                flex: 1 1 100%;
             }
         }
 

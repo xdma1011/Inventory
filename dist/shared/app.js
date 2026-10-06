@@ -1735,8 +1735,9 @@ function lockEditAgain() {
         }
         // ═══════════ 🖼️ صورة الفروقات (الاسم + الفرق) للتدقيق — قراءة فقط، ما بتغيّر أي قيمة ═══════════
         // الترتيب: أصناف diffPhotoPriority (+ الماتركس والمياه) أول شي، وبعدها الباقي — وكل مجموعة من الأكبر للأصغر بالقيمة المطلقة
-        function exportDiffPhoto(mode) {
-            if (!Object.keys(systemData || {}).length) { showToast('ارفع بيانات النظام أول عشان تنحسب الفروقات', 'error'); return; }
+        // بتجمع الفروقات مرتبة — مشتركة بين الصورة ورسالة الواتساب
+        function collectDiffRows() {
+            if (!Object.keys(systemData || {}).length) { showToast('ارفع بيانات النظام أول عشان تنحسب الفروقات', 'error'); return null; }
             const prio = (typeof diffPhotoPriority !== 'undefined' ? diffPhotoPriority : []).map(s => s.toLowerCase());
             const UNIT_AR = { G: 'غرام', ML: 'مل', PC: 'حبة', KG: 'كيلو', 'باتش': 'باتش', Batch: 'باتش' };
             const top = [], rest = [];
@@ -1752,14 +1753,45 @@ function lockEditAgain() {
             });
             const byAbs = (a, b) => Math.abs(b.diff) - Math.abs(a.diff);
             top.sort(byAbs); rest.sort(byAbs);
-            if (!top.length && !rest.length) { showToast('✅ ما في ولا فرق — كل الأصناف متطابقة', 'success'); return; }
+            if (!top.length && !rest.length) { showToast('✅ ما في ولا فرق — كل الأصناف متطابقة', 'success'); return null; }
+            return { top, rest, zero, noSys };
+        }
+        const DIFF_SECTIONS = ['🍽️ الصحون والتعبئة والماتركس', '📦 باقي المواد'];
+        const diffNum = r => (r.diff > 0 ? '+' : '−') + Math.abs(r.diff).toLocaleString('en-US', { maximumFractionDigits: 2 });
+
+        // ═══════════ 💬 إرسال الفروقات كرسالة نص لواتساب السوبر فايزر مباشرة ═══════════
+        const SUPERVISOR_WHATSAPP = '962796497707';
+        function sendDiffWhatsApp() {
+            const d = collectDiffRows();
+            if (!d) return;
+            const RLM = '\u200F';
+            const lines = [`*فروقات الجرد — ${window.BRANCH_NAME || ''}*`,
+                new Date().toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }),
+                'الفرق = الجرد − النظام'];
+            [[DIFF_SECTIONS[0], d.top], [DIFF_SECTIONS[1], d.rest]].forEach(([title, rows]) => {
+                if (!rows.length) return;
+                lines.push('', `*${title}*`);
+                rows.forEach(r => lines.push(`${RLM}${diffNum(r)} ${r.unit} | ${r.name}`));
+            });
+            const foot = [`${d.top.length + d.rest.length} صنف فيه فرق`, `${d.zero} صنف بدون فرق`];
+            if (d.noSys) foot.push(`${d.noSys} صنف ما إله رصيد بالنظام`);
+            lines.push('', foot.join(' · '));
+            const url = `https://wa.me/${SUPERVISOR_WHATSAPP}?text=${encodeURIComponent(lines.join('\n'))}`;
+            const w = window.open(url, '_blank');
+            if (!w) location.href = url;
+        }
+
+        function exportDiffPhoto(mode) {
+            const d = collectDiffRows();
+            if (!d) return;
+            const { top, rest, zero, noSys } = d;
 
             // الفرق أول عمود (يمين) بعرض قد أطول رقم، والاسم لاصق فيه مباشرة — عرض الصورة قد المحتوى
             const rowH = 44, secH = 40, headH = 96, footH = 64, S = 2, PAD = 20, GAP = 22;
             const F = 'Tahoma, Arial, sans-serif';
             const branch = window.BRANCH_NAME || '';
-            const sections = [['🍽️ الصحون والتعبئة والماتركس', top], ['📦 باقي المواد', rest]].filter(s => s[1].length);
-            const diffText = r => (r.diff > 0 ? '+' : '−') + Math.abs(r.diff).toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' ' + r.unit;
+            const sections = [[DIFF_SECTIONS[0], top], [DIFF_SECTIONS[1], rest]].filter(s => s[1].length);
+            const diffText = r => diffNum(r) + ' ' + r.unit;
             const titleTxt = `فروقات الجرد — ${branch}`;
             const subTxt = new Date().toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }) + '  ·  الفرق = الجرد − النظام';
             const foot = [`${top.length + rest.length} صنف فيه فرق`, `${zero} صنف بدون فرق`];
