@@ -29,6 +29,8 @@
     .lines b { color: #eceff1; }
     .neg { color: #ef5350 !important; } .pos { color: #81c784 !important; }
     .with { font-size: 12.5px; color: #4dd0e1; margin-top: 4px; }
+    .lid-btn { margin-top: 10px; background: transparent; color: #90a4ae; border: 1px dashed #546e7a; border-radius: 10px; padding: 7px 12px; font-family: inherit; font-size: 13px; cursor: pointer; }
+    .lid-btn.on { color: #4dd0e1; border: 1px solid #00838f; background: rgba(0,131,143,0.15); }
     .dl-btn { width: 100%; background: #00838f; color: #fff; border: none; border-radius: 12px; padding: 14px; font-family: inherit; font-size: 15px; font-weight: 900; cursor: pointer; }
     .dl-btn:disabled { background: #37474f; color: #90a4ae; cursor: default; }
     .empty { text-align: center; color: #78909c; padding: 20px 0; font-size: 14px; }
@@ -59,16 +61,24 @@
 // ═══════════ الإعدادات — عدّل هون بس ═══════════
 // per = عدد الحبات بالوحدة (كرتونة/ربطة)، minLeft = أقل رصيد مقبول بعد التحويل
 // with = أصناف بتتحول دايماً بنفس عدد حبات الصنف الأساسي (أغطية)
+// optWith = غطا اختياري — بيطلعله زر "مع الغطا" وبيتحول بنفس العدد بس لما ينشغل
 const TRANSFER_ITEMS = [
     { sku: 'sk-0042', name: 'تعبئة كشري', unit: 'كرتونة', per: 300, minLeft: 150,
       with: [{ sku: 'sk-0095', name: 'غطاء تعبئة كشري' }] },
-    { sku: 'sk-0091', name: 'تعبئة ام علي', unit: 'ربطة', per: 125, minLeft: 1 },
-    { sku: 'sk-0092', name: 'تعبئة باشميل', unit: 'ربطة', per: 125, minLeft: 1 }
+    { sku: 'sk-0091', name: 'تعبئة ام علي', unit: 'ربطة', per: 125, minLeft: 1,
+      optWith: [{ sku: 'sk-0093', name: 'غطاء تعبئة ام علي' }] },
+    { sku: 'sk-0092', name: 'تعبئة باشميل', unit: 'ربطة', per: 125, minLeft: 1,
+      optWith: [{ sku: 'sk-0094', name: 'غطاء تعبئة بشاميل' }] }
 ];
 
 let stock = {};        // sku → { qty, name }
 let units = {};        // sku → عدد الكراتين/الربطات (قابل للتعديل يدوياً)
 let branchName = '';
+let lidsOn = {};       // sku → true لما زر "مع الغطا" مشغّل
+
+// الأغطية اللي رح تتحول مع الصنف: الدايمة + الاختيارية لما الزر مشغّل
+const lidsOf = it => (it.with || []).concat(lidsOn[it.sku] ? (it.optWith || []) : []);
+function toggleLids(sku) { lidsOn[sku] = !lidsOn[sku]; render(); }
 
 const fmt = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
 
@@ -168,7 +178,9 @@ function render() {
         if (!s) return `<div class="item"><div class="iname">${it.name}<span class="isku">${it.sku}</span></div><div class="lines">ما إله رصيد بالملف</div></div>`;
         const n = units[it.sku] || 0, pcs = n * it.per, after = s.qty + pcs;
         if (n > 0) any = true;
-        const withLine = (it.with && n > 0) ? `<div class="with">+ ${it.with.map(w => `${w.name}: <b>${fmt(pcs)}</b> حبة`).join('، ')}</div>` : '';
+        const lids = lidsOf(it);
+        const withLine = (lids.length && n > 0) ? `<div class="with">+ ${lids.map(w => `${w.name}: <b>${fmt(pcs)}</b> حبة`).join('، ')}</div>` : '';
+        const lidBtn = it.optWith ? `<button class="lid-btn ${lidsOn[it.sku] ? 'on' : ''}" onclick="toggleLids('${it.sku}')">${lidsOn[it.sku] ? '✅ مع الغطا' : '➕ مع الغطا'}</button>` : '';
         return `<div class="item ${n > 0 ? 'go' : ''}">
             <div class="item-top">
                 <div class="iname">${it.name}<span class="isku">${it.sku}</span></div>
@@ -179,6 +191,7 @@ function render() {
                 يتحول: <b>${fmt(pcs)}</b> حبة &nbsp;→&nbsp; بعد التحويل: <b class="${after < 0 ? 'neg' : 'pos'}">${fmt(after)}</b> حبة
             </div>
             ${withLine}
+            ${lidBtn}
         </div>`;
     }).join('');
     document.getElementById('dlBtn').disabled = !any;
@@ -192,7 +205,7 @@ function downloadTransfer() {
         const pcs = (units[it.sku] || 0) * it.per;
         if (!s || pcs <= 0) return;
         lines.push([s.name || it.name, it.sku, pcs, ''].map(csvCell).join(','));
-        (it.with || []).forEach(w => {
+        lidsOf(it).forEach(w => {
             const ws = stock[w.sku.toLowerCase()];
             lines.push([(ws && ws.name) || w.name, w.sku, pcs, ''].map(csvCell).join(','));
         });
