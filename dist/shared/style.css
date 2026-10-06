@@ -2839,3 +2839,53 @@ body.view-only textarea:disabled {
     cursor: default;
     opacity: 1; /* نفس شكلها العادي — بس مقفولة عن التعديل */
 }
+
+
+/* ═══════════ ➕ إضافة سريعة بالبطاقة + 🧮 تجميع ═══════════ */
+.icard-add-btn {
+    float: left; border: none; border-radius: 10px; padding: 6px 12px;
+    background: #2e7d32; color: #fff; font-family: inherit; font-size: 14px; font-weight: 800; cursor: pointer;
+}
+.icard-sumline {
+    font-size: 13px; color: #455a64; background: #f5f7fa; border-radius: 8px;
+    padding: 6px 10px; margin: -2px 0 10px; line-height: 1.7; direction: ltr; text-align: right; word-break: break-word;
+}
+.icard-sumline:empty { display: none; }
+.icard-actions { display: flex; gap: 8px; justify-content: flex-start; margin: 4px 0 8px; flex-wrap: wrap; }
+.icard-actions button {
+    border: 1px solid #cfd8dc; background: #fff; color: #37474f; border-radius: 10px;
+    padding: 7px 12px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.row-merge-btn {
+    border: none; background: transparent; cursor: pointer; font-size: 13px; padding: 0 4px; opacity: .55; vertical-align: middle;
+}
+.row-merge-btn:hover { opacity: 1; }
+.addqty-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, .55); z-index: 3200;
+    align-items: center; justify-content: center; padding: 16px;
+}
+.addqty-overlay.show { display: flex; }
+.addqty-box { background: #fff; border-radius: 16px; padding: 18px; width: 100%; max-width: 380px; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+.addqty-title { font-size: 16px; font-weight: 900; color: #1a237e; margin-bottom: 6px; }
+.addqty-mult { font-size: 20px; font-weight: 900; color: #e65100; background: #fff3e0; border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; text-align: center; }
+#addQtyInput { width: 100%; font-size: 24px; font-weight: 800; padding: 10px 12px; border: 2px solid #3949ab; border-radius: 12px; text-align: left; font-family: inherit; }
+.addqty-ops { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 8px; }
+.addqty-ops button { border: 1px solid #c5cae9; background: #e8eaf6; color: #1a237e; border-radius: 10px; padding: 8px 0; font-size: 18px; font-weight: 900; cursor: pointer; }
+.addqty-preview { min-height: 22px; margin-top: 10px; font-size: 16px; font-weight: 800; color: #2e7d32; text-align: right; }
+.addqty-preview.bad { color: #c62828; }
+.addqty-btns { display: flex; gap: 8px; margin-top: 14px; }
+.addqty-btns button { flex: 1; border: 1px solid #cfd8dc; background: #fff; border-radius: 12px; padding: 12px; font-family: inherit; font-size: 15px; font-weight: 800; cursor: pointer; }
+.addqty-btns button.primary { background: #2e7d32; border-color: #2e7d32; color: #fff; }
+body.view-only .icard-add-btn,
+body.view-only .icard-actions,
+body.view-only .row-merge-btn { display: none !important; }
+body.dark .icard-sumline { background: #263046; color: #cfd8dc; }
+body.dark .addqty-box { background: #1a1f2b; color: #eceff1; }
+body.dark #addQtyInput { background: #10131a; color: #eceff1; }
+
+/* الصيغ الحسابية بالخانات (5*4، (2)+(3)) تنعرض بترتيبها الطبيعي بدل ما تنقلب يمين-يسار */
+#inventoryTable input[id^="input"],
+.icard-row input {
+    direction: ltr;
+}
+.addqty-preview .pv-ltr { direction: ltr; text-align: right; font-size: 14px; color: #607d8b; }

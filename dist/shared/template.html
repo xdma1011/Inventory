@@ -412,10 +412,16 @@
         <div id="itemCard" style="display:none">
             <div class="icard-name" id="icardName"></div>
             <div class="icard-sku" id="icardSku"></div>
-            <div class="icard-grouplabel">📦 الطرود <span id="icardPkgInfo"></span></div>
+            <div class="icard-grouplabel">📦 الطرود <span id="icardPkgInfo"></span><button type="button" class="icard-add-btn" onclick="openAddQty('pkg')">➕ طرد</button></div>
             <div class="icard-row" id="icardPkgRow"></div>
-            <div class="icard-grouplabel">🔢 الحبات <span id="icardUnitInfo"></span></div>
+            <div class="icard-sumline" id="icardPkgSum"></div>
+            <div class="icard-grouplabel">🔢 الحبات <span id="icardUnitInfo"></span><button type="button" class="icard-add-btn" onclick="openAddQty('unit')">➕ حبة</button></div>
             <div class="icard-row" id="icardUnitRow"></div>
+            <div class="icard-sumline" id="icardUnitSum"></div>
+            <div class="icard-actions">
+                <button type="button" id="icardUndoBtn" style="display:none" onclick="undoLastAdd()">↩️ تراجع عن آخر إضافة</button>
+                <button type="button" onclick="confirmMergeCard()">🧮 تجميع</button>
+            </div>
             <div class="icard-results">
                 <div class="icard-total">الناتج: <b id="icardTotal">0</b> <span id="icardUnit"></span></div>
                 <div class="icard-diff" id="icardDiff">—</div>
@@ -423,6 +429,28 @@
             </div>
         </div>
         <div class="grid-view" id="gridView" style="display:none"></div>
+        <!-- نافذة الإضافة السريعة (طرد/حبة) -->
+        <div class="addqty-overlay" id="addQtyModal" onclick="if(event.target===this) closeAddQty()">
+            <div class="addqty-box">
+                <div class="addqty-title" id="addQtyTitle"></div>
+                <div class="addqty-mult" id="addQtyMult"></div>
+                <input type="text" id="addQtyInput" inputmode="decimal" autocomplete="off" dir="ltr" placeholder="مثلاً 5 أو 5*4"
+                    oninput="updateAddQtyPreview()" onkeydown="if(event.key==='Enter') confirmAddQty()">
+                <div class="addqty-ops">
+                    <button type="button" onclick="addQtyKey('+')">+</button>
+                    <button type="button" onclick="addQtyKey('*')">×</button>
+                    <button type="button" onclick="addQtyKey('-')">−</button>
+                    <button type="button" onclick="addQtyKey('(')">(</button>
+                    <button type="button" onclick="addQtyKey(')')">)</button>
+                    <button type="button" onclick="addQtyKey('back')">⌫</button>
+                </div>
+                <div class="addqty-preview" id="addQtyPreview"></div>
+                <div class="addqty-btns">
+                    <button type="button" onclick="closeAddQty()">إلغاء</button>
+                    <button type="button" class="primary" onclick="confirmAddQty()">➕ أضف</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ═══════════ تبويب الجرودات السابقة ═══════════ -->

@@ -170,7 +170,7 @@ function lockEditAgain() {
 <td class="batch-cell" data-col="batch"><input type="text" inputmode="decimal" autocomplete="off" readonly id="batchf-${index}" value="${lookupByItem(batchFactors, item) !== undefined ? lookupByItem(batchFactors, item) : ''}" oninput="onFactorInput(this, ${index})" ondblclick="unlockFactor(this)" onblur="lockFactor(this)" onkeydown="if(event.key==='Enter') this.blur()" placeholder="—" title="كم باتش يساوي 1000 ${item.unit} — دبل كليك للتعديل"><div class="batch-result" id="batchres-${index}">—</div></td>
 <td data-col="diff"><div class="diff-cell diff-zero" id="diff-${index}"><span id="diffValue-${index}">-</span></div></td>
 <td class="min-cell" data-col="min"><input type="number" inputmode="decimal" id="min-${index}" value="0" min="0" oninput="onMinChange(${index})" placeholder="0" title="الحد الأدنى"></td>
-<td data-col="name"><div class="item-name">${item.name}${noteBtn}</div></td>
+<td data-col="name"><div class="item-name">${item.name}${noteBtn}<button type="button" class="row-merge-btn" onclick="event.stopPropagation(); confirmMerge(${index})" title="تجميع: الطرود بأول خانة طرد والحبات بأول خانة حبة">🧮</button></div></td>
 <td data-col="pkg"><select id="package-${index}" onchange="calculateRow(${index})" ${disabled}>${pkgOpts}</select></td>
 <td><input type="text" inputmode="decimal" autocomplete="off" id="input1-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
 <td><input type="text" inputmode="decimal" autocomplete="off" id="input2-${index}" oninput="onExprInput(this, ${index})" onkeydown="if(event.key==='Enter') lockInput(this)" ondblclick="unlockInput(this)" placeholder="0"></td>
@@ -3066,7 +3066,189 @@ function lockEditAgain() {
             if (mi) { mi.readOnly = false; mi.classList.remove('cell-locked'); mi.focus(); }
             if (navigator.vibrate) navigator.vibrate(15);
         }
+        // ═══════════ ➕ إضافة سريعة بالبطاقة (طرد/حبة) + 🧮 تجميع الخانات ═══════════
+        // بتكتب بنفس خانات الجدول ومن خلال نفس محرك الحساب (onExprInput) — الحسبة نفسها ما بتتغير
+        // الإضافة: أول خانة فاضية بالمجموعة، وإذا تعبّوا بتنضاف للخانة الأخيرة بقوس: (2)+(5*4)
+        // الحبات: الخانات 5-7 (الخانة 8 بتضل للنقص زي ما هي)
+        const ADD_GROUPS = { pkg: { first: 1, last: 4, label: 'طرود', one: 'طرد' }, unit: { first: 5, last: 7, label: 'حبات', one: 'حبة' } };
+        let addQtyGroup = null;
+        const addUndo = {};
+        function exprIsValid(v) {
+            v = String(v || '').trim();
+            if (!v || !/^[\d\s+\-*/().]+$/.test(v)) return false;
+            try { const r = Function('"use strict"; return (' + v + ')')(); return typeof r === 'number' && isFinite(r); } catch (e) { return false; }
+        }
+        function topLevelTerms(expr) {
+            const out = []; let depth = 0, cur = '';
+            for (const ch of expr) {
+                if (ch === '(') depth++;
+                if (ch === ')') depth--;
+                if (ch === '+' && depth === 0) { out.push(cur.trim()); cur = ''; continue; }
+                cur += ch;
+            }
+            out.push(cur.trim());
+            return out;
+        }
+        function wrapsWhole(t) {
+            if (t[0] !== '(' || t[t.length - 1] !== ')') return false;
+            let depth = 0;
+            for (let i = 0; i < t.length; i++) {
+                if (t[i] === '(') depth++;
+                if (t[i] === ')') depth--;
+                if (depth === 0 && i < t.length - 1) return false;
+            }
+            return true;
+        }
+        // "(2)+(5*4)" بتضل زي ما هي، وأي شي تاني بينحط بقوس
+        function asParenList(v) {
+            v = String(v).trim();
+            const terms = topLevelTerms(v);
+            return terms.every(t => t && wrapsWhole(t)) ? v : `(${v})`;
+        }
+        const srcCell = (idx, k) => document.getElementById(`input${k}-${idx}`);
+        function setCellLocked(el, locked) {
+            el.readOnly = locked;
+            el.classList.toggle('cell-locked', locked);
+            if (!locked) { el.style.background = ''; el.style.cursor = ''; }
+        }
+        function multInfo(idx, group) {
+            const item = inventoryData[idx];
+            const word = { PC: 'حبة', G: 'كيلو', ML: 'لتر', KG: 'كيلو' }[item.unit] || item.unit;
+            if (group === 'pkg') {
+                const ps = parseFloat((document.getElementById(`package-${idx}`) || {}).value) || item.packageSize || 1;
+                return { op: '*', val: ps, txt: `الطرد = ${ps.toLocaleString('en-US')} ${word}`, word };
+            }
+            if (getBatchFactor(idx)) return { op: '*', val: 1, txt: 'الحبة × 1', word };
+            const sop = (document.getElementById(`secondOp-${idx}`) || {}).value || item.secondOp;
+            const sv = parseFloat((document.getElementById(`secondVal-${idx}`) || {}).value) || item.secondVal || 1;
+            return { op: sop, val: sv, txt: `الحبة ${sop === '/' ? '÷' : '×'} ${sv.toLocaleString('en-US')}`, word };
+        }
+        function openAddQty(group) {
+            if (VIEW_ONLY || cardIdx === null || cardIdx === undefined || !ADD_GROUPS[group]) return;
+            addQtyGroup = group;
+            const item = inventoryData[cardIdx];
+            document.getElementById('addQtyTitle').textContent = `➕ إضافة ${ADD_GROUPS[group].label} — ${item.name}`;
+            document.getElementById('addQtyMult').textContent = multInfo(cardIdx, group).txt;
+            const inp = document.getElementById('addQtyInput');
+            inp.value = '';
+            updateAddQtyPreview();
+            document.getElementById('addQtyModal').classList.add('show');
+            setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
+        }
+        function closeAddQty() { document.getElementById('addQtyModal').classList.remove('show'); addQtyGroup = null; }
+        function addQtyKey(ch) {
+            const inp = document.getElementById('addQtyInput');
+            if (ch === 'back') inp.value = inp.value.slice(0, -1);
+            else inp.value += ch;
+            updateAddQtyPreview();
+            try { inp.focus(); } catch (e) {}
+        }
+        function updateAddQtyPreview() {
+            const inp = document.getElementById('addQtyInput');
+            const clean = sanitizeExprValue(inp.value);
+            if (clean !== inp.value) inp.value = clean;
+            const pv = document.getElementById('addQtyPreview');
+            if (!clean.trim()) { pv.textContent = ''; pv.className = 'addqty-preview'; return; }
+            if (!exprIsValid(clean)) { pv.textContent = 'الصيغة مش كاملة'; pv.className = 'addqty-preview bad'; return; }
+            const n = evaluateExpression(clean), m = multInfo(cardIdx, addQtyGroup);
+            const fmtN = x => x.toLocaleString('en-US', { maximumFractionDigits: 3 });
+            const res = m.op === '/' ? n / m.val : n * m.val;
+            pv.innerHTML = `<div dir="rtl">= ${fmtN(n)} ${ADD_GROUPS[addQtyGroup].one}</div>` +
+                `<div class="pv-ltr" dir="ltr">${fmtN(n)} ${m.op === '/' ? '÷' : '×'} ${fmtN(m.val)} = ${fmtN(res)} ${m.word}</div>`;
+            pv.className = 'addqty-preview';
+        }
+        function confirmAddQty() {
+            if (VIEW_ONLY || !addQtyGroup) return;
+            const idx = cardIdx, g = ADD_GROUPS[addQtyGroup];
+            const v = sanitizeExprValue(document.getElementById('addQtyInput').value).trim();
+            if (!exprIsValid(v) || evaluateExpression(v) === 0) { showToast('اكتب كمية صحيحة (مثلاً 5 أو 5*4)', 'error'); return; }
+            let k = g.first;
+            while (k < g.last && String(srcCell(idx, k).value).trim() !== '') k++;
+            const el = srcCell(idx, k);
+            const prev = el.value, wasLocked = el.readOnly;
+            el.value = String(prev).trim() ? `${asParenList(prev)}+(${v})` : v;
+            onExprInput(el, idx);
+            setCellLocked(el, true);
+            (addUndo[idx] = addUndo[idx] || []).push({ k, prev, wasLocked });
+            closeAddQty();
+            refreshCardCells(idx);
+            showToast(`✅ انضاف (${v}) لل${g.label}`, 'success');
+        }
+        function undoLastAdd() {
+            const idx = cardIdx, st = addUndo[idx];
+            if (VIEW_ONLY || !st || !st.length) return;
+            const { k, prev, wasLocked } = st.pop();
+            const el = srcCell(idx, k);
+            el.value = prev;
+            onExprInput(el, idx);
+            setCellLocked(el, wasLocked && String(prev).trim() !== '');
+            refreshCardCells(idx);
+            showToast('↩️ رجعت آخر إضافة', 'success');
+        }
+        function refreshCardCells(idx) {
+            const card = document.getElementById('itemCard');
+            if (cardIdx === idx && card && card.style.display !== 'none') {
+                buildMirrorRow(document.getElementById('icardPkgRow'), idx, 1, 4);
+                buildMirrorRow(document.getElementById('icardUnitRow'), idx, 5, 8);
+            }
+            refreshCardResults(idx);
+        }
+        function updateCardSums(idx) {
+            const fmtN = x => x.toLocaleString('en-US', { maximumFractionDigits: 3 });
+            const line = (from, to, label) => {
+                const vals = [];
+                for (let k = from; k <= to; k++) { const v = String(srcCell(idx, k).value).trim(); if (v) vals.push(v); }
+                if (!vals.length) return '';
+                const total = vals.reduce((t, v) => t + evaluateExpression(v), 0);
+                return `${vals.join('  +  ')}  =  ${fmtN(total)} ${label}`;
+            };
+            const ps = document.getElementById('icardPkgSum'), us = document.getElementById('icardUnitSum');
+            if (ps) ps.textContent = line(1, 4, 'طرد');
+            if (us) us.textContent = line(5, 8, 'حبة');
+            const ub = document.getElementById('icardUndoBtn');
+            if (ub) ub.style.display = (addUndo[idx] && addUndo[idx].length) ? '' : 'none';
+        }
+        // 🧮 تجميع: الطرود كلها بأول خانة طرد، والحبات كلها بأول خانة حبة — كل قيمة بقوس، والناتج ما بيتغير
+        function mergePlan(idx, from, to) {
+            const vals = [];
+            for (let k = from; k <= to; k++) { const v = String(srcCell(idx, k).value).trim(); if (v) vals.push({ k, v }); }
+            if (!vals.length || (vals.length === 1 && vals[0].k === from)) return null;
+            return { from, to, vals, expr: vals.map(x => asParenList(x.v)).join('+') };
+        }
+        function confirmMerge(idx) {
+            if (VIEW_ONLY) return;
+            const item = inventoryData[idx];
+            const plans = [mergePlan(idx, 1, 4), mergePlan(idx, 5, 8)].filter(Boolean);
+            if (!plans.length) { showToast('ما في شي تجمعه بهالصنف', 'error'); return; }
+            if (plans.some(p => p.vals.some(x => !exprIsValid(x.v)))) { showToast('في خانة فيها صيغة مش كاملة — صلّحها أول', 'error'); return; }
+            const resEl = document.getElementById(`result-${idx}`);
+            const before = resEl ? resEl.textContent : '';
+            const msg = `تجميع خانات «${item.name}»؟\n\n` + plans.map(p => `${p.from === 1 ? '📦 الطرود' : '🔢 الحبات'} → الخانة الأولى:\n${p.expr}`).join('\n\n') + `\n\nالناتج بيضل ${before}`;
+            if (!confirm(msg)) return;
+            const snapshot = [];
+            for (let k = 1; k <= 8; k++) { const el = srcCell(idx, k); snapshot.push({ k, v: el.value, l: el.readOnly }); }
+            plans.forEach(p => {
+                for (let k = p.from; k <= p.to; k++) { const el = srcCell(idx, k); el.value = ''; setCellLocked(el, false); }
+                const first = srcCell(idx, p.from);
+                first.value = p.expr;
+                setCellLocked(first, true);
+            });
+            onExprInput(srcCell(idx, 1), idx);
+            // أمان: لو الناتج تغيّر لأي سبب، بنرجّع كل شي زي ما كان
+            if (resEl && resEl.textContent !== before) {
+                snapshot.forEach(x => { const el = srcCell(idx, x.k); el.value = x.v; setCellLocked(el, x.l); });
+                onExprInput(srcCell(idx, 1), idx);
+                showToast('ما زبط التجميع — رجعت الخانات زي ما كانت', 'error');
+                return;
+            }
+            delete addUndo[idx];
+            refreshCardCells(idx);
+            showToast('🧮 تجمّعت الخانات — الناتج ما تغيّر', 'success');
+        }
+        function confirmMergeCard() { if (cardIdx !== null && cardIdx !== undefined) confirmMerge(cardIdx); }
+
         function refreshCardResults(idx) {
+            if (idx === cardIdx) updateCardSums(idx);
             const resEl = document.getElementById(`result-${idx}`);
             const diffEl = document.getElementById(`diffValue-${idx}`);
             const totalTxt = resEl ? resEl.textContent : '0';
