@@ -1735,7 +1735,7 @@ function lockEditAgain() {
         }
         // ═══════════ 🖼️ صورة الفروقات (الاسم + الفرق) للتدقيق — قراءة فقط، ما بتغيّر أي قيمة ═══════════
         // الترتيب: أصناف diffPhotoPriority (+ الماتركس والمياه) أول شي، وبعدها الباقي — وكل مجموعة من الأكبر للأصغر بالقيمة المطلقة
-        function exportDiffPhoto() {
+        function exportDiffPhoto(mode) {
             if (!Object.keys(systemData || {}).length) { showToast('ارفع بيانات النظام أول عشان تنحسب الفروقات', 'error'); return; }
             const prio = (typeof diffPhotoPriority !== 'undefined' ? diffPhotoPriority : []).map(s => s.toLowerCase());
             const UNIT_AR = { G: 'غرام', ML: 'مل', PC: 'حبة', KG: 'كيلو', 'باتش': 'باتش', Batch: 'باتش' };
@@ -1821,9 +1821,28 @@ function lockEditAgain() {
                     setTimeout(() => URL.revokeObjectURL(url), 3000);
                     showToast('✅ تم تنزيل صورة الفروقات', 'success');
                 };
-                download();
+                if (mode !== 'share') { download(); return; }
+                // مشاركة: نافذة المشاركة تبع التلفون (واتساب...) — ولو فشلت لأي سبب بنزّلها بدالها
+                const file = new File([blob], fname, { type: 'image/png' });
+                navigator.share({ files: [file], title: `فروقات الجرد — ${branch}` })
+                    .catch(err => {
+                        if (err && err.name === 'AbortError') return;
+                        showToast('ما زبطت المشاركة — نزّلت الصورة بدالها', 'error');
+                        download();
+                    });
             }, 'image/png');
         }
+        // زر المشاركة بيطلع بس إذا المتصفح بيقدر يشارك صور
+        function canShareImages() {
+            try {
+                return !!(navigator.canShare && typeof File !== 'undefined' &&
+                    navigator.canShare({ files: [new File([new Blob(['x'], { type: 'image/png' })], 'x.png', { type: 'image/png' })] }));
+            } catch (e) { return false; }
+        }
+        (function showDiffShareBtn() {
+            const run = () => { const b = document.getElementById('diffShareBtn'); if (b && canShareImages()) b.style.display = ''; };
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
+        })();
         function renderCsvBar() {
             const bar = document.getElementById('csvBar');
             if (!bar || typeof countSheets === 'undefined') return;

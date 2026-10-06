@@ -41,7 +41,10 @@
                 <button type="button" class="mic-btn" id="micBtn" onclick="startVoiceSearch()" title="بحث صوتي">🎤</button>
             </div>
             <button class="btn btn-tools" id="toolsToggle" onclick="toggleTools()">⚙️ الأدوات</button>
-            <button class="btn btn-diffphoto" type="button" onclick="exportDiffPhoto()">🖼️ صورة الفروقات</button>
+            <div class="diffphoto-row">
+                <button class="btn btn-diffphoto" type="button" onclick="exportDiffPhoto('download')">🖼️ تنزيل صورة الفروقات</button>
+                <button class="btn btn-diffphoto" type="button" id="diffShareBtn" style="display:none" onclick="exportDiffPhoto('share')">📤 مشاركة</button>
+            </div>
         </div>
 
         <!-- TOOLS PANEL (قابلة للطي — الأزرار كلها هنا) -->

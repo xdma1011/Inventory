@@ -932,6 +932,29 @@
             color: #fff;
         }
 
+        .diffphoto-row {
+            display: flex;
+            gap: 8px;
+            flex: 0 0 auto;
+        }
+
+        .diffphoto-row .btn {
+            flex: 0 0 auto;
+            width: auto;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .diffphoto-row {
+                width: 100%;
+            }
+
+            .diffphoto-row .btn {
+                flex: 1 1 0;
+                min-width: 0;
+            }
+        }
+
         /* حجم الطرد: أنحف */
         td[data-col="pkg"] select {
             width: 54px;
