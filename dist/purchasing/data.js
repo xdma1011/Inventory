@@ -9,10 +9,10 @@ const AHRAM_SPOONS = { perCarton: 80 * 25, label: 'معالق غسان', text: '
 const AHRAM_50ML = { perCarton: 2000, label: 'علب 50 مل (شطة ارنون)', text: 'علب 50 مل\nأسود\n{n}\n\nاذا مش اسود لا تبعث' };
 const AHRAM_250ML = { perCarton: 1000, label: 'علب 250 مل (كمالة)', text: '250 مل\nشفاف\n{n}' };
 
-function ahramOrder(branchLabel, lines) {
+function ahramOrder(branchLabel, lines, invoiceName = 'مطعم السيد كشري') {
     return {
         title: '🏭 طلبية مصنع الأهرام',
-        header: `السلام عليكم\nيعطيك العافية\nطلبية ${branchLabel}\n\nالفاتورة باسم :\nمطعم السيد كشري`,
+        header: `السلام عليكم\nيعطيك العافية\nطلبية ${branchLabel}\n\nالفاتورة باسم :\n${invoiceName}`,
         footer: 'ارسل لي الفاتورة مشان احاسبك كليك واحولك مباشرة',
         lines
     };
@@ -64,7 +64,7 @@ const PURCHASING_BRANCHES = {
         orders: [ahramOrder('مرج الحمام', [
             { sku: 'sk-0040', target: 4, ...AHRAM_SPOONS },
             { sku: 'sk-0099', target: 3, ...AHRAM_250ML }
-        ])]
+        ], 'مطعم ارض الرمان')]
     },
     central: {
         label: 'المركزي',
