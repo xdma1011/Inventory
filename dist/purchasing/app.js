@@ -289,7 +289,10 @@ function renderOrders() {
             : `<div class="order-empty">✓ كل شي فوق الهدف — ما في داعي تطلب هلق</div>`;
         return `<div class="panel order-panel">
             <div class="order-head"><h3>${o.title}</h3>
-                <button class="copy-btn" onclick="copyOrder(${i}, this)" ${r.message ? '' : 'disabled'}>📋 نسخ الرسالة</button></div>
+                <span class="order-btns">
+                    <button class="copy-btn" onclick="copyOrder(${i}, this)" ${r.message ? '' : 'disabled'}>📋 نسخ</button>
+                    ${o.waNumber ? `<button class="copy-btn wa-btn" onclick="sendOrderWA(${i})" ${r.message ? '' : 'disabled'}>💬 إرسال للأهرام</button>` : ''}
+                </span></div>
             <div class="order-calc">${r.calc.join('<br>')}</div>
             ${body}
         </div>`;
@@ -298,6 +301,16 @@ function renderOrders() {
 
 function escapeHtml(s) {
     return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+// بيفتح محادثة المورد عالواتساب والطلبية مكتوبة جاهزة
+function sendOrderWA(i) {
+    const text = currentOrderMessages[i];
+    const o = (PURCHASING_BRANCHES[activeBranch].orders || [])[i];
+    if (!text || !o || !o.waNumber) return;
+    const url = `https://wa.me/${o.waNumber}?text=${encodeURIComponent(text)}`;
+    const w = window.open(url, '_blank');
+    if (!w) location.href = url;
 }
 
 function copyOrder(i, btn) {

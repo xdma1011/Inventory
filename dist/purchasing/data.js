@@ -14,6 +14,7 @@ function ahramOrder(branchLabel, lines, invoiceName = 'مطعم السيد كش�
         title: '🏭 طلبية مصنع الأهرام',
         header: `السلام عليكم\nيعطيك العافية\nطلبية ${branchLabel}\n\nالفاتورة باسم :\n${invoiceName}`,
         footer: 'ارسل لي الفاتورة مشان احاسبك كليك واحولك مباشرة',
+        waNumber: '962790466909', // واتساب مصنع الأهرام — زر الإرسال المباشر
         lines
     };
 }
