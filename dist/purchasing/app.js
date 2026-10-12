@@ -16,6 +16,23 @@ function saveQty(branchId) {
         localStorage.setItem(PURCHASING_BRANCHES[branchId].lsKey + '_time', new Date().toISOString());
     } catch (e) {}
 }
+const MAX_FILE_AGE_DAYS = 3; // زر الطلبية المجمّعة للفرعين بيرفض ملف أقدم من هيك
+const DAY_MS = 24 * 60 * 60 * 1000;
+function ageText(t) {
+    if (!t) return 'تاريخ الرفع مش محفوظ';
+    const d = Math.floor((Date.now() - t.getTime()) / DAY_MS);
+    const when = t.toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
+    return `${when} (${d <= 0 ? 'اليوم' : d === 1 ? 'مبارح' : d === 2 ? 'قبل يومين' : `قبل ${d} أيام`})`;
+}
+const isStale = t => !t || (Date.now() - t.getTime()) > MAX_FILE_AGE_DAYS * DAY_MS;
+function deleteBranchFile() {
+    const b = PURCHASING_BRANCHES[activeBranch];
+    if (!confirm(`حذف ملف ${b.label}؟\nبتنحذف الكميات المرفوعة وتاريخ آخر رفع لهالفرع بس.`)) return;
+    qtyByBranch[activeBranch] = {};
+    try { localStorage.removeItem(b.lsKey); localStorage.removeItem(b.lsKey + '_time'); } catch (e) {}
+    render();
+    showMsg(`🗑️ انحذف ملف ${b.label}`, 'success');
+}
 function uploadedAt(branchId) {
     try { const t = localStorage.getItem(PURCHASING_BRANCHES[branchId].lsKey + '_time'); return t ? new Date(t) : null; } catch (e) { return null; }
 }
@@ -247,6 +264,15 @@ function render() {
 
     renderOrders();
 
+    const lu = document.getElementById('lastUpload'), hasFile = Object.keys(qty).length > 0;
+    if (lu) {
+        const t = uploadedAt(activeBranch);
+        lu.textContent = hasFile ? `📅 آخر رفع لـ ${branch.label}: ${ageText(t)}` : `📅 لسا ما انرفع ملف لـ ${branch.label}`;
+        lu.className = 'last-upload' + (hasFile && isStale(t) ? ' stale' : '');
+    }
+    const db = document.getElementById('delFileBtn');
+    if (db) db.style.display = hasFile ? '' : 'none';
+
     const withMin = branch.items.filter(it => it.min !== null && it.min !== undefined).length;
     const uploadedCount = Object.keys(qty).length;
     document.getElementById('branchStats').textContent =
@@ -317,25 +343,28 @@ function renderCombinedOrder() {
         if (o) parts.push({ id, o, b: PURCHASING_BRANCHES[id] });
     });
     if (parts.length < 2) return '';
-    const status = [], missingFile = [], sections = [], names = [];
+    const status = [], missingFile = [], staleFile = [], sections = [], names = [];
     parts.forEach(({ id, o, b }) => {
         const qty = qtyByBranch[id] || {};
         const t = uploadedAt(id);
         if (!Object.keys(qty).length) { missingFile.push(b.label); status.push(`${b.icon} ${b.label}: <b>ما انرفع ملف</b>`); return; }
-        const when = t ? t.toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }) : 'غير معروف';
         const r = buildOrder(o, qty);
-        status.push(`${b.icon} ${b.label}: ${r.blocks.length ? `<b>${r.blocks.length}</b> صنف بدهم طلب` : 'ما بدها شي'} — ملف ${when}`);
+        const stale = isStale(t);
+        if (stale) staleFile.push(b.label);
+        status.push(`${b.icon} ${b.label}: ${r.blocks.length ? `<b>${r.blocks.length}</b> صنف بدهم طلب` : 'ما بدها شي'} — <span class="${stale ? 'stale' : ''}">ملف ${ageText(t)}${stale ? ' ⚠️ قديم' : ''}</span>`);
         if (r.blocks.length) names.push(b.label);
         if (r.blocks.length) sections.push(`━━━━━━━━━━\n${b.icon} ${b.label}\nالفاتورة باسم :\n${o.invoiceName}\n\n${r.blocks.join('\n----------\n\n')}`);
     });
     let message = '';
-    if (!missingFile.length && sections.length) {
+    if (!missingFile.length && !staleFile.length && sections.length) {
         message = `السلام عليكم\nيعطيك العافية\nطلبية ${names.join(' و')}\n\n${sections.join('\n\n')}\n\n` +
             (sections.length > 1 ? 'ارسل لي الفواتير مشان احاسبك كليك واحولك مباشرة' : mine.footer);
     }
     combinedOrder = message ? { text: message, waNumber: mine.waNumber } : null;
     const body = missingFile.length
         ? `<div class="order-calc">ارفع ملف ${missingFile.join(' و')} من تابه أول، وبعدين ارجع هون</div>`
+        : staleFile.length
+        ? `<div class="order-calc stale">⚠️ ملف ${staleFile.join(' و')} أقدم من ${MAX_FILE_AGE_DAYS} أيام (أو تاريخه مش محفوظ) — ارفعه من جديد من تابه، وبعدين ابعت</div>`
         : message ? `<div class="order-preview">${escapeHtml(message)}</div>`
         : `<div class="order-empty">✓ الفرعين فوق الهدف — ما في داعي تطلب هلق</div>`;
     return `<div class="panel order-panel">
