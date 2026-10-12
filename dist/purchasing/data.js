@@ -12,6 +12,7 @@ const AHRAM_250ML = { perCarton: 1000, label: 'علب 250 مل (كمالة)', te
 function ahramOrder(branchLabel, lines, invoiceName = 'مطعم السيد كشري') {
     return {
         title: '🏭 طلبية مصنع الأهرام',
+        group: 'ahram', branchLabel, invoiceName, // للرسالة المجمّعة للفرعين
         header: `السلام عليكم\nيعطيك العافية\nطلبية ${branchLabel}\n\nالفاتورة باسم :\n${invoiceName}`,
         footer: 'ارسل لي الفاتورة مشان احاسبك كليك واحولك مباشرة',
         waNumber: '962790466909', // واتساب مصنع الأهرام — زر الإرسال المباشر

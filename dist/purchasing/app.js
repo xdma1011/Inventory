@@ -11,7 +11,13 @@ function loadQty(branchId) {
     } catch (e) { return {}; }
 }
 function saveQty(branchId) {
-    try { localStorage.setItem(PURCHASING_BRANCHES[branchId].lsKey, JSON.stringify(qtyByBranch[branchId] || {})); } catch (e) {}
+    try {
+        localStorage.setItem(PURCHASING_BRANCHES[branchId].lsKey, JSON.stringify(qtyByBranch[branchId] || {}));
+        localStorage.setItem(PURCHASING_BRANCHES[branchId].lsKey + '_time', new Date().toISOString());
+    } catch (e) {}
+}
+function uploadedAt(branchId) {
+    try { const t = localStorage.getItem(PURCHASING_BRANCHES[branchId].lsKey + '_time'); return t ? new Date(t) : null; } catch (e) { return null; }
 }
 Object.keys(PURCHASING_BRANCHES).forEach(b => { qtyByBranch[b] = loadQty(b); });
 
@@ -265,7 +271,7 @@ function buildOrder(order, qty) {
     const message = blocks.length
         ? `${order.header}\n\n\n${blocks.join('\n----------\n\n')}\n\n${order.footer}`
         : '';
-    return { calc, message, missing };
+    return { calc, message, missing, blocks };
 }
 
 let currentOrderMessages = [];
@@ -296,7 +302,62 @@ function renderOrders() {
             <div class="order-calc">${r.calc.join('<br>')}</div>
             ${body}
         </div>`;
-    }).join('');
+    }).join('') + renderCombinedOrder();
+}
+
+// ─── طلبية وحدة للفرعين: قسم لكل فرع مع اسم فاتورته، من ملف كل فرع المرفوع بتابه ───
+let combinedOrder = null;
+function renderCombinedOrder() {
+    combinedOrder = null;
+    const mine = (PURCHASING_BRANCHES[activeBranch].orders || []).find(o => o.group === 'ahram');
+    if (!mine) return '';
+    const parts = [];
+    Object.keys(PURCHASING_BRANCHES).forEach(id => {
+        const o = (PURCHASING_BRANCHES[id].orders || []).find(x => x.group === 'ahram');
+        if (o) parts.push({ id, o, b: PURCHASING_BRANCHES[id] });
+    });
+    if (parts.length < 2) return '';
+    const status = [], missingFile = [], sections = [], names = [];
+    parts.forEach(({ id, o, b }) => {
+        const qty = qtyByBranch[id] || {};
+        const t = uploadedAt(id);
+        if (!Object.keys(qty).length) { missingFile.push(b.label); status.push(`${b.icon} ${b.label}: <b>ما انرفع ملف</b>`); return; }
+        const when = t ? t.toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }) : 'غير معروف';
+        const r = buildOrder(o, qty);
+        status.push(`${b.icon} ${b.label}: ${r.blocks.length ? `<b>${r.blocks.length}</b> صنف بدهم طلب` : 'ما بدها شي'} — ملف ${when}`);
+        if (r.blocks.length) names.push(b.label);
+        if (r.blocks.length) sections.push(`━━━━━━━━━━\n${b.icon} ${b.label}\nالفاتورة باسم :\n${o.invoiceName}\n\n${r.blocks.join('\n----------\n\n')}`);
+    });
+    let message = '';
+    if (!missingFile.length && sections.length) {
+        message = `السلام عليكم\nيعطيك العافية\nطلبية ${names.join(' و')}\n\n${sections.join('\n\n')}\n\n` +
+            (sections.length > 1 ? 'ارسل لي الفواتير مشان احاسبك كليك واحولك مباشرة' : mine.footer);
+    }
+    combinedOrder = message ? { text: message, waNumber: mine.waNumber } : null;
+    const body = missingFile.length
+        ? `<div class="order-calc">ارفع ملف ${missingFile.join(' و')} من تابه أول، وبعدين ارجع هون</div>`
+        : message ? `<div class="order-preview">${escapeHtml(message)}</div>`
+        : `<div class="order-empty">✓ الفرعين فوق الهدف — ما في داعي تطلب هلق</div>`;
+    return `<div class="panel order-panel">
+        <div class="order-head"><h3>🏭 طلبية الأهرام — الفرعين مع بعض</h3>
+            <span class="order-btns">
+                <button class="copy-btn" onclick="copyCombined(this)" ${message ? '' : 'disabled'}>📋 نسخ</button>
+                ${mine.waNumber ? `<button class="copy-btn wa-btn" onclick="sendCombinedWA()" ${message ? '' : 'disabled'}>💬 إرسال للأهرام</button>` : ''}
+            </span></div>
+        <div class="order-calc">${status.join('<br>')}</div>
+        ${body}
+    </div>`;
+}
+function sendCombinedWA() {
+    if (!combinedOrder || !combinedOrder.waNumber) return;
+    const url = `https://wa.me/${combinedOrder.waNumber}?text=${encodeURIComponent(combinedOrder.text)}`;
+    const w = window.open(url, '_blank');
+    if (!w) location.href = url;
+}
+function copyCombined(btn) {
+    if (!combinedOrder) return;
+    currentOrderMessages.__combined = combinedOrder.text;
+    copyOrder('__combined', btn);
 }
 
 function escapeHtml(s) {
