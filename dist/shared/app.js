@@ -793,8 +793,12 @@ function lockEditAgain() {
                     const sop = document.getElementById(`secondOp-${i}`);
                     const sva = document.getElementById(`secondVal-${i}`);
                     if (!item.isFixed) {
-                        if (pkg) pkg.value = entry.packageSize || item.packageSize;
-                        if (mul) mul.value = entry.multiplier || item.packageSize;
+                        // حجم طرد قديم انشال من data.js (oldPackageSizes): بيتبدّل بالجديد بس لما خانات الطرود فاضية،
+                        // عشان ما يتغيّر معنى أي رقم مدخل على أساس الحجم القديم
+                        const pkgEmpty = !['input1', 'input2', 'input3', 'input4'].some(n => String(entry[n] || '').trim());
+                        const oldPkg = item.oldPackageSizes && item.oldPackageSizes.includes(parseFloat(entry.packageSize)) && pkgEmpty;
+                        if (pkg) pkg.value = oldPkg ? item.packageSize : (entry.packageSize || item.packageSize);
+                        if (mul) mul.value = oldPkg ? item.packageSize : (entry.multiplier || item.packageSize);
                         if (sop) sop.value = entry.secondOp || '*';
                         if (sva) sva.value = entry.secondVal || 1;
                     }

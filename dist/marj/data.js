@@ -18,7 +18,7 @@ const inventoryData = [
             { name: "ملاعق", sku: "sk-0040", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, filter: "معالق ملاعق", pkgBarcode: "", unitBarcode: "" },
             { name: "شوك", sku: "sk-0041", unit: "PC", packageSize: 25.0, secondOp: "*", secondVal: 25, isFixed: true, pkgBarcode: "", unitBarcode: "" },
             { name: "معكرونة كوع", sku: "sk-0033", unit: "G", packageSize: 9.6, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "سباغتي خام", sku: "sk-0034", unit: "G", packageSize: 10.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
+            { name: "سباغتي خام", sku: "sk-0034", unit: "G", packageSize: 1.0, oldPackageSizes: [10], secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "رز خام", sku: "sk-0032", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "عدس حب خام", sku: "sk-0046", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
             { name: "حمص خام", sku: "sk-0047", unit: "G", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
