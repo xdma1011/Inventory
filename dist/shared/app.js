@@ -799,8 +799,10 @@ function lockEditAgain() {
                         const oldPkg = item.oldPackageSizes && item.oldPackageSizes.includes(parseFloat(entry.packageSize)) && pkgEmpty;
                         if (pkg) pkg.value = oldPkg ? item.packageSize : (entry.packageSize || item.packageSize);
                         if (mul) mul.value = oldPkg ? item.packageSize : (entry.multiplier || item.packageSize);
-                        if (sop) sop.value = entry.secondOp || '*';
-                        if (sva) sva.value = entry.secondVal || 1;
+                        const unitEmpty = !['input5', 'input6', 'input7', 'input8'].some(n => String(entry[n] || '').trim());
+                        const oldSec = item.oldSecondVals && item.oldSecondVals.includes(parseFloat(entry.secondVal)) && unitEmpty;
+                        if (sop) sop.value = oldSec ? item.secondOp : (entry.secondOp || '*');
+                        if (sva) sva.value = oldSec ? item.secondVal : (entry.secondVal || 1);
                     }
                     if (entry.input7 === undefined && entry.input8 === undefined) {
                         // حفظ من النسخة القديمة (3+3): نرحّل المجموعة الثانية لمواقعها الجديدة
@@ -3023,8 +3025,16 @@ function lockEditAgain() {
             document.getElementById('itemCard').style.display = '';
             document.getElementById('icardName').textContent = item.name;
             document.getElementById('icardSku').textContent = item.sku;
-            document.getElementById('icardPkgInfo').textContent = '× ' + item.packageSize + ' ' + item.unit;
-            document.getElementById('icardUnitInfo').textContent = item.secondOp === '/' ? '÷ ' + item.secondVal : '× ' + item.secondVal;
+            // المعامل الفعلي بالصف (ممكن يختلف عن الافتراضي لجرد محفوظ قديم)، مش قيمة data.js
+            const curPkg = (document.getElementById(`package-${idx}`) || {}).value || item.packageSize;
+            const curOp = (document.getElementById(`secondOp-${idx}`) || {}).value || item.secondOp;
+            const curSec = (document.getElementById(`secondVal-${idx}`) || {}).value || item.secondVal;
+            document.getElementById('icardPkgInfo').textContent = '× ' + curPkg + ' ' + item.unit;
+            document.getElementById('icardUnitInfo').textContent = curOp === '/' ? '÷ ' + curSec : '× ' + curSec;
+            const gn = groupNames(idx);
+            const setTxt = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+            setTxt('icardPkgTitle', 'ال' + gn.pkg.many); setTxt('icardUnitTitle', 'ال' + gn.unit.many);
+            setTxt('icardAddPkgBtn', '➕ ' + gn.pkg.one); setTxt('icardAddUnitBtn', '➕ ' + gn.unit.one);
             document.getElementById('icardUnit').textContent = item.unit;
             const pkgRow = document.getElementById('icardPkgRow');
             const unitRow = document.getElementById('icardUnitRow');
@@ -3115,23 +3125,31 @@ function lockEditAgain() {
             el.classList.toggle('cell-locked', locked);
             if (!locked) { el.style.background = ''; el.style.cursor = ''; }
         }
+        function groupNames(idx) {
+            const it = inventoryData[idx] || {};
+            return {
+                pkg: { one: it.pkgName || 'طرد', many: it.pkgPlural || 'طرود' },
+                unit: { one: it.unitName || 'حبة', many: it.unitPlural || 'حبات' }
+            };
+        }
         function multInfo(idx, group) {
             const item = inventoryData[idx];
+            const gn = groupNames(idx);
             const word = { PC: 'حبة', G: 'كيلو', ML: 'لتر', KG: 'كيلو' }[item.unit] || item.unit;
             if (group === 'pkg') {
                 const ps = parseFloat((document.getElementById(`package-${idx}`) || {}).value) || item.packageSize || 1;
-                return { op: '*', val: ps, txt: `الطرد = ${ps.toLocaleString('en-US')} ${word}`, word };
+                return { op: '*', val: ps, txt: `ال${gn.pkg.one} = ${ps.toLocaleString('en-US')} ${word}`, word };
             }
             if (getBatchFactor(idx)) return { op: '*', val: 1, txt: 'الحبة × 1', word };
             const sop = (document.getElementById(`secondOp-${idx}`) || {}).value || item.secondOp;
             const sv = parseFloat((document.getElementById(`secondVal-${idx}`) || {}).value) || item.secondVal || 1;
-            return { op: sop, val: sv, txt: `الحبة ${sop === '/' ? '÷' : '×'} ${sv.toLocaleString('en-US')}`, word };
+            return { op: sop, val: sv, txt: item.unitName && sop === '*' ? `ال${gn.unit.one} = ${sv.toLocaleString('en-US')} ${word}` : `الحبة ${sop === '/' ? '÷' : '×'} ${sv.toLocaleString('en-US')}`, word };
         }
         function openAddQty(group) {
             if (VIEW_ONLY || cardIdx === null || cardIdx === undefined || !ADD_GROUPS[group]) return;
             addQtyGroup = group;
             const item = inventoryData[cardIdx];
-            document.getElementById('addQtyTitle').textContent = `➕ إضافة ${ADD_GROUPS[group].label} — ${item.name}`;
+            document.getElementById('addQtyTitle').textContent = `➕ إضافة ${groupNames(cardIdx)[group].many} — ${item.name}`;
             document.getElementById('addQtyMult').textContent = multInfo(cardIdx, group).txt;
             const inp = document.getElementById('addQtyInput');
             inp.value = '';
@@ -3157,13 +3175,13 @@ function lockEditAgain() {
             const n = evaluateExpression(clean), m = multInfo(cardIdx, addQtyGroup);
             const fmtN = x => x.toLocaleString('en-US', { maximumFractionDigits: 3 });
             const res = m.op === '/' ? n / m.val : n * m.val;
-            pv.innerHTML = `<div dir="rtl">= ${fmtN(n)} ${ADD_GROUPS[addQtyGroup].one}</div>` +
+            pv.innerHTML = `<div dir="rtl">= ${fmtN(n)} ${groupNames(cardIdx)[addQtyGroup].one}</div>` +
                 `<div class="pv-ltr" dir="ltr">${fmtN(n)} ${m.op === '/' ? '÷' : '×'} ${fmtN(m.val)} = ${fmtN(res)} ${m.word}</div>`;
             pv.className = 'addqty-preview';
         }
         function confirmAddQty() {
             if (VIEW_ONLY || !addQtyGroup) return;
-            const idx = cardIdx, g = ADD_GROUPS[addQtyGroup];
+            const idx = cardIdx, grp = addQtyGroup, g = ADD_GROUPS[grp];
             const v = sanitizeExprValue(document.getElementById('addQtyInput').value).trim();
             if (!exprIsValid(v) || evaluateExpression(v) === 0) { showToast('اكتب كمية صحيحة (مثلاً 5 أو 5*4)', 'error'); return; }
             let k = g.first;
@@ -3176,7 +3194,7 @@ function lockEditAgain() {
             (addUndo[idx] = addUndo[idx] || []).push({ k, prev, wasLocked });
             closeAddQty();
             refreshCardCells(idx);
-            showToast(`✅ انضاف (${v}) لل${g.label}`, 'success');
+            showToast(`✅ انضاف (${v}) لل${groupNames(idx)[grp].many}`, 'success');
         }
         function undoLastAdd() {
             const idx = cardIdx, st = addUndo[idx];
@@ -3207,8 +3225,9 @@ function lockEditAgain() {
                 return `${vals.join('  +  ')}  =  ${fmtN(total)} ${label}`;
             };
             const ps = document.getElementById('icardPkgSum'), us = document.getElementById('icardUnitSum');
-            if (ps) ps.textContent = line(1, 4, 'طرد');
-            if (us) us.textContent = line(5, 8, 'حبة');
+            const gn = groupNames(idx);
+            if (ps) ps.textContent = line(1, 4, gn.pkg.one);
+            if (us) us.textContent = line(5, 8, gn.unit.one);
             const ub = document.getElementById('icardUndoBtn');
             if (ub) ub.style.display = (addUndo[idx] && addUndo[idx].length) ? '' : 'none';
         }

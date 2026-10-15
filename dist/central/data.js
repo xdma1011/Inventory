@@ -2,10 +2,10 @@
 /* jshint esversion:6 */
 
 const inventoryData = [
-            { name: "صحن كشري - طبق", sku: "sk-0042", unit: "PC", packageSize: 50.0, secondOp: "*", secondVal: 1, isFixed: false, note: "كرتون = 50 صحن", pkgBarcode: "", unitBarcode: "" },
-            { name: "اغطية صحن كشري", sku: "sk-0095", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "صحن ام علي", sku: "sk-0091", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" },
-            { name: "صحن بشاميل - صحن باشميل", sku: "sk-0092", unit: "PC", packageSize: 1.0, secondOp: "*", secondVal: 1, isFixed: false, pkgBarcode: "", unitBarcode: "" }
+            { name: "صحن كشري - طبق", sku: "sk-0042", unit: "PC", packageSize: 300, oldPackageSizes: [50], secondOp: "*", secondVal: 50, oldSecondVals: [1], pkgName: "كرتونة", pkgPlural: "كراتين", unitName: "ربطة", unitPlural: "ربطات", isFixed: false, note: "كرتونة = 300 صحن — الخانات التانية ربطات (الربطة = 50)", pkgBarcode: "", unitBarcode: "" },
+            { name: "اغطية صحن كشري", sku: "sk-0095", unit: "PC", packageSize: 300, oldPackageSizes: [1], secondOp: "*", secondVal: 50, oldSecondVals: [1], pkgName: "كرتونة", pkgPlural: "كراتين", unitName: "ربطة", unitPlural: "ربطات", isFixed: false, note: "كرتونة = 300 غطا — الخانات التانية ربطات (الربطة = 50)", pkgBarcode: "", unitBarcode: "" },
+            { name: "صحن ام علي", sku: "sk-0091", unit: "PC", packageSize: 1000, oldPackageSizes: [1], secondOp: "*", secondVal: 125, oldSecondVals: [1], pkgName: "كرتونة", pkgPlural: "كراتين", unitName: "ربطة", unitPlural: "ربطات", isFixed: false, note: "كرتونة = 1000 صحن — الخانات التانية ربطات (الربطة = 125)", pkgBarcode: "", unitBarcode: "" },
+            { name: "صحن بشاميل - صحن باشميل", sku: "sk-0092", unit: "PC", packageSize: 500, oldPackageSizes: [1], secondOp: "*", secondVal: 125, oldSecondVals: [1], pkgName: "كرتونة", pkgPlural: "كراتين", unitName: "ربطة", unitPlural: "ربطات", isFixed: false, note: "كرتونة = 500 صحن — الخانات التانية ربطات (الربطة = 125)", pkgBarcode: "", unitBarcode: "" }
         ];
 
 const sectionStarts = { 0: "🧾 جرد المستودع المركزي" };
