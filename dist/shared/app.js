@@ -1804,7 +1804,7 @@ function lockEditAgain() {
             const neg = skus.filter(sk => systemData[sk] < -0.0049).map(sk => {
                 const m = sysMeta[sk] || {}, it = pageItem(sk);
                 const u = String(m.unit || (it && it.unit) || '').toUpperCase();
-                return { sk, q: systemData[sk], name: m.name || (it && it.name) || sheetName(sk) || sk, unit: UNIT_AR[u] || u.toLowerCase() };
+                return { sk, q: systemData[sk], name: m.name || (it && it.name) || sheetName(sk) || 'صنف بدون اسم (ارفع ملف المستويات من جديد)', unit: UNIT_AR[u] || u.toLowerCase() };
             }).sort((a, b) => a.q - b.q);
             if (!neg.length) { showToast('✅ ما في ولا صنف بالسالب بملف المستويات', 'success'); return; }
             const RLM = '\u200F';
@@ -1816,7 +1816,8 @@ function lockEditAgain() {
             groups.forEach(([title, rows]) => {
                 if (!rows.length) return;
                 lines.push('', `*${title}*`);
-                rows.forEach(x => lines.push(`${RLM}${x.name}: ${waNum(x.q)} ${x.unit}`));
+                rows.forEach(x => lines.push(`${RLM}${x.name}: ${waNum(x.q)} ${x.unit}`, ''));
+                lines.pop(); // بلا سطر فاضي زيادة بآخر المجموعة
             });
             lines.push('', `${neg.length} صنف بالسالب`);
             sendWhatsApp(lines.join('\n'), SUPERVISOR_WHATSAPP, 'السوالب للسوبر فايزر');
