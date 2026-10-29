@@ -626,7 +626,7 @@ function lockEditAgain() {
         function parseSystemText(content, mergeMode) {
             content = String(content || '').replace(/^\uFEFF/, '').trim();
             if (!content) throw new Error('المحتوى فارغ');
-            if (!mergeMode) { systemData = {}; sysMeta = {}; }
+            if (!mergeMode) systemData = {}; // sysMeta بيضل: الأسماء اللي انعرفت من ملفات سابقة بتنفع لو الملف الجديد بلا أسماء
             if (content[0] === '[' || content[0] === '{') {
                 const arr = JSON.parse(content);
                 (Array.isArray(arr) ? arr : [arr]).forEach(item => {
@@ -1785,6 +1785,17 @@ function lockEditAgain() {
         const SUPERVISOR_WHATSAPP = '962796497707';
         // ═══════════ ⚠️ إرسال السوالب: كل صنف رصيده بفوديكس (ملف المستويات) بالسالب ═══════════
         // سالب = غالباً فاتورة مش مدخلة (مواد) أو إنتاج مش منتج على فوديكس (P-/SP-)
+        // رقم بإشارته (+/-) لرسائل الواتساب — علامة اتجاه (LRM) عشان الإشارة ما تنقلب للجهة التانية
+        function waNum(v) {
+            if (Math.abs(v) < 0.005) return '0';
+            return '\u200E' + (v > 0 ? '+' : '-') + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits: 2 }) + '\u200E';
+        }
+        // اسم الصنف بفوديكس من شيتات الجرد (لما ما يكون في اسم من ملف المستويات)
+        function sheetName(sk) {
+            if (typeof countSheets === 'undefined') return '';
+            for (const sh of countSheets) for (const e of sh.items) if (String(e.s).toLowerCase() === sk) return e.n;
+            return '';
+        }
         function sendNegativesWhatsApp() {
             const skus = Object.keys(systemData || {});
             if (!skus.length) { showToast('ارفع ملف المستويات (بيانات النظام) أول', 'error'); return; }
@@ -1793,7 +1804,7 @@ function lockEditAgain() {
             const neg = skus.filter(sk => systemData[sk] < -0.0049).map(sk => {
                 const m = sysMeta[sk] || {}, it = pageItem(sk);
                 const u = String(m.unit || (it && it.unit) || '').toUpperCase();
-                return { sk, q: systemData[sk], name: m.name || (it && it.name) || sk, unit: UNIT_AR[u] || u.toLowerCase() };
+                return { sk, q: systemData[sk], name: m.name || (it && it.name) || sheetName(sk) || sk, unit: UNIT_AR[u] || u.toLowerCase() };
             }).sort((a, b) => a.q - b.q);
             if (!neg.length) { showToast('✅ ما في ولا صنف بالسالب بملف المستويات', 'success'); return; }
             const RLM = '\u200F';
@@ -1805,7 +1816,7 @@ function lockEditAgain() {
             groups.forEach(([title, rows]) => {
                 if (!rows.length) return;
                 lines.push('', `*${title}*`);
-                rows.forEach(x => lines.push(`${RLM}−${Math.abs(x.q).toLocaleString('en-US', { maximumFractionDigits: 2 })} ${x.unit} | ${x.name}`));
+                rows.forEach(x => lines.push(`${RLM}${x.name}: ${waNum(x.q)} ${x.unit}`));
             });
             lines.push('', `${neg.length} صنف بالسالب`);
             sendWhatsApp(lines.join('\n'), SUPERVISOR_WHATSAPP, 'السوالب للسوبر فايزر');
@@ -1821,14 +1832,14 @@ function lockEditAgain() {
             if (d.pairs.length) {
                 lines.push('', `*${PAIRS_TITLE}*`);
                 d.pairs.forEach(pr => {
-                    lines.push(`${RLM}*صافي ${diffNum(pr.net)} ${pr.net.unit}* | ${pr.title}`);
-                    lines.push(`${RLM}    (${pr.parts.map(x => `${x.name} ${diffNum(x)}`).join(' + ')})`);
+                    lines.push(`${RLM}*${pr.title}: صافي ${waNum(pr.net.diff)} ${pr.net.unit}*`);
+                    lines.push(`${RLM}    (${pr.parts.map(x => `${x.name} ${waNum(x.diff)}`).join(' + ')})`);
                 });
             }
             [[DIFF_SECTIONS[0], d.top], [DIFF_SECTIONS[1], d.rest]].forEach(([title, rows]) => {
                 if (!rows.length) return;
                 lines.push('', `*${title}*`);
-                rows.forEach(r => lines.push(`${RLM}${diffNum(r)} ${r.unit} | ${r.name}`));
+                rows.forEach(r => lines.push(`${RLM}${r.name}: ${waNum(r.diff)} ${r.unit}`));
             });
             const foot = [`${d.top.length + d.rest.length} صنف فيه فرق`, `${d.zero} صنف بدون فرق`];
             if (d.noSys) foot.push(`${d.noSys} صنف ما إله رصيد بالنظام`);
