@@ -379,7 +379,12 @@ function renderCombinedOrder() {
 }
 function sendCombinedWA() {
     if (!combinedOrder || !combinedOrder.waNumber) return;
-    const url = `https://wa.me/${combinedOrder.waNumber}?text=${encodeURIComponent(combinedOrder.text)}`;
+    sendWhatsApp(combinedOrder.text, combinedOrder.waNumber, 'مصنع الأهرام — الفرعين');
+}
+// نافذة الإرسال المشتركة (../shared/wa-send.js) — وإذا مش محمّلة: فتح مباشر للرقم الافتراضي
+function sendWhatsApp(text, number, label) {
+    if (typeof openWhatsAppSend === 'function') return openWhatsAppSend(text, number, label);
+    const url = `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
     const w = window.open(url, '_blank');
     if (!w) location.href = url;
 }
@@ -398,9 +403,7 @@ function sendOrderWA(i) {
     const text = currentOrderMessages[i];
     const o = (PURCHASING_BRANCHES[activeBranch].orders || [])[i];
     if (!text || !o || !o.waNumber) return;
-    const url = `https://wa.me/${o.waNumber}?text=${encodeURIComponent(text)}`;
-    const w = window.open(url, '_blank');
-    if (!w) location.href = url;
+    sendWhatsApp(text, o.waNumber, 'مصنع الأهرام');
 }
 
 function copyOrder(i, btn) {

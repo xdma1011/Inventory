@@ -29,7 +29,7 @@ const VIEW_ONLY = FORCE_VIEW_PARAM || !isEditUnlocked();
 (function applyViewOnlyMode() {
     if (!VIEW_ONLY) return;
     // أزرار/عناصر البحث والفلترة مسموحة — هي عرض بس ما بتعدّل ولا بترفع أي بيانات
-    const allowIds = new Set(['searchInput', 'historySearchInput', 'cardSearchInput', 'toolsSearchInput', 'historyFromSelect', 'historyToSelect', 'visSearchInput', 'passwordInput']);
+    const allowIds = new Set(['searchInput', 'historySearchInput', 'cardSearchInput', 'toolsSearchInput', 'historyFromSelect', 'historyToSelect', 'visSearchInput', 'passwordInput', 'waNumberInput']);
     function lockNode(node) {
         if (!(node instanceof Element)) return;
         if (node.matches && node.matches('input, select, textarea') && !allowIds.has(node.id)) {
@@ -1808,9 +1808,7 @@ function lockEditAgain() {
                 rows.forEach(x => lines.push(`${RLM}−${Math.abs(x.q).toLocaleString('en-US', { maximumFractionDigits: 2 })} ${x.unit} | ${x.name}`));
             });
             lines.push('', `${neg.length} صنف بالسالب`);
-            const url = `https://wa.me/${SUPERVISOR_WHATSAPP}?text=${encodeURIComponent(lines.join('\n'))}`;
-            const w = window.open(url, '_blank');
-            if (!w) location.href = url;
+            sendWhatsApp(lines.join('\n'), SUPERVISOR_WHATSAPP, 'السوالب للسوبر فايزر');
         }
 
         function sendDiffWhatsApp() {
@@ -1835,7 +1833,12 @@ function lockEditAgain() {
             const foot = [`${d.top.length + d.rest.length} صنف فيه فرق`, `${d.zero} صنف بدون فرق`];
             if (d.noSys) foot.push(`${d.noSys} صنف ما إله رصيد بالنظام`);
             lines.push('', foot.join(' · '));
-            const url = `https://wa.me/${SUPERVISOR_WHATSAPP}?text=${encodeURIComponent(lines.join('\n'))}`;
+            sendWhatsApp(lines.join('\n'), SUPERVISOR_WHATSAPP, 'الفروق للسوبر فايزر');
+        }
+        // نافذة الإرسال المشتركة (wa-send.js) — وإذا مش محمّلة لأي سبب: فتح مباشر للرقم الافتراضي زي قبل
+        function sendWhatsApp(text, number, label) {
+            if (typeof openWhatsAppSend === 'function') return openWhatsAppSend(text, number, label);
+            const url = `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
             const w = window.open(url, '_blank');
             if (!w) location.href = url;
         }
