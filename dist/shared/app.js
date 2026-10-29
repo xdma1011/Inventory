@@ -105,6 +105,9 @@ function lockEditAgain() {
         const secondMultiplierOptions = [0.815, 1.0, 1.1, 25.0];
         const CLEAR_PASSWORD = "12345";
         let systemData = {};
+        // اسم ووحدة كل صنف من ملف المستويات (للعرض بس — ما بيدخل بأي حساب)، محفوظ لحاله لكل فرع
+        const SYS_META_LS_KEY = 'sysMeta_' + (window.BRANCH_ID || 'gardens') + '_v1';
+        let sysMeta = (() => { try { return JSON.parse(localStorage.getItem(SYS_META_LS_KEY)) || {}; } catch (e) { return {}; } })();
         let autoSaveTimer = null;
         let isSorted = false;
         let originalRows = [];
@@ -623,7 +626,7 @@ function lockEditAgain() {
         function parseSystemText(content, mergeMode) {
             content = String(content || '').replace(/^\uFEFF/, '').trim();
             if (!content) throw new Error('المحتوى فارغ');
-            if (!mergeMode) systemData = {};
+            if (!mergeMode) { systemData = {}; sysMeta = {}; }
             if (content[0] === '[' || content[0] === '{') {
                 const arr = JSON.parse(content);
                 (Array.isArray(arr) ? arr : [arr]).forEach(item => {
@@ -637,6 +640,8 @@ function lockEditAgain() {
                 const headers = splitSysLine(lines[0], sep).map(h => h.toLowerCase());
                 let si = headers.findIndex(h => h.includes('sku') || h.includes('كود') || h.includes('رمز'));
                 let qi = headers.findIndex(h => h.includes('quantity') || h.includes('qty') || h.includes('كمية') || h.includes('الكمية') || h.includes('رصيد'));
+                const ni = headers.findIndex(h => h === 'name' || h.includes('الاسم') || h.includes('اسم'));
+                const ui = headers.findIndex(h => h.includes('unit') || h.includes('وحدة'));
                 let start = 1;
                 if (si < 0 || qi < 0) {
                     // لا عناوين معروفة؟ خمّن: عمود يشبه sk-0000 هو الكود، وآخر عمود رقمي هو الكمية
@@ -652,9 +657,11 @@ function lockEditAgain() {
                     if (!sku) continue;
                     const q = parseFloat(String(cols[qi] || '0').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/,/g, ''));
                     systemData[sku] = isNaN(q) ? 0 : q;
+                    if (ni >= 0 || ui >= 0) sysMeta[sku] = { name: ni >= 0 ? (cols[ni] || '') : '', unit: ui >= 0 ? (cols[ui] || '') : '' };
                 }
                 if (!Object.keys(systemData).length) throw new Error('ما قدرت أقرأ أي صنف من الملف');
             }
+            try { localStorage.setItem(SYS_META_LS_KEY, JSON.stringify(sysMeta)); } catch (e) {}
             return Object.keys(systemData).length;
         }
         function refreshLiveAfterSystemUpdate() {
@@ -1776,6 +1783,36 @@ function lockEditAgain() {
 
         // ═══════════ 💬 إرسال الفروقات كرسالة نص لواتساب السوبر فايزر مباشرة ═══════════
         const SUPERVISOR_WHATSAPP = '962796497707';
+        // ═══════════ ⚠️ إرسال السوالب: كل صنف رصيده بفوديكس (ملف المستويات) بالسالب ═══════════
+        // سالب = غالباً فاتورة مش مدخلة (مواد) أو إنتاج مش منتج على فوديكس (P-/SP-)
+        function sendNegativesWhatsApp() {
+            const skus = Object.keys(systemData || {});
+            if (!skus.length) { showToast('ارفع ملف المستويات (بيانات النظام) أول', 'error'); return; }
+            const UNIT_AR = { G: 'غرام', ML: 'مل', PC: 'حبة', KG: 'كيلو', BATCH: 'باتش' };
+            const pageItem = sk => inventoryData.find(it => it.sku.toLowerCase() === sk);
+            const neg = skus.filter(sk => systemData[sk] < -0.0049).map(sk => {
+                const m = sysMeta[sk] || {}, it = pageItem(sk);
+                const u = String(m.unit || (it && it.unit) || '').toUpperCase();
+                return { sk, q: systemData[sk], name: m.name || (it && it.name) || sk, unit: UNIT_AR[u] || u.toLowerCase() };
+            }).sort((a, b) => a.q - b.q);
+            if (!neg.length) { showToast('✅ ما في ولا صنف بالسالب بملف المستويات', 'success'); return; }
+            const RLM = '\u200F';
+            const isProd = x => /^s?p-/i.test(x.sk);
+            const groups = [['📄 مواد — غالباً فاتورة مش مدخلة', neg.filter(x => !isProd(x))], ['🏭 إنتاج — غالباً إنتاج مش منتج على فوديكس', neg.filter(isProd)]];
+            const lines = [`*السوالب بالنظام — ${window.BRANCH_NAME || ''}*`,
+                new Date().toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }),
+                'أصناف رصيدها بفوديكس (ملف المستويات) بالسالب'];
+            groups.forEach(([title, rows]) => {
+                if (!rows.length) return;
+                lines.push('', `*${title}*`);
+                rows.forEach(x => lines.push(`${RLM}−${Math.abs(x.q).toLocaleString('en-US', { maximumFractionDigits: 2 })} ${x.unit} | ${x.name}`));
+            });
+            lines.push('', `${neg.length} صنف بالسالب`);
+            const url = `https://wa.me/${SUPERVISOR_WHATSAPP}?text=${encodeURIComponent(lines.join('\n'))}`;
+            const w = window.open(url, '_blank');
+            if (!w) location.href = url;
+        }
+
         function sendDiffWhatsApp() {
             const d = collectDiffRows();
             if (!d) return;

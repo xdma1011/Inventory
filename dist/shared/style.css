@@ -2889,3 +2889,5 @@ body.dark #addQtyInput { background: #10131a; color: #eceff1; }
     direction: ltr;
 }
 .addqty-preview .pv-ltr { direction: ltr; text-align: right; font-size: 14px; color: #607d8b; }
+
+.btn-negwa { background: linear-gradient(135deg, #e65100, #fb8c00); color: #fff; }
