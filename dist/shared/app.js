@@ -18,8 +18,9 @@
 // الحالة محلياً بهالجهاز (localStorage) — فما تحتاج تدخل الباسوورد كل مرة على نفس الجهاز/المتصفح.
 // رابط ?view=1 بيفرض القفل حتى لو الجهاز مفتوح أصلاً (مفيد لمشاركة لينك مضمون إنه عرض بس).
 const EDIT_UNLOCK_KEY = 'editUnlocked_' + (window.BRANCH_ID || 'gardens') + '_v1';
+const EDIT_UNLOCK_ALL_KEY = 'editUnlocked_all_v1'; // فتح التعديل بفرع بيفتحه لكل الفروع على نفس الجهاز
 function isEditUnlocked() {
-    try { return localStorage.getItem(EDIT_UNLOCK_KEY) === '1'; } catch (e) { return false; }
+    try { return localStorage.getItem(EDIT_UNLOCK_KEY) === '1' || localStorage.getItem(EDIT_UNLOCK_ALL_KEY) === '1'; } catch (e) { return false; }
 }
 const FORCE_VIEW_PARAM = (function () {
     try { return new URLSearchParams(window.location.search).get('view') === '1'; }
@@ -64,12 +65,12 @@ function confirmUnlockEdit() {
     document.getElementById('passwordInput').focus();
 }
 function unlockEditAndReload() {
-    try { localStorage.setItem(EDIT_UNLOCK_KEY, '1'); } catch (e) {}
+    try { localStorage.setItem(EDIT_UNLOCK_KEY, '1'); localStorage.setItem(EDIT_UNLOCK_ALL_KEY, '1'); } catch (e) {}
     window.location.reload();
 }
 function lockEditAgain() {
     if (FORCE_VIEW_PARAM) { showToast('الصفحة مقفولة أصلاً عبر رابط ?view=1', 'warning'); return; }
-    try { localStorage.removeItem(EDIT_UNLOCK_KEY); } catch (e) {}
+    try { ['gardens', 'marj', 'central'].forEach(b => localStorage.removeItem('editUnlocked_' + b + '_v1')); localStorage.removeItem(EDIT_UNLOCK_KEY); localStorage.removeItem(EDIT_UNLOCK_ALL_KEY); } catch (e) {}
     window.location.reload();
 }
 
@@ -103,7 +104,7 @@ function lockEditAgain() {
 
         const packageSizeOptions = [0.3, 0.4, 1.0, 1.7, 4.0, 4.4, 5.0, 6.0, 9.0, 9.6, 10.0, 12.0, 13.5, 15.0, 18.0, 24.0, 25.0, 50.0, 100.0];
         const secondMultiplierOptions = [0.815, 1.0, 1.1, 25.0];
-        const CLEAR_PASSWORD = "12345";
+        const CLEAR_PASSWORD = "123";
         let systemData = {};
         // اسم ووحدة كل صنف من ملف المستويات (للعرض بس — ما بيدخل بأي حساب)، محفوظ لحاله لكل فرع
         const SYS_META_LS_KEY = 'sysMeta_' + (window.BRANCH_ID || 'gardens') + '_v1';
@@ -3864,7 +3865,8 @@ function lockEditAgain() {
     /* تنقل الفروع + لينك تقرير مستويات المخزون بفوديكس (مفلتر على الفرع إذا معروف) */
     (function () {
         const FOODICS_LEVELS = {
-            gardens: 'https://console.foodics.com/reports/inventory-levels?filter%5Bbranches%5D%5B0%5D=9c0a203d-abfc-4294-b187-ca87f6a6f109'
+            gardens: 'https://console.foodics.com/reports/inventory-levels?filter%5Bbranches%5D%5B0%5D=9c0a203d-abfc-4294-b187-ca87f6a6f109',
+            central: 'https://console.foodics.com/reports/inventory-levels?filter%5Bbranches%5D%5B0%5D=9c0a203d-ae38-47af-b92d-e82b529db298'
         };
         const b = window.BRANCH_ID || 'gardens';
         document.querySelectorAll('#branchNav a[data-branch]').forEach(a => { if (a.dataset.branch === b) a.classList.add('current'); });
