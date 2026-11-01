@@ -8,11 +8,14 @@
     window.BRANCH_NAME = 'الجاردنز';
     window.LS_KEY      = 'inventoryData_22FEB2026_v8';
   </script>
-  <script src="data.js"></script>
+  <script>document.write('<script src="data.js?v=' + Date.now() + '"><\/script>');</script>
   <script>
     // جلب الهيكل المشترك وحقنه بعد تحميل البيانات
-    fetch('../shared/template.html')
+    // دايماً آخر نسخة من الكود: القالب بلا كاش، وملفات shared بتنطلب برقم نسخة جديد كل فتحة
+    const V = Date.now();
+    fetch('../shared/template.html?v=' + V, { cache: 'no-store' })
       .then(r => r.text())
+      .then(html => html.replace(/(\.\.\/shared\/[\w-]+\.(?:js|css))"/g, '$1?v=' + V + '"'))
       .then(html => { document.open(); document.write(html); document.close(); });
   </script>
 </head>
