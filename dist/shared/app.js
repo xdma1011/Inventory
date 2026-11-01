@@ -3861,3 +3861,13 @@ function lockEditAgain() {
         try { if (localStorage.getItem((window.BRANCH_ID==='marj'?'activeTab_marj_v1':'activeTab_v1')) === 'shop') switchMainTab('shop'); } catch (e) {}
     })();
     
+    /* تنقل الفروع + لينك تقرير مستويات المخزون بفوديكس (مفلتر على الفرع إذا معروف) */
+    (function () {
+        const FOODICS_LEVELS = {
+            gardens: 'https://console.foodics.com/reports/inventory-levels?filter%5Bbranches%5D%5B0%5D=9c0a203d-abfc-4294-b187-ca87f6a6f109'
+        };
+        const b = window.BRANCH_ID || 'gardens';
+        document.querySelectorAll('#branchNav a[data-branch]').forEach(a => { if (a.dataset.branch === b) a.classList.add('current'); });
+        const l = document.getElementById('foodicsLevelsLink');
+        if (l && FOODICS_LEVELS[b]) l.href = FOODICS_LEVELS[b];
+    })();

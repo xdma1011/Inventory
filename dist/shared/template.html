@@ -24,6 +24,13 @@
   
 
     <div class="container">
+        <!-- تنقل: الرئيسية + باقي الفروع -->
+        <nav class="branch-nav" id="branchNav">
+            <a href="../index.html">🏠 الرئيسية</a>
+            <a href="../gardens/index.html" data-branch="gardens">🌿 الجاردنز</a>
+            <a href="../marj/index.html" data-branch="marj">🏙️ مرج الحمام</a>
+            <a href="../central/index.html" data-branch="central">🏬 المركزي</a>
+        </nav>
         <!-- HEADER -->
         <div class="header">
             <div class="header-left">
@@ -94,6 +101,7 @@
             <button class="btn btn-warning" onclick="togglePasteBox()">📋 لصق</button>
             <button class="btn btn-danger" onclick="clearSystemData()">❌ مسح</button>
         </div>
+        <div class="foodics-row"><a class="btn btn-foodics" id="foodicsLevelsLink" href="https://console.foodics.com/reports/inventory-levels" target="_blank" rel="noopener">🔗 افتح مستويات المخزون بفوديكس (لتنزيل الملف)</a></div>
         <div class="paste-sys" id="pasteSysBox" style="display:none">
             <textarea id="pasteSysArea" placeholder="افتح ملف CSV بأي تطبيق نصوص، انسخ محتواه كاملاً والصقه هنا&#10;Name,SKU,Barcode,Storage Unit,Quantity&#10;بندق,sk-0062,,G,600"></textarea>
             <button class="btn btn-info" onclick="pasteSystemData()">✔ اقرأ الملصوق</button>
