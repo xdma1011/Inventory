@@ -3612,7 +3612,7 @@ function lockEditAgain() {
         const LS_KEY = "kitchen_inv_v3";
         function loadPrefs() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) { return {}; } }
         function savePrefs() {
-            try { localStorage.setItem(LS_KEY, JSON.stringify({ target: TARGET, perBatch, minLevels })); } catch (e) {}
+            try { localStorage.setItem(LS_KEY, JSON.stringify({ target: TARGET, perBatch, minLevels, platesPerDay: PLATES, perPlate })); } catch (e) {}
         }
 
         /* أصنافي فقط: sku، الاسم، وحدة فوديكس، كمية احتياطية من آخر تقرير */
@@ -3627,6 +3627,9 @@ function lockEditAgain() {
         ];
 
         const OM_ALI_DEFAULTS = { "بندق": 270, "جوز هند": 225, "لوز": 160, "كاجو": 160 };
+        /* أم علي بالصحون: غرامات كل صحن (حسب مدير المطعم) × صحون اليوم × 30 يوم = استهلاك الشهر */
+        const OM_ALI_PER_PLATE = { "بندق": 5, "جوز هند": 10, "لوز": 8, "كاجو": 7 };
+        const MONTH_DAYS = 30;
         const OM_ALI_SKUS = { "sk-0062": "بندق", "sk-0063": "جوز هند", "sk-0064": "لوز", "sk-0065": "كاجو" };
 
         const DEFAULT_MINS = {
@@ -3650,6 +3653,9 @@ function lockEditAgain() {
         const prefs = loadPrefs();
         let TARGET = prefs.target || 30;
         const perBatch = Object.assign({}, OM_ALI_DEFAULTS, prefs.perBatch || {});
+        let PLATES = prefs.platesPerDay || 12;
+        const perPlate = Object.assign({}, OM_ALI_PER_PLATE, prefs.perPlate || {});
+        const monthNeed = key => PLATES * MONTH_DAYS * (perPlate[key] ?? 0);
         const minLevels = Object.assign({}, DEFAULT_MINS, prefs.minLevels || {});
 
         const CATS = [
@@ -3727,7 +3733,7 @@ function lockEditAgain() {
         }
 
         function render() {
-            document.getElementById("targetB").value = TARGET;
+            document.getElementById("targetB").value = PLATES;
             const groups = { nuts: [], veg: [], meat: [], dish: [], pack: [], other: [] };
             ITEMS.forEach(it => groups[categorize(it.name)].push(it));
 
@@ -3735,23 +3741,24 @@ function lockEditAgain() {
             groups.nuts.forEach(it => {
                 const key = omKey(it);
                 if (!key) return;
-                const per = perBatch[key] ?? OM_ALI_DEFAULTS[key];
+                const per = perPlate[key] ?? 0;
                 const qty = Math.max(0, it.qty);
-                omRows.push({ ...it, key, per, batches: per > 0 ? Math.floor(qty / per) : 0, need: per > 0 ? Math.max(0, TARGET * per - qty) : 0 });
+                const month = monthNeed(key);
+                omRows.push({ ...it, key, per, month, days: per > 0 ? Math.floor(qty / (per * PLATES)) : Infinity, need: Math.max(0, month - qty) });
             });
-            const minB = omRows.length ? Math.min(...omRows.map(r => r.batches)) : 0;
-            const bott = omRows.find(r => r.batches === minB);
+            const minD = omRows.length ? Math.min(...omRows.map(r => r.days)) : 0;
+            const bott = omRows.find(r => r.days === minD);
 
             const toBuy = omRows.filter(r => r.need > 0).sort((a, b) => b.need - a.need);
             const ul = document.getElementById("omShopList");
             const foot = document.getElementById("omShopFoot");
             if (!omRows.length) { ul.innerHTML = `<div class="allok">ما لقيت مكسرات أم علي في البيانات</div>`; foot.textContent = ""; }
             else if (toBuy.length === 0) {
-                ul.innerHTML = `<div class="allok">✓ ما تحتاج تشتري شيء — كل المكسرات تغطي ${fmt(TARGET)} خلطة</div>`;
-                foot.textContent = `تقدر تعمل ${fmt(minB)} خلطة بالمخزون الحالي`;
+                ul.innerHTML = `<div class="allok">✓ ما تحتاج تشتري شيء — المخزون بيغطي شهر (${fmt(PLATES)} صحن باليوم)</div>`;
+                foot.textContent = `المخزون الحالي بيكفي ${fmt(minD)} يوم`;
             } else {
-                ul.innerHTML = toBuy.map(r => `<li><b>${r.name}<span class="have">عندك ${fmt(Math.max(0, r.qty))} جم${kgTxt(Math.max(0, r.qty))} — يكفي ${fmt(r.batches)} خلطة</span></b><span class="qb">+ ${fmt(Math.ceil(r.need))} جم</span></li>`).join("");
-                foot.textContent = `المخزون الحالي يكفي ${fmt(minB)} خلطة بس — العائق: ${bott.name}`;
+                ul.innerHTML = toBuy.map(r => `<li><b>${r.name}<span class="have">الشهر بدو ${fmt(r.month)} جم${kgTxt(r.month)} · عندك ${fmt(Math.max(0, r.qty))} جم — بيكفي ${fmt(r.days)} يوم</span></b><span class="qb">+ ${fmt(Math.ceil(r.need))} جم</span></li>`).join("");
+                foot.textContent = `شراء شهر = ${fmt(PLATES)} صحن × ${MONTH_DAYS} يوم = ${fmt(PLATES * MONTH_DAYS)} صحن ناقص اللي عندك · المخزون بيكفي ${fmt(minD)} يوم بس — العائق: ${bott.name}`;
             }
 
             const others = [];
@@ -3767,7 +3774,7 @@ function lockEditAgain() {
 
             const needOf = it => {
                 const k = omKey(it);
-                if (k) { const per = perBatch[k] ?? 0; return per > 0 ? Math.max(0, TARGET * per - Math.max(0, it.qty)) : 0; }
+                if (k) return Math.max(0, monthNeed(k) - Math.max(0, it.qty));
                 const min = minLevels[itemKey(it)] ?? 0;
                 return min > 0 ? Math.max(0, min - it.qty) : (it.qty < 0 ? 1 : 0);
             };
@@ -3782,24 +3789,25 @@ function lockEditAgain() {
             document.getElementById("nutsList").innerHTML = groups.nuts.map(it => {
                 const key = omKey(it);
                 if (!key) return simpleRow(it);
-                const per = perBatch[key] ?? OM_ALI_DEFAULTS[key];
+                const per = perPlate[key] ?? 0;
                 const qty = Math.max(0, it.qty);
-                const batches = per > 0 ? Math.floor(qty / per) : 0;
-                const need = per > 0 ? Math.max(0, TARGET * per - qty) : 0;
+                const month = monthNeed(key);
+                const days = per > 0 ? Math.floor(qty / (per * PLATES)) : Infinity;
+                const need = Math.max(0, month - qty);
                 let cls = "ok", label = "تمام ✓";
-                if (batches <= 0) { cls = "buy"; label = "اشترِ فورًا"; }
-                else if (batches < TARGET) { cls = "warn"; label = "قرّب يخلص"; }
-                const pct = Math.min(100, (batches / (TARGET * 1.5)) * 100);
+                if (days <= 0) { cls = "buy"; label = "اشترِ فورًا"; }
+                else if (days < MONTH_DAYS) { cls = "warn"; label = "قرّب يخلص"; }
+                const pct = Math.min(100, (days / (MONTH_DAYS * 1.5)) * 100);
                 const isBn = bott && key === bott.key;
                 const line = need > 0
-                    ? `<div class="buyline">🛒 اشترِ ${fmt(Math.ceil(need))} جم لتغطية ${fmt(TARGET)} خلطة</div>`
-                    : `<div class="okline">✓ يكفي هدفك (${fmt(TARGET)} خلطة)</div>`;
-                return `<div class="item ${isBn ? 'bottleneck' : ''}">${isBn ? '<span class="crown">العائق الأساسي</span>' : ''}<div class="row1"><div><div class="iname">${it.name}</div><div class="iqty">متوفر <b>${fmt(qty)}</b> جم${kgTxt(qty)}${it.qty < 0 ? ' — رصيد سالب!' : ''}</div></div><span class="badge b-${cls}">${label}</span></div><div class="calc-row"><label for="pb_${key}">لكل خلطة:</label><input type="number" id="pb_${key}" data-key="${key}" value="${per}" min="0" step="5"><span>جم <span class="lock-hint">🔒 نقرتين للتعديل</span></span><span class="batches"><b>${fmt(batches)}</b><small>خلطة</small></span></div><div class="gauge g-${cls}"><i style="width:${pct}%"></i></div>${line}</div>`;
+                    ? `<div class="buyline">🛒 اشترِ ${fmt(Math.ceil(need))} جم — الشهر بدو ${fmt(month)} جم${kgTxt(month)}</div>`
+                    : `<div class="okline">✓ بيغطي الشهر (${fmt(month)} جم)</div>`;
+                return `<div class="item ${isBn ? 'bottleneck' : ''}">${isBn ? '<span class="crown">العائق الأساسي</span>' : ''}<div class="row1"><div><div class="iname">${it.name}</div><div class="iqty">متوفر <b>${fmt(qty)}</b> جم${kgTxt(qty)}${it.qty < 0 ? ' — رصيد سالب!' : ''}</div></div><span class="badge b-${cls}">${label}</span></div><div class="calc-row"><label for="pb_${key}">لكل صحن:</label><input type="number" id="pb_${key}" data-key="${key}" value="${per}" min="0" step="1"><span>جم <span class="lock-hint">🔒 نقرتين للتعديل</span></span><span class="batches"><b>${days === Infinity ? '—' : fmt(days)}</b><small>يوم</small></span></div><div class="gauge g-${cls}"><i style="width:${pct}%"></i></div>${line}</div>`;
             }).join("");
 
             document.querySelectorAll('#nutsList input[data-key]').forEach(inp => {
                 makeLockable(inp);
-                inp.addEventListener("change", e => { perBatch[e.target.dataset.key] = Math.max(0, parseFloat(e.target.value) || 0); savePrefs(); render(); });
+                inp.addEventListener("change", e => { perPlate[e.target.dataset.key] = Math.max(0, parseFloat(e.target.value) || 0); savePrefs(); render(); });
             });
 
             fill("veg", sortByNeed(groups.veg));
@@ -3842,7 +3850,7 @@ function lockEditAgain() {
         }
 
         document.getElementById("targetB").addEventListener("change", e => {
-            TARGET = Math.max(1, parseInt(e.target.value) || 30);
+            PLATES = Math.max(1, parseFloat(e.target.value) || 12);
             savePrefs(); render();
         });
 
