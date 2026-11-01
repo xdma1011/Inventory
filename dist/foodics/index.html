@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سحب فوديكس التلقائي</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; background: #10131a; color: #eceff1; min-height: 100vh; padding: 20px 16px 60px; line-height: 1.8; }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 10px; }
+    .top-bar a { color: #90a4ae; text-decoration: none; font-size: 13px; white-space: nowrap; }
+    h1 { font-size: 20px; font-weight: 900; }
+    .panel { background: #171a21; border: 1px solid #262a34; border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+    h2 { font-size: 16px; font-weight: 900; margin-bottom: 8px; }
+    ol { padding-right: 20px; font-size: 14px; color: #cfd8dc; }
+    li { margin-bottom: 6px; }
+    b { color: #fff; }
+    .bm { display: block; text-align: center; background: #5e35b1; color: #fff; text-decoration: none; font-weight: 900; font-size: 16px; padding: 14px; border-radius: 12px; margin: 10px 0; cursor: grab; }
+    .btn { display: block; width: 100%; background: #00838f; color: #fff; border: none; border-radius: 12px; padding: 13px; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; margin: 8px 0; }
+    .note { font-size: 12.5px; color: #90a4ae; }
+    .links a { display: block; color: #b39ddb; margin: 4px 0; font-size: 14px; }
+    code { background: #0d1015; padding: 1px 6px; border-radius: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <div class="top-bar">
+        <h1>⚡ سحب مستويات المخزون من فوديكس</h1>
+        <a href="../index.html">🏠 الرئيسية</a>
+    </div>
+
+    <div class="panel">
+        <h2>شو بيعمل؟</h2>
+        <p style="font-size:14px;color:#cfd8dc">وإنت فاتح صفحة «مستويات المخزون» بفوديكس (ومسجّل دخول)، بتكبس زر <b>سحب فوديكس</b> من المفضلة: بيلف على كل صفحات الجدول، بياخد كل الأصناف، وبيفتحلك صفحة جرد الفرع وبيحمّل الأرقام فيها لحاله — بدون تنزيل ملف ولا رفع.</p>
+        <p class="note">الفرع بينعرف لحاله من فلتر الفرع بفوديكس. صفحة الجرد لازم تكون مفتوح فيها التعديل على نفس الجهاز.</p>
+    </div>
+
+    <div class="panel">
+        <h2>💻 على الكمبيوتر</h2>
+        <ol>
+            <li>اسحب الزر البنفسجي تحت بالماوس وحطه على شريط المفضلة (Bookmarks bar). إذا الشريط مخفي: <code>Ctrl+Shift+B</code>.</li>
+            <li>افتح مستويات المخزون بفوديكس للفرع.</li>
+            <li>اكبس «سحب فوديكس» من شريط المفضلة.</li>
+        </ol>
+        <a class="bm" id="bmLink" href="#" onclick="event.preventDefault();alert('هاد الزر ما بينكبس هون — اسحبه لشريط المفضلة، واكبسه وإنت على صفحة فوديكس')">⚡ سحب فوديكس</a>
+    </div>
+
+    <div class="panel">
+        <h2>📱 على الموبايل (كروم)</h2>
+        <ol>
+            <li>اكبس الزر تحت لنسخ الكود.</li>
+            <li>بكروم: ⋮ ← ☆ (أضف هالصفحة للمفضلة).</li>
+            <li>⋮ ← المفضلة ← عدّل المفضلة اللي انضافت: الاسم <b>سحب فوديكس</b>، وبخانة الرابط (URL) امسح كل شي والصق الكود.</li>
+            <li>افتح مستويات المخزون بفوديكس، اكبس على شريط العنوان واكتب <b>سحب فوديكس</b>، واختار المفضلة اللي بتطلع (اللي عليها نجمة).</li>
+        </ol>
+        <button class="btn" id="copyBtn" type="button">📋 نسخ كود الزر</button>
+        <p class="note">على الآيفون (سفاري) نفس الفكرة: أضف أي صفحة للمفضلة، عدّلها والصق الكود بالرابط، وافتحها من المفضلة وإنت على صفحة فوديكس.</p>
+    </div>
+
+    <div class="panel links">
+        <h2>🔗 صفحات مستويات المخزون بفوديكس</h2>
+        <a href="https://console.foodics.com/reports/inventory-levels?filter%5Bbranches%5D%5B0%5D=9c0a203d-abfc-4294-b187-ca87f6a6f109" target="_blank" rel="noopener">🌿 الجاردنز</a>
+        <a href="https://console.foodics.com/reports/inventory-levels" target="_blank" rel="noopener">📊 مستويات المخزون (اختار الفرع من الفلتر)</a>
+    </div>
+</div>
+
+<script>
+    (async function () {
+        const base = new URL('../', location.href).href;
+        let code = '';
+        try {
+            const src = await (await fetch('bookmarklet.js', { cache: 'no-store' })).text();
+            code = src.replace(/const BASE = '[^']*';/, "const BASE = '" + base + "';")
+                .split('\n').map(l => l.trim()).filter(Boolean).join('\n');
+        } catch (e) {}
+        const url = code ? 'javascript:' + encodeURIComponent(code) : '';
+        const link = document.getElementById('bmLink');
+        if (url) { link.href = url; link.onclick = function (e) { e.preventDefault(); alert('هاد الزر ما بينكبس هون — اسحبه لشريط المفضلة، واكبسه وإنت على صفحة فوديكس'); }; }
+        document.getElementById('copyBtn').onclick = async function () {
+            if (!url) { alert('ما انحمّل الكود — حدّث الصفحة'); return; }
+            try { await navigator.clipboard.writeText(url); this.textContent = '✅ انسخ — هلق الصقه برابط المفضلة'; }
+            catch (e) { prompt('انسخ الكود من هون:', url); }
+        };
+    })();
+</script>
+<script src="../shared/version-stamp.js"></script>
+</body>
+</html>
