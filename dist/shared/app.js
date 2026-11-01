@@ -3894,3 +3894,19 @@ function lockEditAgain() {
         if (l && FOODICS_LEVELS[b]) l.href = FOODICS_LEVELS[b];
     })();
 
+    /* سحب مستويات المخزون من فوديكس: زر المفضلة (foodics/) بيفتح الصفحة ومعها البيانات بعد # */
+    window.addEventListener('load', function () {
+        const h = location.hash || '';
+        if (!h.startsWith('#foodics=')) return;
+        let csv = '';
+        try { csv = decodeURIComponent(h.slice(9)); } catch (e) {}
+        try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+        setTimeout(function () {
+            if (VIEW_ONLY) { showToast('🔒 افتح التعديل أول، وبعدين ارجع اسحب من فوديكس', 'error'); return; }
+            try {
+                parseSystemText(csv, false);
+                applySystemData();
+                showToast(`✅ انسحب ملف المستويات من فوديكس — ${Object.keys(systemData).length} صنف`, 'success');
+            } catch (err) { showToast('⚠️ ما قدرت أقرأ بيانات فوديكس: ' + err.message, 'error'); }
+        }, 600);
+    });
