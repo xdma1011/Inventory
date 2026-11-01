@@ -576,7 +576,23 @@ function lockEditAgain() {
             document.getElementById('passwordInput').value = '';
             document.getElementById('passwordInput').focus();
         }
-        function closePasswordModal() { document.getElementById('passwordModal').classList.remove('show'); }
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.remove('show');
+            document.getElementById('pwTitle').textContent = '🔐 تأكيد مسح البيانات';
+            document.getElementById('pwMsg').textContent = 'هذا الإجراء لا يمكن التراجع عنه!';
+        }
+        // الانتقال لفرع تاني بكلمة السر — مشان ما ينكبس بالغلط ويكمّل الجرد على الفرع الغلط
+        let pendingNavHref = '';
+        function confirmBranchNav(a) {
+            pendingPasswordAction = 'nav';
+            pendingNavHref = a.href;
+            document.getElementById('pwTitle').textContent = '🔐 الانتقال إلى ' + a.textContent.trim();
+            document.getElementById('pwMsg').textContent = 'متأكد إنك بدك تطلع من ' + (window.BRANCH_NAME || 'هالفرع') + '؟ اكتب كلمة السر';
+            document.getElementById('passwordModal').classList.add('show');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').focus();
+            return false;
+        }
         function verifyPassword() {
             if (document.getElementById('passwordInput').value === CLEAR_PASSWORD) {
                 closePasswordModal();
@@ -585,6 +601,7 @@ function lockEditAgain() {
                 else if (pendingPasswordAction === 'forcePull') forcePullFromCloud();
                 else if (pendingPasswordAction === 'sync') syncWithCloud(false);
                 else if (pendingPasswordAction === 'unlockEdit') unlockEditAndReload();
+                else if (pendingPasswordAction === 'nav') location.href = pendingNavHref;
                 else clearAllData();
             }
             else { showToast('كلمة المرور غير صحيحة!', 'error'); document.getElementById('passwordInput').value = ''; document.getElementById('passwordInput').focus(); }
@@ -3869,7 +3886,10 @@ function lockEditAgain() {
             central: 'https://console.foodics.com/reports/inventory-levels?filter%5Bbranches%5D%5B0%5D=9c0a203d-ae38-47af-b92d-e82b529db298'
         };
         const b = window.BRANCH_ID || 'gardens';
-        document.querySelectorAll('#branchNav a[data-branch]').forEach(a => { if (a.dataset.branch === b) a.classList.add('current'); });
+        document.querySelectorAll('#branchNav a[data-branch]').forEach(a => {
+            if (a.dataset.branch === b) a.classList.add('current');
+            else a.addEventListener('click', e => { e.preventDefault(); confirmBranchNav(a); });
+        });
         const l = document.getElementById('foodicsLevelsLink');
         if (l && FOODICS_LEVELS[b]) l.href = FOODICS_LEVELS[b];
     })();
