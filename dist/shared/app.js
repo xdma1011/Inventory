@@ -3770,6 +3770,17 @@ function lockEditAgain() {
             const toBuy = omRows.filter(r => r.need > 0).sort((a, b) => b.need - a.need);
             const ul = document.getElementById("omShopList");
             const foot = document.getElementById("omShopFoot");
+            // كم يوم بتكفي أم علي: حسب الصنف الأقل (العائق) — صحون اليوم × غرامات الصحن
+            const dEl = document.getElementById("omDays");
+            if (dEl) {
+                if (!omRows.length || minD === Infinity) { dEl.innerHTML = ""; }
+                else {
+                    const plates = Math.min(...omRows.filter(r => r.per > 0).map(r => Math.floor(Math.max(0, r.qty) / r.per)));
+                    const dc = minD <= 0 ? "d-buy" : minD < 7 ? "d-warn" : "d-ok";
+                    dEl.className = "om-days " + dc;
+                    dEl.innerHTML = `🍮 أم علي بتكفي <b>${fmt(minD)}</b> يوم <small>(${fmt(plates)} صحن على ${fmt(PLATES)} صحن باليوم — حسب ${bott.name}، الأقل)</small>`;
+                }
+            }
             if (!omRows.length) { ul.innerHTML = `<div class="allok">ما لقيت مكسرات أم علي في البيانات</div>`; foot.textContent = ""; }
             else if (toBuy.length === 0) {
                 ul.innerHTML = `<div class="allok">✓ ما تحتاج تشتري شيء — المخزون بيغطي شهر (${fmt(PLATES)} صحن باليوم)</div>`;
