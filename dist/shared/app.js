@@ -792,7 +792,7 @@ function lockEditAgain() {
             });
             const payload = JSON.stringify({ data, systemData, timestamp: new Date().toISOString() });
             localStorage.setItem(window.LS_KEY, payload);
-            document.getElementById('lastSave').textContent = new Date().toLocaleString('ar-EG');
+            document.getElementById('lastSave').textContent = new Date().toLocaleString('ar-EG-u-nu-latn');
             if (!isAuto) showToast('تم حفظ البيانات بنجاح!', 'success');
         }
         function loadSavedData() {
@@ -925,7 +925,7 @@ function lockEditAgain() {
                         skipPush = true;
                         showToast('⚠️ في نسخة أحدث بالسحابة لهالفرع — اضغط Sync يدوياً من الأدوات لو بدك تحمّلها', 'warning');
                     } else {
-                        const cloudWhen = new Date(cloudRow.updated_at).toLocaleString('ar-EG');
+                        const cloudWhen = new Date(cloudRow.updated_at).toLocaleString('ar-EG-u-nu-latn');
                         const pullDown = confirm(`في نسخة أحدث محفوظة بالسحابة (${cloudWhen}).\nموافق = نحمّلها بدل الجرد الحالي على هالجهاز.\nإلغاء = نرفع نسخة هالجهاز فوقها بالسحابة.`);
                         if (pullDown) {
                             localStorage.setItem(window.LS_KEY, JSON.stringify(cloudRow.payload));
@@ -1232,7 +1232,7 @@ function lockEditAgain() {
         }
 
         function formatHistoryDate(iso) {
-            try { return new Date(iso).toLocaleString('ar-EG', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+            try { return new Date(iso).toLocaleString('ar-EG-u-nu-latn', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
             catch (e) { return iso; }
         }
 
@@ -1676,8 +1676,8 @@ function lockEditAgain() {
         function exportRangeXLSX(id, title, startIdx, endIdx) { exportSheetObjXLSX(rangeSheet(id, title, startIdx, endIdx)); }
         function sheetIdForSectionLabel(label) {
             // شيتات مرج الحمام المرقمة أولاً (عناوينها تحوي كلمات تتقاطع مع شيتات الجاردنز)
-            if (label.includes('شيت الجرد ١')) return 'sheet1';
-            if (label.includes('شيت الجرد ٢')) return 'sheet2';
+            if (label.includes('شيت الجرد 1') || label.includes('شيت الجرد ١')) return 'sheet1';
+            if (label.includes('شيت الجرد 2') || label.includes('شيت الجرد ٢')) return 'sheet2';
             // ملاحظة: "main" (الشيت الموحد القديم) لم يعد موجوداً — قسم "الترتيب الرسمي" الآن يُصدَّر بالفهرس مباشرة (rangeSheet)
             if (label.includes('خارج الشيت')) return null;
             if (label.includes('مشروبات')) return 'drinks';
@@ -1714,7 +1714,7 @@ function lockEditAgain() {
             ctx.fillText('\uD83E\uDD64 فرق الماتركس', W - 20, 34);
             ctx.fillStyle = '#90a4ae';
             ctx.font = '13px Tahoma, Arial';
-            ctx.fillText(new Date().toLocaleDateString('ar-EG'), W - 20, 60);
+            ctx.fillText(new Date().toLocaleDateString('ar-EG-u-nu-latn'), W - 20, 60);
             // رأس الجدول
             let y = headH;
             ctx.fillStyle = '#1a1f2e';
@@ -1829,7 +1829,7 @@ function lockEditAgain() {
             const isProd = x => /^s?p-/i.test(x.sk);
             const groups = [['📄 مواد — غالباً فاتورة مش مدخلة', neg.filter(x => !isProd(x))], ['🏭 إنتاج — غالباً إنتاج مش منتج على فوديكس', neg.filter(isProd)]];
             const lines = [`*رصيد سالب — ${window.BRANCH_NAME || ''}*`,
-                new Date().toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' })];
+                new Date().toLocaleString('ar-EG-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short' })];
             groups.forEach(([title, rows]) => {
                 if (!rows.length) return;
                 lines.push('', `*${title}*`);
@@ -1845,7 +1845,7 @@ function lockEditAgain() {
             if (!d) return;
             const RLM = '\u200F';
             const lines = [`*فروقات الجرد — ${window.BRANCH_NAME || ''}*`,
-                new Date().toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }),
+                new Date().toLocaleString('ar-EG-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short' }),
                 'الفرق = الجرد − النظام'];
             if (d.pairs.length) {
                 lines.push('', `*${PAIRS_TITLE}*`);
@@ -1885,7 +1885,7 @@ function lockEditAgain() {
             const sections = [[DIFF_SECTIONS[0], top], [DIFF_SECTIONS[1], rest]].filter(s => s[1].length);
             const diffText = r => diffNum(r) + ' ' + r.unit;
             const titleTxt = `فروقات الجرد — ${branch}`;
-            const subTxt = new Date().toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }) + '  ·  الفرق = الجرد − النظام';
+            const subTxt = new Date().toLocaleString('ar-EG-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short' }) + '  ·  الفرق = الجرد − النظام';
             const foot = [`${top.length + rest.length} صنف فيه فرق`, `${zero} صنف بدون فرق`];
             if (noSys) foot.push(`${noSys} صنف ما إله رصيد بالنظام`);
             const footTxt = foot.join('  ·  ');

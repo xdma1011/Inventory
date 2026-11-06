@@ -22,7 +22,7 @@
         } catch (e) { return null; }
     }
     const newest = list => list.filter(Boolean).reduce((a, b) => (!a || b > a) ? b : a, null);
-    const fmt = d => d.toLocaleString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit', hour: 'numeric', minute: '2-digit' });
+    const fmt = d => d.toLocaleString('ar-EG-u-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit', hour: 'numeric', minute: '2-digit' });
 
     async function run() {
         let box = document.getElementById('buildStamp');

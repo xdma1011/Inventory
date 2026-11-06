@@ -21,7 +21,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 function ageText(t) {
     if (!t) return 'تاريخ الرفع مش محفوظ';
     const d = Math.floor((Date.now() - t.getTime()) / DAY_MS);
-    const when = t.toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
+    const when = t.toLocaleString('ar-EG-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short' });
     return `${when} (${d <= 0 ? 'اليوم' : d === 1 ? 'مبارح' : d === 2 ? 'قبل يومين' : `قبل ${d} أيام`})`;
 }
 const isStale = t => !t || (Date.now() - t.getTime()) > MAX_FILE_AGE_DAYS * DAY_MS;
