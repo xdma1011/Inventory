@@ -151,6 +151,6 @@
     // طلب خفيف لمجرد إبقاء مشروع Supabase نشط — ما إله علاقة بأي بيانات جرد
     if (typeof pingSupabase === 'function') pingSupabase('home');
 </script>
-<script src="shared/version-stamp.js"></script>
+<script>document.write('<script src="shared/version-stamp.js?v=' + Date.now() + '"><\/script>');</script>
 </body>
 </html>

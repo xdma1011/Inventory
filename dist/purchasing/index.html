@@ -197,9 +197,13 @@
     <div class="items-list" id="itemsList"></div>
 </div>
 
-<script src="../shared/wa-send.js?v=2026-11-06b"></script>
-<script src="data.js?v=2026-11-06b"></script>
-<script src="app.js?v=2026-11-06b"></script>
-<script src="../shared/version-stamp.js"></script>
+<script>
+    // دايماً آخر نسخة من الكود: رقم نسخة جديد كل فتحة (بدون كاش قديم)
+    (function () {
+        const V = Date.now();
+        ['../shared/wa-send.js', 'data.js', 'app.js', '../shared/version-stamp.js']
+            .forEach(src => document.write('<script src="' + src + '?v=' + V + '"><\/script>'));
+    })();
+</script>
 </body>
 </html>
