@@ -2910,3 +2910,20 @@ body.dark #addQtyInput { background: #10131a; color: #eceff1; }
 #shopTab .om-days.d-ok { background: #e8f5e9; color: #2e7d32; }
 #shopTab .om-days.d-warn { background: #fff8e1; color: #e65100; }
 #shopTab .om-days.d-buy { background: #ffebee; color: #c62828; }
+
+/* حاسبة أم علي */
+#shopTab .om-calc { background: var(--card); border: 2px solid var(--red); border-radius: var(--r); margin-top: 14px; padding: 14px 16px; }
+#shopTab .om-calc h3 { font-size: 16px; font-weight: 800; color: var(--red); margin-bottom: 8px; }
+#shopTab .oc-note { background: var(--red-tint); border-radius: 10px; padding: 8px 10px; font-size: 13px; line-height: 1.8; margin-bottom: 10px; }
+#shopTab .oc-row { display: grid; grid-template-columns: 1.1fr 1fr 1.2fr 1fr; gap: 8px; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+#shopTab .oc-head { font-size: 11.5px; color: var(--soft); font-weight: 700; padding-top: 0; }
+#shopTab .oc-name { font-weight: 800; }
+#shopTab .oc-row input { width: 100%; padding: 7px 6px; border: 1px solid var(--line); border-radius: 8px; text-align: center; font-size: 15px; font-weight: 700; font-family: "Rubik", sans-serif; direction: ltr; }
+#shopTab .oc-row small { display: block; font-size: 11px; color: var(--soft); }
+#shopTab .oc-result { margin-top: 12px; padding: 12px; border-radius: 10px; font-size: 16px; font-weight: 800; }
+#shopTab .oc-result:empty { display: none; }
+#shopTab .oc-result b { font-size: 22px; margin: 0 2px; }
+#shopTab .oc-result small { display: block; font-size: 12px; font-weight: 600; opacity: .8; }
+#shopTab .oc-result.d-ok { background: #e8f5e9; color: #2e7d32; }
+#shopTab .oc-result.d-warn { background: #fff8e1; color: #e65100; }
+#shopTab .oc-result.d-buy { background: #ffebee; color: #c62828; }

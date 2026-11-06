@@ -30,7 +30,7 @@ const VIEW_ONLY = FORCE_VIEW_PARAM || !isEditUnlocked();
 (function applyViewOnlyMode() {
     if (!VIEW_ONLY) return;
     // أزرار/عناصر البحث والفلترة مسموحة — هي عرض بس ما بتعدّل ولا بترفع أي بيانات
-    const allowIds = new Set(['searchInput', 'historySearchInput', 'cardSearchInput', 'toolsSearchInput', 'historyFromSelect', 'historyToSelect', 'visSearchInput', 'passwordInput', 'waNumberInput']);
+    const allowIds = new Set(['searchInput', 'historySearchInput', 'cardSearchInput', 'toolsSearchInput', 'historyFromSelect', 'historyToSelect', 'visSearchInput', 'passwordInput', 'waNumberInput', 'omBuy_0', 'omBuy_1', 'omBuy_2', 'omBuy_3']);
     function lockNode(node) {
         if (!(node instanceof Element)) return;
         if (node.matches && node.matches('input, select, textarea') && !allowIds.has(node.id)) {
@@ -3790,6 +3790,8 @@ function lockEditAgain() {
                 foot.textContent = `شراء شهر = ${fmt(PLATES)} صحن × ${MONTH_DAYS} يوم = ${fmt(PLATES * MONTH_DAYS)} صحن ناقص اللي عندك · المخزون بيكفي ${fmt(minD)} يوم بس — العائق: ${bott.name}`;
             }
 
+            renderOmCalc();
+
             const others = [];
             ITEMS.forEach(it => {
                 if (omKey(it)) return;
@@ -3852,6 +3854,37 @@ function lockEditAgain() {
             const nw = document.getElementById("negWarn");
             if (negs.length) { nw.classList.remove("hidden"); document.getElementById("negTxt").textContent = negs.map(n => `${n.name} (${fmt(n.qty)})`).join("، "); }
             else nw.classList.add("hidden");
+        }
+
+        /* حاسبة أم علي: الكمية الحالية + اللي رح تشتريه هلق (بالكيلو) = كم يوم بتكفي، حسب الصنف الأقل */
+        const OM_CALC_KEYS = ["كاجو", "بندق", "لوز", "جوز هند"];
+        const omBuyKg = {};
+        const omHave = key => { const it = ITEMS.find(x => omKey(x) === key); return it ? Math.max(0, it.qty) : 0; };
+        function renderOmCalc() {
+            const note = document.getElementById("omNote");
+            if (!note) return;
+            const total = OM_CALC_KEYS.reduce((s, k) => s + (perPlate[k] ?? 0), 0);
+            note.innerHTML = `📝 كل صحن أم علي بيستهلك: ${OM_CALC_KEYS.map(k => `${k} <b>${fmt(perPlate[k] ?? 0)}</b> غ`).join(" · ")} — المجموع <b>${fmt(total)}</b> غ مكسرات للصحن`;
+            document.getElementById("omCalcRows").innerHTML = `<div class="oc-row oc-head"><span>الصنف</span><span>عندك</span><span>رح تشتري (كغ)</span><span>بيكفي</span></div>` +
+                OM_CALC_KEYS.map((k, i) => `<div class="oc-row"><span class="oc-name">${k}</span><span>${fmt(omHave(k))} غ</span><span><input type="number" inputmode="decimal" id="omBuy_${i}" data-k="${k}" min="0" step="0.25" placeholder="0" value="${omBuyKg[k] || ""}"></span><span id="omCalcD_${i}">—</span></div>`).join("");
+            document.querySelectorAll("#omCalcRows input[data-k]").forEach(inp => inp.addEventListener("input", e => { omBuyKg[e.target.dataset.k] = Math.max(0, parseFloat(e.target.value) || 0); updateOmCalc(); }));
+            updateOmCalc();
+        }
+        function updateOmCalc() {
+            const rows = OM_CALC_KEYS.map((k, i) => {
+                const per = perPlate[k] ?? 0, tot = omHave(k) + (omBuyKg[k] || 0) * 1000;
+                const plates = per > 0 ? Math.floor(tot / per) : Infinity;
+                const days = per > 0 ? Math.floor(plates / PLATES) : Infinity;
+                const el = document.getElementById("omCalcD_" + i);
+                if (el) el.innerHTML = days === Infinity ? "—" : `<b>${fmt(days)}</b> يوم<small>${fmt(tot)} غ</small>`;
+                return { k, plates, days };
+            }).filter(r => r.days !== Infinity);
+            const res = document.getElementById("omCalcResult");
+            if (!rows.length) { res.innerHTML = ""; return; }
+            const min = rows.reduce((a, b) => b.days < a.days ? b : a);
+            const bought = OM_CALC_KEYS.some(k => omBuyKg[k] > 0);
+            res.className = "oc-result " + (min.days <= 0 ? "d-buy" : min.days < 7 ? "d-warn" : "d-ok");
+            res.innerHTML = `🍮 ${bought ? "بعد الشراء" : "بدون شراء"} أم علي بتكفي <b>${fmt(min.days)}</b> يوم <small>${fmt(min.plates)} صحن على ${fmt(PLATES)} باليوم — حسب ${min.k}، الأقل</small>`;
         }
 
         function simpleRow(it) {
