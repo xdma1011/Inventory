@@ -214,18 +214,20 @@ function render() {
         .map(it => {
             const q = qty[it.sku.toLowerCase()];
             const hasQty = q !== undefined;
-            const isBatch = it.batchGrams != null;
-            const hasMin = isBatch ? true : (it.min !== null && it.min !== undefined);
-            let below = false, need = 0, batches = null;
-            if (isBatch) {
-                batches = hasQty ? Math.floor(Math.max(0, q) / it.batchGrams) : null;
-                below = hasQty && batches < it.batchThreshold;
-                need = below ? Math.max(0, (it.batchTarget - batches) * it.batchGrams) : 0;
+            const isPlate = it.plateGrams != null;
+            const hasMin = isPlate ? true : (it.min !== null && it.min !== undefined);
+            let below = false, need = 0, plates = null, days = null, month = 0;
+            if (isPlate) {
+                month = omPlates * OM_MONTH_DAYS * it.plateGrams;
+                plates = hasQty ? Math.floor(Math.max(0, q) / it.plateGrams) : null;
+                days = hasQty ? Math.floor(plates / omPlates) : null;
+                need = hasQty ? Math.max(0, month - Math.max(0, q)) : 0;
+                below = hasQty && need > 0;
             } else {
                 below = hasQty && hasMin && q < it.min;
                 need = 0; // بالتنبيه فقط — بلا اقتراح كمية شراء محددة (إلا للمكسرات دفعة أم علي)
             }
-            return { ...it, qty: q, hasQty, hasMin, isBatch, batches, below, need };
+            return { ...it, qty: q, hasQty, hasMin, isPlate, plates, days, month, below, need };
         })
         .sort((a, b) => {
             if (a.below !== b.below) return a.below ? -1 : 1;
@@ -239,10 +241,10 @@ function render() {
     } else {
         const sections = [];
 
-        // ─── تفصيل خلطة أم علي: قائمة واضحة بالجرام بالضبط عشان تطلب من الموظف ───
-        const nutRows = rows.filter(r => r.isBatch);
+        // ─── تفصيل مكسرات أم علي: شراء الشهر بالجرام بالضبط عشان تطلب من الموظف ───
+        const nutRows = rows.filter(r => r.isPlate);
         if (nutRows.length) {
-            sections.push(renderSection('🥜 تفصيل مكسرات أم علي — الكمية بالجرام بالضبط', nutRows, true));
+            sections.push(renderSection('🥜 مكسرات أم علي — شراء شهر بالجرام بالضبط', nutRows, true));
         }
 
         // ─── تجميع حسب المورد ───
@@ -263,6 +265,7 @@ function render() {
     }
 
     renderOrders();
+    renderOmali(branch, qty);
 
     const lu = document.getElementById('lastUpload'), hasFile = Object.keys(qty).length > 0;
     if (lu) {
@@ -421,6 +424,70 @@ function copyOrder(i, btn) {
     else fallback();
 }
 
+// ─── أم علي بالصحون: صحون اليوم (افتراضي 12) × غرامات الصحن × 30 يوم = شراء الشهر ───
+const OM_PLATES_KEY = 'purchasing_omali_plates_v1';
+const OM_MONTH_DAYS = 30;
+let omPlates = (() => { try { return parseFloat(localStorage.getItem(OM_PLATES_KEY)) || 12; } catch (e) { return 12; } })();
+const omBuyKg = {}; // الحاسبة: اللي رح تشتريه هلق بالكيلو (للحساب بس، ما بينحفظ)
+let omNuts = [];
+const dayClass = d => d <= 0 ? 'd-buy' : d < 7 ? 'd-warn' : 'd-ok';
+
+function renderOmali(branch, qty) {
+    const box = document.getElementById('omaliBox');
+    if (!box) return;
+    omNuts = branch.items.filter(it => it.plateGrams != null).map(it => {
+        const q = qty[it.sku.toLowerCase()];
+        return { ...it, hasQty: q !== undefined, have: Math.max(0, q || 0) };
+    });
+    if (!omNuts.length) { box.innerHTML = ''; return; }
+    const total = omNuts.reduce((s, n) => s + n.plateGrams, 0);
+    const hasAll = omNuts.every(n => n.hasQty);
+    box.innerHTML = `<div class="panel om-panel">
+        <div class="om-head"><h3>🍮 أم علي — شراء شهر</h3>
+            <label>بيع اليوم: <input type="number" id="omPlatesInput" value="${omPlates}" min="1" step="1"> صحن</label></div>
+        <div class="om-note">📝 كل صحن أم علي بيستهلك: ${omNuts.map(n => `${n.name} <b>${fmt(n.plateGrams)}</b> غ`).join(' · ')} — المجموع <b>${fmt(total)}</b> غ مكسرات للصحن</div>
+        <div class="om-days" id="omDaysNow"></div>
+        <div class="oc-title">🧮 الحاسبة — عندك + رح تشتري هلق</div>
+        <div class="oc-row oc-head"><span>الصنف</span><span>عندك</span><span>رح تشتري (كغ)</span><span>بيكفي</span></div>
+        ${omNuts.map((n, i) => `<div class="oc-row"><span class="oc-name">${n.name}</span><span>${n.hasQty ? fmt(n.have) + ' غ' : '—'}</span><span><input type="number" inputmode="decimal" id="omBuy_${i}" data-i="${i}" min="0" step="0.25" placeholder="0" value="${omBuyKg[n.sku] || ''}"></span><span id="omCalcD_${i}">—</span></div>`).join('')}
+        <div class="om-days" id="omCalcResult"></div>
+        ${hasAll ? '' : '<div class="file-note">ارفع ملف المستويات لهالفرع عشان تنحسب الأيام صح</div>'}
+    </div>`;
+    document.getElementById('omPlatesInput').addEventListener('change', e => {
+        omPlates = Math.max(1, parseFloat(e.target.value) || 12);
+        try { localStorage.setItem(OM_PLATES_KEY, String(omPlates)); } catch (err) {}
+        render();
+    });
+    box.querySelectorAll('input[data-i]').forEach(inp => inp.addEventListener('input', e => {
+        omBuyKg[omNuts[+e.target.dataset.i].sku] = Math.max(0, parseFloat(e.target.value) || 0);
+        updateOmCalc();
+    }));
+    updateOmCalc();
+}
+
+// كم يوم بتكفي أم علي — حسب الصنف الأقل (أول واحد بيخلص بيوقّفها كلها)
+function omDaysFor(extraKg) {
+    const rows = omNuts.map((n, i) => {
+        const tot = n.have + (extraKg ? (omBuyKg[n.sku] || 0) * 1000 : 0);
+        const plates = Math.floor(tot / n.plateGrams);
+        return { i, name: n.name, tot, plates, days: Math.floor(plates / omPlates) };
+    });
+    return { rows, min: rows.reduce((a, b) => b.days < a.days ? b : a) };
+}
+function updateOmCalc() {
+    if (!omNuts.length) return;
+    const nowEl = document.getElementById('omDaysNow');
+    if (!omNuts.every(n => n.hasQty)) { nowEl.innerHTML = ''; document.getElementById('omCalcResult').innerHTML = ''; return; }
+    const now = omDaysFor(false), after = omDaysFor(true);
+    nowEl.className = 'om-days ' + dayClass(now.min.days);
+    nowEl.innerHTML = `🍮 أم علي بتكفي <b>${fmt(now.min.days)}</b> يوم <small>${fmt(now.min.plates)} صحن على ${fmt(omPlates)} صحن باليوم — حسب ${now.min.name}، الأقل</small>`;
+    after.rows.forEach(r => { document.getElementById('omCalcD_' + r.i).innerHTML = `<b>${fmt(r.days)}</b> يوم<small>${fmt(r.tot)} غ</small>`; });
+    const bought = omNuts.some(n => omBuyKg[n.sku] > 0);
+    const res = document.getElementById('omCalcResult');
+    res.className = 'om-days ' + dayClass(after.min.days);
+    res.innerHTML = `🧮 ${bought ? 'بعد الشراء' : 'بدون شراء'} أم علي بتكفي <b>${fmt(after.min.days)}</b> يوم <small>${fmt(after.min.plates)} صحن على ${fmt(omPlates)} باليوم — حسب ${after.min.name}، الأقل</small>`;
+}
+
 function renderSection(title, items, nutsDetail) {
     return `<div class="group-section">
         <h3 class="group-title">${title}</h3>
@@ -437,14 +504,14 @@ function renderRow(r, nutsDetail) {
                 ? `<span class="badge b-buy">تحت الحد — انتبه</span>`
                 : `<span class="badge b-ok">متوفر ✓</span>`;
     const qtyTxt = r.hasQty
-        ? (r.isBatch ? `${fmt(r.qty)} ${unitLabel(r.unit)} (~${fmt(r.batches)} خلطة)` : `${fmt(r.qty)} ${unitLabel(r.unit)}`)
+        ? (r.isPlate ? `${fmt(r.qty)} ${unitLabel(r.unit)} (~${fmt(r.plates)} صحن · ${fmt(r.days)} يوم)` : `${fmt(r.qty)} ${unitLabel(r.unit)}`)
         : '—';
-    const minTxt = r.isBatch
-        ? `${fmt(r.batchThreshold)} خلطة (${fmt(r.batchThreshold * r.batchGrams)} ${unitLabel(r.unit)})`
+    const minTxt = r.isPlate
+        ? `شهر = ${fmt(r.month)} ${unitLabel(r.unit)} (${fmt(r.plateGrams)} غ للصحن)`
         : (r.hasMin ? `${fmt(r.min)} ${unitLabel(r.unit)}` : '—');
-    const needLine = (r.below && r.isBatch)
-        ? `<div class="need-line">🛒 اشترِ ${fmt(r.need)} ${unitLabel(r.unit)} لترجع لـ ${fmt(r.batchTarget)} خلطة</div>`
-        : (nutsDetail && r.isBatch ? `<div class="need-line ok-line">✓ فوق حد التنبيه (${fmt(r.batchThreshold)} خلطات) — ما في داعي تطلب هلق</div>` : '');
+    const needLine = (r.below && r.isPlate)
+        ? `<div class="need-line">🛒 اشترِ ${fmt(Math.ceil(r.need))} ${unitLabel(r.unit)} — عشان يكفي شهر (${fmt(omPlates)} صحن باليوم)</div>`
+        : (nutsDetail && r.isPlate && r.hasQty ? `<div class="need-line ok-line">✓ بيغطي الشهر — ما في داعي تطلب هلق</div>` : '');
     const supplierLine = (r.supplier || r.location)
         ? `<div class="supplier-line">📍 ${[r.supplier, r.location].filter(Boolean).join(' — ')}</div>` : '';
     return `<div class="item-row ${r.below ? 'urgent' : ''}">

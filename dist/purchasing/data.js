@@ -2,6 +2,8 @@
 // عدّل هنا فقط لإضافة/تعديل حد أدنى أو مورد لصنف. لو صنف مش موجود هون، ما بيظهر بالصفحة.
 /* jshint esversion:6 */
 
+// plateGrams = غرامات الصنف بصحن أم علي الواحد (حسب مدير المطعم) — الحسبة: صحون اليوم × غرامات الصحن × 30 يوم
+
 // ─── رسائل الطلبيات الجاهزة للنسخ (واتساب) ───
 // target = عدد الكراتين اللي بدنا نوصلها، perCarton = عدد الحبات بالكرتونة الوحدة
 // الرقم {n} بالنص بيتعبى تلقائياً = target − الكراتين الموجودة (مقرّب)، والسطر اللي ما بده شي بينحذف
@@ -29,10 +31,10 @@ const PURCHASING_BRANCHES = {
             { sku: 'sk-0037', name: 'جزر', unit: 'G', min: 5000, supplier: 'سوق مركزي', location: 'سوق مركزي' },
             { sku: 'sk-0040', name: 'معالق - ملاعق', unit: 'PC', min: 8000, supplier: 'الأهرام', location: 'توصيل', filter: 'معالق ملاعق' },
             { sku: 'sk-0041', name: 'شوك', unit: 'PC', min: 2000, supplier: 'البرج', location: 'الجاردنز' },
-            { sku: 'sk-0062', name: 'بندق', unit: 'G', min: null, supplier: 'الشعب', location: '', batchGrams: 270, batchThreshold: 10, batchTarget: 30 },
-            { sku: 'sk-0063', name: 'جوز هند', unit: 'G', min: null, supplier: 'الشعب', location: '', batchGrams: 225, batchThreshold: 10, batchTarget: 30 },
-            { sku: 'sk-0064', name: 'لوز', unit: 'G', min: null, supplier: 'الشعب', location: '', batchGrams: 160, batchThreshold: 10, batchTarget: 30 },
-            { sku: 'sk-0065', name: 'كاجو', unit: 'G', min: null, supplier: 'الشعب', location: '', batchGrams: 160, batchThreshold: 10, batchTarget: 30 },
+            { sku: 'sk-0062', name: 'بندق', unit: 'G', min: null, supplier: 'الشعب', location: '', plateGrams: 5 },
+            { sku: 'sk-0063', name: 'جوز هند', unit: 'G', min: null, supplier: 'الشعب', location: '', plateGrams: 10 },
+            { sku: 'sk-0064', name: 'لوز', unit: 'G', min: null, supplier: 'الشعب', location: '', plateGrams: 8 },
+            { sku: 'sk-0065', name: 'كاجو', unit: 'G', min: null, supplier: 'الشعب', location: '', plateGrams: 7 },
             { sku: 'sk-0066', name: 'فستق حلبي', unit: 'G', min: 500, supplier: 'الشعب', location: '' },
             { sku: 'sk-0067', name: 'صنوبر', unit: 'G', min: 750, supplier: 'الشعب', location: '' },
             { sku: 'sk-0071', name: 'لحمة مفرومة', unit: 'G', min: 24000, supplier: 'الصاحب', location: 'ام نوارة' },

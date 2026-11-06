@@ -138,6 +138,27 @@
         border-bottom: 1px solid #262a34;
     }
 
+    .om-panel { border-color: #8d6e63; }
+    .om-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .om-head h3 { font-size: 15px; font-weight: 900; }
+    .om-head label { font-size: 13px; color: #b0bec5; }
+    .om-head input, .oc-row input { width: 70px; background: #0d1015; border: 1px solid #37474f; color: #fff; border-radius: 8px; padding: 6px; text-align: center; font-family: inherit; font-size: 15px; font-weight: 700; direction: ltr; }
+    .oc-row input { width: 100%; }
+    .om-note { background: #0d1015; border: 1px solid #262a34; border-radius: 10px; padding: 8px 10px; font-size: 13px; line-height: 1.8; color: #cfd8dc; margin-bottom: 10px; }
+    .om-note b { color: #fff; }
+    .om-days { border-radius: 10px; padding: 10px 12px; font-size: 15px; font-weight: 800; margin: 8px 0; }
+    .om-days:empty { display: none; }
+    .om-days b { font-size: 22px; margin: 0 2px; }
+    .om-days small { display: block; font-size: 12px; font-weight: 600; opacity: .85; }
+    .om-days.d-ok { background: rgba(102,187,106,0.15); color: #81c784; }
+    .om-days.d-warn { background: rgba(255,183,77,0.15); color: #ffb74d; }
+    .om-days.d-buy { background: rgba(239,83,80,0.18); color: #ef5350; }
+    .oc-title { font-size: 13.5px; font-weight: 900; margin: 12px 0 4px; }
+    .oc-row { display: grid; grid-template-columns: 1.1fr 1fr 1.2fr 1fr; gap: 8px; align-items: center; padding: 7px 0; border-bottom: 1px solid #262a34; font-size: 13.5px; }
+    .oc-head { font-size: 11.5px; color: #78909c; font-weight: 700; }
+    .oc-name { font-weight: 800; }
+    .oc-row small { display: block; font-size: 11px; color: #78909c; }
+
     @media (max-width: 480px) {
         .branch-tab { font-size: 12.5px; padding: 10px 6px; }
     }
@@ -169,14 +190,16 @@
         <div class="branch-stats" id="branchStats"></div>
     </div>
 
+    <div id="omaliBox"></div>
+
     <div id="ordersBox"></div>
 
     <div class="items-list" id="itemsList"></div>
 </div>
 
-<script src="../shared/wa-send.js?v=2026-10-29a"></script>
-<script src="data.js?v=2026-10-29a"></script>
-<script src="app.js?v=2026-10-29a"></script>
+<script src="../shared/wa-send.js?v=2026-11-06a"></script>
+<script src="data.js?v=2026-11-06a"></script>
+<script src="app.js?v=2026-11-06a"></script>
 <script src="../shared/version-stamp.js"></script>
 </body>
 </html>
